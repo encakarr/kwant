@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Check, CheckCircle2, Loader2, MessagesSquare, Sparkles } from 'lucide-react';
 import { ResolvePick, ResolveResult, RouteChoiceMeta, generalHint, routeChoiceOutcome, routeChoiceView } from '../routeChoice';
+import { t } from '../i18n';
 
 export interface RouteChoiceCardProps {
   meta: RouteChoiceMeta;
@@ -46,7 +47,12 @@ export const RouteChoiceCard: React.FC<RouteChoiceCardProps> = ({ meta, messageI
 
   const options: Array<{ key: string; label: string; sub: string }> = [
     ...view.choices.slice(0, 2).map((b) => ({ key: b.kwant_id, label: b.name, sub: b.title })),
-    { key: 'general', label: view.general.label || 'Answer generally', sub: generalHint(view) },
+    {
+      key: 'general',
+      // The server's default label is ours too, so it reads in the interface language.
+      label: !view.general.label || view.general.label === 'Answer generally' ? t('Answer generally') : view.general.label,
+      sub: generalHint(view),
+    },
   ];
 
   const onKey = (e: React.KeyboardEvent, i: number) => {
@@ -63,14 +69,16 @@ export const RouteChoiceCard: React.FC<RouteChoiceCardProps> = ({ meta, messageI
     </span>
   ) : sent === 'already' ? (
     <span className="inline-flex items-center gap-1.5 text-zinc-400">
-      <CheckCircle2 size={13} aria-hidden="true" /> Already answered.
+      <CheckCircle2 size={13} aria-hidden="true" /> {t('Already answered.')}
     </span>
   ) : sent !== null ? (
     <span className="inline-flex items-center gap-1.5 text-emerald-300">
-      <CheckCircle2 size={13} aria-hidden="true" /> {sent === 'general' ? 'Sent. A general answer is coming.' : `Sent. ${options.find((o) => o.key === sent)?.label ?? 'The bot'} is answering.`}
+      <CheckCircle2 size={13} aria-hidden="true" /> {sent === 'general'
+        ? t('Sent. A general answer is coming.')
+        : t('Sent. {name} is answering.', { name: options.find((o) => o.key === sent)?.label ?? t('The bot') })}
     </span>
   ) : (
-    <span className="text-zinc-400">Nothing is answered until you choose.</span>
+    <span className="text-zinc-400">{t('Nothing is answered until you choose.')}</span>
   );
 
   return (
@@ -87,10 +95,10 @@ export const RouteChoiceCard: React.FC<RouteChoiceCardProps> = ({ meta, messageI
         <div className="px-4 pt-3 pb-2 space-y-1">
           <span className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-400">
             <MessagesSquare size={12} className="text-violet-300" aria-hidden="true" />
-            <span className="text-zinc-200">Laya</span> · router
+            <span className="text-zinc-200">Laya</span> · {t('router')}
           </span>
           <h3 id={headingId} className="text-sm font-semibold text-zinc-100 leading-snug">
-            Who should answer this?
+            {t('Who should answer this?')}
           </h3>
           {question && <p className="text-xs text-zinc-400 break-words line-clamp-2">“{question}”</p>}
         </div>

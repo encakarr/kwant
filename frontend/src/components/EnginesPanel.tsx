@@ -10,6 +10,7 @@ import { Profile, accountUsable, accountsForCard, activeLimit, formatUntil } fro
 import type { ProfilesState } from '../useProfiles';
 import { RouteRow, routeSummary } from '../routing';
 import { StartPicker } from './StartPicker';
+import { t } from '../i18n';
 
 const SUMMARY_TEXT = {
   ok: 'text-emerald-300',
@@ -37,7 +38,7 @@ const withCode = (text: string) =>
 const summaryAccounts = (accounts: Profile[], now: number) =>
   accounts.map((p) => {
     const limit = activeLimit(p.limited_until, now);
-    return { name: p.kind === 'system' ? 'This machine' : p.name, usable: accountUsable(p, now), is_default: p.is_default, priority: p.priority, outUntil: limit ? formatUntil(limit, now) : null };
+    return { name: p.kind === 'system' ? t('This machine') : p.name, usable: accountUsable(p, now), is_default: p.is_default, priority: p.priority, outUntil: limit ? formatUntil(limit, now) : null };
   });
 
 /** One engine: its status, switch and models up top, and the accounts it can run on underneath. */
@@ -63,7 +64,7 @@ export const EngineCard: React.FC<{
   const signInHere = !hasMachineRow && engine.id === 'claude' && (!!hostAction || signInAbove);
   const summary =
     signInHere && engine.status === 'signed_out' && !usable && !off
-      ? { text: `Not signed in · Sign in ${signInAbove ? 'above' : 'below'}`, tone: 'warn' as const }
+      ? { text: signInAbove ? t('Not signed in · Sign in above') : t('Not signed in · Sign in below'), tone: 'warn' as const }
       : engineSummary(engine, accounts ? summaryAccounts(accounts, now) : []);
   // Not installed and nothing but its "This machine" row: nothing to list or switch until it's installed.
   const onlyMachine = isAbsent(engine) && !accounts?.some((p) => p.kind !== 'system');
@@ -85,7 +86,7 @@ export const EngineCard: React.FC<{
           </p>
           {usable && engine.models.length > 0 && (
             <p className="text-[11px] text-zinc-500 truncate" title={engine.models.map((m) => m.label).join(', ')}>
-              {engine.models.length === 1 ? '1 model' : `${engine.models.length} models`}
+              {t(engine.models.length === 1 ? '{n} model' : '{n} models', { n: engine.models.length })}
               {' · '}
               {engine.models.slice(0, 3).map((m) => m.label).join(', ')}
               {engine.models.length > 3 ? '…' : ''}
@@ -98,7 +99,7 @@ export const EngineCard: React.FC<{
               rel="noreferrer"
               className="inline-flex items-center gap-1 text-[11px] text-violet-300 hover:text-violet-200 hover:underline underline-offset-2"
             >
-              Install {engine.name} <ExternalLink size={10} aria-hidden="true" />
+              {t('Install {engine}', { engine: engine.name })} <ExternalLink size={10} aria-hidden="true" />
             </a>
           )}
           {/* Without a "This machine" row to hold it, the sign-in sits here. */}
@@ -110,7 +111,7 @@ export const EngineCard: React.FC<{
             role="switch"
             aria-checked={!off}
             aria-labelledby={labelId}
-            title={off ? 'Off: bots never use it' : 'On: bots may use it'}
+            title={off ? t('Off: bots never use it') : t('On: bots may use it')}
             onClick={() => {
               playSfx('click');
               onToggle(off);
@@ -119,7 +120,7 @@ export const EngineCard: React.FC<{
               off ? 'bg-zinc-700' : 'bg-sky-600'
             }`}
           >
-            <span className="sr-only">{off ? 'Off' : 'On'}</span>
+            <span className="sr-only">{off ? t('Off') : t('On')}</span>
             <span
               aria-hidden="true"
               className={`absolute top-[2px] left-[2px] w-[14px] h-[14px] rounded-full bg-white transition-transform motion-reduce:transition-none ${off ? '' : 'translate-x-[14px]'}`}
@@ -152,24 +153,26 @@ const hostAction = (e: EngineInfo, api: EnginesApi, onSignedIn: () => void, focu
 function headline(engines: EngineInfo[], profiles: Profile[] | null, now: number): string {
   const ready = engines.filter(isUsable).length;
   if (ready > 0) {
-    return `${ready} ready${onlyCliReady(engines) ? ', all through your signed-in CLIs, so no API keys are needed' : ''}. Bots only use engines that are ready.`;
+    return onlyCliReady(engines)
+      ? t('{n} ready, all through your signed-in CLIs, so no API keys are needed. Bots only use engines that are ready.', { n: ready })
+      : t('{n} ready. Bots only use engines that are ready.', { n: ready });
   }
   // An engine that's off but has an account ready is the quickest fix.
   for (const e of sortEngines(engines)) {
     if (e.enabled !== false || !profiles) continue;
     const s = engineSummary(e, summaryAccounts(accountsForCard(profiles, e.id), now));
-    if (s.text.startsWith('Off · Turn on to use ') && !s.text.endsWith(' it')) return `No engine can run right now. ${e.name} is off: turn it on to use ${s.text.slice('Off · Turn on to use '.length)}.`;
+    if (s.turnOnFor) return t('No engine can run right now. {engine} is off: turn it on to use {name}.', { engine: e.name, name: s.turnOnFor });
   }
   return claudeNeedsSignIn(engines)
-    ? 'No engine can run right now. Sign in with Claude below, or add an account.'
-    : 'No engine can run right now. Turn on an engine and sign in to one of its accounts below.';
+    ? t('No engine can run right now. Sign in with Claude below, or add an account.')
+    : t('No engine can run right now. Turn on an engine and sign in to one of its accounts below.');
 }
 
 /** The answer to "what will run my next kwant?": engine → account → model per family, and the fallback. */
 export const RouteSummary: React.FC<{ rows: RouteRow[]; pending: boolean }> = ({ rows, pending }) => (
   <div data-route-summary className="rounded-xl border border-sky-500/25 bg-gradient-to-b from-sky-500/[0.07] to-transparent p-3 space-y-2.5">
     <h4 className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-sky-200">
-      <Route size={13} aria-hidden="true" /> What runs your kwant bots
+      <Route size={13} aria-hidden="true" /> {t('What runs your kwant bots')}
     </h4>
     <ul className="space-y-2.5">
       {rows.map((r) => (
@@ -177,7 +180,7 @@ export const RouteSummary: React.FC<{ rows: RouteRow[]; pending: boolean }> = ({
           <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
             <span className="w-14 shrink-0 font-semibold text-zinc-100">{r.label}</span>
             <span className="px-1.5 py-0.5 rounded-md bg-zinc-800/80 text-zinc-300">{r.engine}</span>
-            <ArrowRight size={11} className="text-zinc-500" aria-label="on" />
+            <ArrowRight size={11} className="text-zinc-500" aria-label={t('on')} />
             <span className={`px-1.5 py-0.5 rounded-md font-medium ${r.account.otherProvider || r.note ? 'bg-amber-500/15 text-amber-100' : 'bg-emerald-500/15 text-emerald-100'}`}>
               {r.account.name}
             </span>
@@ -185,15 +188,16 @@ export const RouteSummary: React.FC<{ rows: RouteRow[]; pending: boolean }> = ({
           </div>
           <p className="mt-1 pl-0 sm:pl-[3.875rem] text-zinc-500">
             {r.note && <span className="text-amber-200">{r.note} </span>}
-            {r.then.length > 0 ? `If it’s out of usage or signed out: ${r.then.join(', then ')}.` : r.note ? '' : 'No backup account is ready.'}
-            {r.defaultModel && <> Bots on Auto get {r.defaultModel}.</>}
+            {r.then.length > 0 ? t('If it’s out of usage or signed out: {list}.', { list: r.then.join(t(', then ')) }) : r.note ? '' : t('No backup account is ready.')}
+            {r.defaultModel && <> {t('Bots on Auto get {model}.', { model: r.defaultModel })}</>}
           </p>
           {r.fallback && <p className="pl-0 sm:pl-[3.875rem] text-zinc-500">{r.fallback}</p>}
         </li>
       ))}
     </ul>
     <p className="text-[10.5px] text-zinc-500 border-t border-zinc-800/80 pt-2">
-      {pending ? 'Loading accounts… ' : ''}A bot set to a specific account in its own settings starts with that account instead.
+      {pending ? t('Loading accounts…') + ' ' : ''}
+      {t('A bot set to a specific account in its own settings starts with that account instead.')}
     </p>
   </div>
 );
@@ -249,8 +253,8 @@ export const EnginesPanel: React.FC<{ api: EnginesApi; accounts?: ProfilesState;
     <section aria-labelledby="engines-title" className="bg-zinc-950/60 p-3 sm:p-4 rounded-xl border border-zinc-800 space-y-3">
       <div className="flex items-center gap-2">
         <Cpu size={15} className="shrink-0 text-sky-400" aria-hidden="true" />
-        <h3 id="engines-title" className="text-xs font-semibold text-zinc-200 whitespace-nowrap">Engines &amp; accounts</h3>
-        {ago && <span className="ml-auto min-w-0 truncate text-[10.5px] text-zinc-500" title={`Checked ${ago}`}><span className="hidden sm:inline">Checked </span>{ago}</span>}
+        <h3 id="engines-title" className="text-xs font-semibold text-zinc-200 whitespace-nowrap">{t('Engines & accounts')}</h3>
+        {ago && <span className="ml-auto min-w-0 truncate text-[10.5px] text-zinc-500" title={t('Checked {ago}', { ago })}><span className="hidden sm:inline">{t('Checked')} </span>{ago}</span>}
         <button
           type="button"
           onClick={() => {
@@ -262,7 +266,7 @@ export const EnginesPanel: React.FC<{ api: EnginesApi; accounts?: ProfilesState;
           className={`${ago ? '' : 'ml-auto '}shrink-0 whitespace-nowrap flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium text-zinc-300 border border-zinc-800 hover:text-sky-200 hover:border-sky-500/40 disabled:opacity-50 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400`}
         >
           {rechecking ? <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <RefreshCw size={12} aria-hidden="true" />}
-          {rechecking ? 'Checking…' : 'Re-check'}
+          {rechecking ? t('Checking…') : t('Re-check')}
         </button>
       </div>
 
@@ -271,11 +275,11 @@ export const EnginesPanel: React.FC<{ api: EnginesApi; accounts?: ProfilesState;
       ) : (
         <p className="text-[11px] text-zinc-400 leading-relaxed" aria-live="polite">
           {engines === null
-            ? 'Checking which engines can run…'
+            ? t('Checking which engines can run…')
             : engines.length === 0
-              ? 'This server doesn’t report engine status yet.'
+              ? t('This server doesn’t report engine status yet.')
               : picking
-                ? 'Nothing can answer yet. Pick one way to start:'
+                ? t('Nothing can answer yet. Pick one way to start:')
                 : headline(engines, profiles, now)}
         </p>
       )}
@@ -290,24 +294,24 @@ export const EnginesPanel: React.FC<{ api: EnginesApi; accounts?: ProfilesState;
       {accounts?.error && (
         <div role="alert" className="flex flex-wrap items-center gap-2 rounded-lg border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-[11px] text-rose-200">
           <AlertTriangle size={12} aria-hidden="true" />
-          <span className="flex-1 min-w-0">Couldn’t load accounts: {accounts.error}</span>
+          <span className="flex-1 min-w-0">{t('Couldn’t load accounts: {error}', { error: accounts.error })}</span>
           <button
             type="button"
             onClick={() => accounts.reload()}
             className="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-rose-500/30 text-rose-100 hover:bg-rose-500/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400"
           >
-            <RefreshCw size={11} aria-hidden="true" /> Try again
+            <RefreshCw size={11} aria-hidden="true" /> {t('Try again')}
           </button>
         </div>
       )}
       {accounts && !profiles && !accounts.error && engines && engines.length > 0 && (
         <p role="status" className="flex items-center gap-1.5 text-[11px] text-zinc-500">
-          <Loader2 size={11} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> Loading accounts…
+          <Loader2 size={11} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> {t('Loading accounts…')}
         </p>
       )}
 
       {present.length > 0 && (
-        <ul className="grid grid-cols-1 gap-2.5" aria-label="Engines on this computer">
+        <ul className="grid grid-cols-1 gap-2.5" aria-label={t('Engines on this computer')}>
           {present.map(card)}
         </ul>
       )}
@@ -322,7 +326,7 @@ export const EnginesPanel: React.FC<{ api: EnginesApi; accounts?: ProfilesState;
             className="flex items-center gap-1 text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400 rounded"
           >
             {showAbsent ? <ChevronDown size={12} aria-hidden="true" /> : <ChevronRight size={12} aria-hidden="true" />}
-            Not available on this computer ({absent.length})
+            {t('Not available on this computer ({n})', { n: absent.length })}
           </button>
           {showAbsent && (
             <ul id="engines-absent" className="mt-2 grid grid-cols-1 gap-2.5">

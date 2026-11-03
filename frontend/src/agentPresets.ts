@@ -1,9 +1,11 @@
+import { t } from './i18n';
+
 export type PresetGroup = 'tech' | 'nontech' | 'lifestyle';
 
 export const PRESET_GROUPS: Array<{ id: PresetGroup; label: string }> = [
-  { id: 'tech', label: 'Tech' },
-  { id: 'nontech', label: 'Non-tech' },
-  { id: 'lifestyle', label: 'Lifestyle' },
+  { id: 'tech', label: t('Tech') },
+  { id: 'nontech', label: t('Non-tech') },
+  { id: 'lifestyle', label: t('Lifestyle') },
 ];
 
 export interface AgentPreset {
@@ -25,7 +27,7 @@ export const AGENT_PRESETS: AgentPreset[] = [
   {
     id: 'product',
     group: 'tech',
-    label: 'Product',
+    label: t('Product'),
     name: 'ProductManager',
     title: 'Product Manager',
     avatar_sprite: 'product',
@@ -38,7 +40,7 @@ export const AGENT_PRESETS: AgentPreset[] = [
   {
     id: 'designer',
     group: 'tech',
-    label: 'Designer',
+    label: t('Designer'),
     name: 'Designer',
     title: 'UX & Product Designer',
     avatar_sprite: 'designer',
@@ -51,7 +53,7 @@ export const AGENT_PRESETS: AgentPreset[] = [
   {
     id: 'frontend',
     group: 'tech',
-    label: 'Frontend',
+    label: t('Frontend'),
     name: 'Frontend',
     title: 'Frontend Engineer',
     avatar_sprite: 'tech_lead',
@@ -64,7 +66,7 @@ export const AGENT_PRESETS: AgentPreset[] = [
   {
     id: 'backend',
     group: 'tech',
-    label: 'Backend',
+    label: t('Backend'),
     name: 'Backend',
     title: 'Backend Engineer',
     avatar_sprite: 'architect',
@@ -77,7 +79,7 @@ export const AGENT_PRESETS: AgentPreset[] = [
   {
     id: 'qa',
     group: 'tech',
-    label: 'QA',
+    label: t('QA'),
     name: 'QA',
     title: 'QA & Test Engineer',
     avatar_sprite: 'qa',
@@ -90,7 +92,7 @@ export const AGENT_PRESETS: AgentPreset[] = [
   {
     id: 'security',
     group: 'tech',
-    label: 'Security',
+    label: t('Security'),
     name: 'SecurityAuditor',
     title: 'Security Auditor',
     avatar_sprite: 'security',
@@ -103,7 +105,7 @@ export const AGENT_PRESETS: AgentPreset[] = [
   {
     id: 'sre',
     group: 'tech',
-    label: 'SRE',
+    label: t('SRE'),
     name: 'SRE',
     title: 'Site Reliability Engineer',
     avatar_sprite: 'devops',
@@ -116,7 +118,7 @@ export const AGENT_PRESETS: AgentPreset[] = [
   {
     id: 'data',
     group: 'tech',
-    label: 'Data',
+    label: t('Data'),
     name: 'DataAnalyst',
     title: 'Data Analyst',
     avatar_sprite: 'data',
@@ -129,7 +131,7 @@ export const AGENT_PRESETS: AgentPreset[] = [
   {
     id: 'writer',
     group: 'tech',
-    label: 'Writer',
+    label: t('Writer'),
     name: 'TechWriter',
     title: 'Technical Writer',
     avatar_sprite: 'writer',
@@ -142,7 +144,7 @@ export const AGENT_PRESETS: AgentPreset[] = [
   {
     id: 'research',
     group: 'nontech',
-    label: 'Research',
+    label: t('Research'),
     name: 'Researcher',
     title: 'Research Analyst',
     avatar_sprite: 'research',
@@ -155,7 +157,7 @@ export const AGENT_PRESETS: AgentPreset[] = [
   {
     id: 'marketing',
     group: 'nontech',
-    label: 'Marketing',
+    label: t('Marketing'),
     name: 'Marketer',
     title: 'Marketing Strategist',
     avatar_sprite: 'marketing',
@@ -168,7 +170,7 @@ export const AGENT_PRESETS: AgentPreset[] = [
   {
     id: 'copywriter',
     group: 'nontech',
-    label: 'Copywriter',
+    label: t('Copywriter'),
     name: 'Copywriter',
     title: 'Copywriter & Editor',
     avatar_sprite: 'writer',
@@ -181,7 +183,7 @@ export const AGENT_PRESETS: AgentPreset[] = [
   {
     id: 'sales',
     group: 'nontech',
-    label: 'Sales',
+    label: t('Sales'),
     name: 'SalesLead',
     title: 'Sales Lead',
     avatar_sprite: 'product',
@@ -194,7 +196,7 @@ export const AGENT_PRESETS: AgentPreset[] = [
   {
     id: 'finance',
     group: 'nontech',
-    label: 'Finance',
+    label: t('Finance'),
     name: 'FinanceAnalyst',
     title: 'Finance Analyst',
     avatar_sprite: 'data',
@@ -207,7 +209,7 @@ export const AGENT_PRESETS: AgentPreset[] = [
   {
     id: 'legal',
     group: 'nontech',
-    label: 'Legal',
+    label: t('Legal'),
     name: 'LegalAdvisor',
     title: 'Legal & Compliance Advisor',
     avatar_sprite: 'legal',
@@ -220,7 +222,7 @@ export const AGENT_PRESETS: AgentPreset[] = [
   {
     id: 'support',
     group: 'nontech',
-    label: 'Support',
+    label: t('Support'),
     name: 'Support',
     title: 'Customer Support Lead',
     avatar_sprite: 'tech_lead',
@@ -233,7 +235,7 @@ export const AGENT_PRESETS: AgentPreset[] = [
   {
     id: 'hr',
     group: 'nontech',
-    label: 'People',
+    label: t('People'),
     name: 'PeopleOps',
     title: 'People & Recruiting Partner',
     avatar_sprite: 'coach',
@@ -246,7 +248,7 @@ export const AGENT_PRESETS: AgentPreset[] = [
   {
     id: 'coach',
     group: 'nontech',
-    label: 'Coach',
+    label: t('Coach'),
     name: 'Coach',
     title: 'Career & Productivity Coach',
     avatar_sprite: 'coach',
@@ -259,7 +261,7 @@ export const AGENT_PRESETS: AgentPreset[] = [
   {
     id: 'tutor',
     group: 'nontech',
-    label: 'Tutor',
+    label: t('Tutor'),
     name: 'Tutor',
     title: 'Patient Tutor',
     avatar_sprite: 'teacher',
@@ -272,7 +274,7 @@ export const AGENT_PRESETS: AgentPreset[] = [
   {
     id: 'travel',
     group: 'lifestyle',
-    label: "Travel",
+    label: t('Travel'),
     name: 'TravelPlanner',
     title: "Travel Planner",
     avatar_sprite: 'traveler',
@@ -285,7 +287,7 @@ export const AGENT_PRESETS: AgentPreset[] = [
   {
     id: 'chef',
     group: 'lifestyle',
-    label: "Chef",
+    label: t('Chef'),
     name: 'Chef',
     title: "Chef & Meal Planner",
     avatar_sprite: 'chef',
@@ -298,7 +300,7 @@ export const AGENT_PRESETS: AgentPreset[] = [
   {
     id: 'fitness',
     group: 'lifestyle',
-    label: "Fitness",
+    label: t('Fitness'),
     name: 'FitnessCoach',
     title: "Fitness Trainer",
     avatar_sprite: 'fitness',
@@ -311,7 +313,7 @@ export const AGENT_PRESETS: AgentPreset[] = [
   {
     id: 'event',
     group: 'lifestyle',
-    label: "Events",
+    label: t('Events'),
     name: 'EventPlanner',
     title: "Event & Party Planner",
     avatar_sprite: 'party',
@@ -324,7 +326,7 @@ export const AGENT_PRESETS: AgentPreset[] = [
   {
     id: 'diy',
     group: 'lifestyle',
-    label: "Home & DIY",
+    label: t('Home & DIY'),
     name: 'HomeHelper',
     title: "Home & DIY Helper",
     avatar_sprite: 'builder',
@@ -337,7 +339,7 @@ export const AGENT_PRESETS: AgentPreset[] = [
   {
     id: 'language',
     group: 'lifestyle',
-    label: "Language",
+    label: t('Language'),
     name: 'LanguageBuddy',
     title: "Language Partner",
     avatar_sprite: 'teacher',
@@ -350,7 +352,7 @@ export const AGENT_PRESETS: AgentPreset[] = [
   {
     id: 'budget',
     group: 'lifestyle',
-    label: "Budget",
+    label: t('Budget'),
     name: 'BudgetBuddy',
     title: "Personal Budget Buddy",
     avatar_sprite: 'data',
@@ -363,7 +365,7 @@ export const AGENT_PRESETS: AgentPreset[] = [
   {
     id: 'wellbeing',
     group: 'lifestyle',
-    label: "Wellbeing",
+    label: t('Wellbeing'),
     name: 'Companion',
     title: "Wellbeing Companion",
     avatar_sprite: 'zen',

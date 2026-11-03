@@ -3,6 +3,7 @@
 
 import { parseView, viewSegment, type SpaceView } from './nav';
 import { pickedLine, serverReason } from './routeReason';
+import { t } from './i18n';
 
 export interface SpaceCounts {
   bots: number;
@@ -94,25 +95,29 @@ export function firstUnusedColor(spaces: Array<Pick<Space, 'color'>>): string {
 /** Why a space name can't be saved, or null when it can. `taken` are the other spaces' names. */
 export function spaceNameError(name: string, taken: string[]): string | null {
   const n = name.trim();
-  if (!n) return 'Give the space a name.';
-  if (n.length > 60) return 'Keep the name under 60 characters.';
-  if (taken.some((t) => t.trim().toLowerCase() === n.toLowerCase())) return `You already have a space called ${n}.`;
+  if (!n) return t('Give the space a name.');
+  if (n.length > 60) return t('Keep the name under 60 characters.');
+  if (taken.some((other) => other.trim().toLowerCase() === n.toLowerCase())) return t('You already have a space called {name}.', { name: n });
   return null;
 }
 
 /** "6 bots · 2 accounts" under the space name: short enough for the sidebar header (QA b). */
 export function spaceSummary(c: SpaceCounts | undefined): string {
   if (!c) return '';
-  const bots = `${c.bots} ${c.bots === 1 ? 'bot' : 'bots'}`;
-  const accounts = c.ready_accounts === 0 ? 'no account yet' : `${c.ready_accounts} ${c.ready_accounts === 1 ? 'account' : 'accounts'}`;
+  const bots = t(c.bots === 1 ? '{n} bot' : '{n} bots', { n: c.bots });
+  const accounts =
+    c.ready_accounts === 0 ? t('no account yet') : t(c.ready_accounts === 1 ? '{n} account' : '{n} accounts', { n: c.ready_accounts });
   return `${bots} · ${accounts}`;
 }
 
 /** The long form, for the subtitle's tooltip. */
 export function spaceSummaryTitle(c: SpaceCounts | undefined): string {
   if (!c) return '';
-  const bots = `${c.bots} kwant ${c.bots === 1 ? 'bot' : 'bots'}`;
-  const accounts = c.ready_accounts === 0 ? 'no account signed in yet' : `${c.ready_accounts} ${c.ready_accounts === 1 ? 'account' : 'accounts'} ready to use`;
+  const bots = t(c.bots === 1 ? '{n} kwant bot' : '{n} kwant bots', { n: c.bots });
+  const accounts =
+    c.ready_accounts === 0
+      ? t('no account signed in yet')
+      : t(c.ready_accounts === 1 ? '{n} account ready to use' : '{n} accounts ready to use', { n: c.ready_accounts });
   return `${bots} · ${accounts}`;
 }
 
@@ -308,14 +313,15 @@ export function routingLine(r: RoutingMeta, spaceName: string, nameOf?: (kwantId
   });
   if (picked) return picked;
   const n = typeof r.candidate_count === 'number' && r.candidate_count > 0 ? r.candidate_count : null;
-  const pool = n ? `from ${n} ${n === 1 ? 'bot' : 'bots'} in ${spaceName}` : `in ${spaceName}`;
+  const pool = n ? t(n === 1 ? 'from {n} bot in {space}' : 'from {n} bots in {space}', { n, space: spaceName }) : t('in {space}', { space: spaceName });
   const own = serverReason(r);
-  if (own) return `${own} Chosen ${pool}.`;
-  const matched = r.matched_terms?.length ? ` · matched ${r.matched_terms.map((t) => `'${t}'`).join(', ')}` : '';
-  if (r.fallback) return `Picked by keywords (Laya is offline) · ${r.kwant_name} ${pool}${matched}`;
-  if (r.basis === 'lead') return `No one’s role matched, so the team lead ${r.kwant_name} took it ${pool}`;
-  if (r.basis === 'only') return `${r.kwant_name} is the only bot that can answer ${pool}`;
-  return `Laya picked ${r.kwant_name} ${pool}${matched}`;
+  if (own) return t('{reason} Chosen {pool}.', { reason: own, pool });
+  const matched = r.matched_terms?.length ? t(' · matched {terms}', { terms: r.matched_terms.map((term) => `'${term}'`).join(', ') }) : '';
+  const name = r.kwant_name ?? '';
+  if (r.fallback) return t('Picked by keywords (Laya is offline) · {name} {pool}{matched}', { name, pool, matched });
+  if (r.basis === 'lead') return t('No one’s role matched, so the team lead {name} took it {pool}', { name, pool });
+  if (r.basis === 'only') return t('{name} is the only bot that can answer {pool}', { name, pool });
+  return t('Laya picked {name} {pool}{matched}', { name, pool, matched });
 }
 
 /** "ran on Work account" from a reply's `ran_on`, or null. */
@@ -338,7 +344,7 @@ async function errorText(res: Response, fallback: string): Promise<string> {
   } catch {
     // not JSON
   }
-  return `${fallback} (HTTP ${res.status}).`;
+  return t('{what} (HTTP {status}).', { what: fallback, status: res.status });
 }
 
 async function json<T>(res: Response, fallback: string): Promise<T> {
@@ -347,19 +353,19 @@ async function json<T>(res: Response, fallback: string): Promise<T> {
 }
 
 export const spacesApi = {
-  list: (): Promise<Space[]> => fetch('/api/spaces', { cache: 'no-store' }).then((r) => json<Space[]>(r, 'Couldn’t load spaces')),
+  list: (): Promise<Space[]> => fetch('/api/spaces', { cache: 'no-store' }).then((r) => json<Space[]>(r, t('Couldn’t load spaces'))),
   archived: (): Promise<Space[]> =>
     fetch('/api/spaces?archived=1', { cache: 'no-store' })
-      .then((r) => json<Space[]>(r, 'Couldn’t load archived spaces'))
+      .then((r) => json<Space[]>(r, t('Couldn’t load archived spaces')))
       .then((all) => all.filter((s) => !!s.archived_at)),
   create: (body: NewSpace): Promise<Space> =>
     fetch('/api/spaces', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then((r) =>
-      json<Space>(r, 'Couldn’t create the space'),
+      json<Space>(r, t('Couldn’t create the space')),
     ),
   patch: (id: string, body: SpacePatch): Promise<Space> =>
     fetch(`/api/spaces/${encodeURIComponent(id)}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
-    }).then((r) => json<Space>(r, 'Couldn’t save the space')),
+    }).then((r) => json<Space>(r, t('Couldn’t save the space'))),
 };

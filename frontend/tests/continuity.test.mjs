@@ -1,15 +1,9 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
 import test from 'node:test';
-import ts from 'typescript';
+import { loadBundled } from './bundle.mjs';
 
-const load = async (path) => {
-  const source = await readFile(new URL(path, import.meta.url), 'utf8');
-  const { outputText } = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext } });
-  return import(`data:text/javascript;base64,${Buffer.from(outputText).toString('base64')}`);
-};
-
-const c = await load('../src/continuity.ts');
+// Bundled, since continuity.ts imports the interface language (src/i18n).
+const c = await loadBundled(`export * from './src/continuity';`);
 
 test('snippets escape everything except <mark>', () => {
   const raw = 'see <script>alert("x")</script> & <b>the</b> <mark>plan</mark> <img src=x onerror=alert(1)>';

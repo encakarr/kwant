@@ -2,13 +2,14 @@ import React, { useId, useMemo, useState } from 'react';
 import { ArrowDown, ArrowUp, ChevronsUpDown, MessageSquare, Minus, Plus } from 'lucide-react';
 import { ColumnRole, ComparisonBlock, Sort, nextSort, plainText, sortRows } from '../../smartResults';
 import type { RendererProps } from './registry';
+import { t } from '../../i18n';
 
 // Pros and cons cells: split on ";", "•", "·" or a line break, else on commas when every part is short.
 export function shortList(text: string): string[] | null {
-  const t = plainText(text);
-  let parts = t.split(/\s*(?:;|•|·|\n)\s*/).filter(Boolean);
+  const plain = plainText(text);
+  let parts = plain.split(/\s*(?:;|•|·|\n)\s*/).filter(Boolean);
   if (parts.length < 2) {
-    const commas = t.split(/\s*,\s*/).filter(Boolean);
+    const commas = plain.split(/\s*,\s*/).filter(Boolean);
     parts = commas.length >= 2 && commas.every((p) => p.split(/\s+/).length <= 5) ? commas : [];
   }
   return parts.length >= 2 ? parts : null;
@@ -21,7 +22,7 @@ const PickLabel: React.FC<{ reason: string | null; inline?: boolean; className?:
     className={`${className} ${inline ? 'ml-1.5 ' : ''}rounded border border-sky-500/30 bg-sky-500/10 px-1 py-px align-[1px] text-[10px] font-medium leading-none text-sky-300 [box-decoration-break:clone]`}
     title={reason ?? undefined}
   >
-    Pick in this reply
+    {t('Pick in this reply')}
   </span>
 );
 
@@ -59,11 +60,15 @@ export const Comparison: React.FC<RendererProps<ComparisonBlock>> = ({ block, re
     return sortRows(block, sort).map((r) => pos.get(r.id) as number);
   }, [block, sort]);
   const labels = block.columns.map((c) => plainText(c.label));
-  const askRow = (i: number) => ask(`About ${plainText(block.rows[i].cells[0])} in your ${labels[0]} table: `);
+  const askRow = (i: number) => ask(t('About {row} in your {table} table: ', { row: plainText(block.rows[i].cells[0]), table: labels[0] }));
 
   const applySort = (next: Sort | null) => {
     setSort(next);
-    setSaid(next ? `Sorted by ${labels[next.col]}, ${next.dir}` : "Back in the reply's order");
+    setSaid(
+      next
+        ? t(next.dir === 'ascending' ? 'Sorted by {col}, ascending' : 'Sorted by {col}, descending', { col: labels[next.col] })
+        : t("Back in the reply's order"),
+    );
   };
 
   return (
@@ -127,8 +132,8 @@ export const Comparison: React.FC<RendererProps<ComparisonBlock>> = ({ block, re
                           <button
                             type="button"
                             onClick={() => askRow(i)}
-                            aria-label={`Ask about ${plainText(row.cells[0])}`}
-                            title="Ask about this (fills in the message box, sends nothing)"
+                            aria-label={t('Ask about {name}', { name: plainText(row.cells[0]) })}
+                            title={t('Ask about this (fills in the message box, sends nothing)')}
                             className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-md border border-zinc-700 bg-zinc-900 text-zinc-400 opacity-0 hover:text-zinc-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70 group-hover/row:opacity-100 [@media(hover:none)]:hidden"
                           >
                             <MessageSquare size={12} />
@@ -143,9 +148,9 @@ export const Comparison: React.FC<RendererProps<ComparisonBlock>> = ({ block, re
                               <PickLabel reason={block.highlight_reason} inline className="smart-pick-full" />
                               <span
                                 aria-hidden="true"
-                                title={block.highlight_reason ? `Pick in this reply: ${block.highlight_reason}` : 'Pick in this reply'}
+                                title={block.highlight_reason ? t('Pick in this reply: {reason}', { reason: block.highlight_reason }) : t('Pick in this reply')}
                                 className="smart-pick-short ml-1.5 rounded border border-sky-500/30 bg-sky-500/10 px-1 py-px align-[1px] text-[10px] font-medium leading-none text-sky-300">
-                                Pick
+                                {t('Pick')}
                               </span>
                             </span>
                           </div>
@@ -166,7 +171,7 @@ export const Comparison: React.FC<RendererProps<ComparisonBlock>> = ({ block, re
       <div className="my-3.5 space-y-2 sm:hidden">
         <div className="flex items-center gap-2">
           <label htmlFor={`${uid}-sort`} className="shrink-0 text-[11px] text-zinc-500">
-            Sort by
+            {t('Sort by')}
           </label>
           <select
             id={`${uid}-sort`}
@@ -177,14 +182,14 @@ export const Comparison: React.FC<RendererProps<ComparisonBlock>> = ({ block, re
             }}
             className="h-8 min-w-0 flex-1 truncate rounded-lg border border-zinc-800 bg-zinc-900 px-2 text-xs text-zinc-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70"
           >
-            <option value="">Reply order</option>
+            <option value="">{t('Reply order')}</option>
             {block.columns.map((col, j) => (
               <React.Fragment key={col.key}>
                 <option value={`${j}:ascending`}>
-                  {labels[j]}, {col.numeric ? 'low to high' : 'A to Z'}
+                  {t(col.numeric ? '{col}, low to high' : '{col}, A to Z', { col: labels[j] })}
                 </option>
                 <option value={`${j}:descending`}>
-                  {labels[j]}, {col.numeric ? 'high to low' : 'Z to A'}
+                  {t(col.numeric ? '{col}, high to low' : '{col}, Z to A', { col: labels[j] })}
                 </option>
               </React.Fragment>
             ))}
@@ -220,7 +225,7 @@ export const Comparison: React.FC<RendererProps<ComparisonBlock>> = ({ block, re
                   className="-mx-1 mt-1.5 flex items-center gap-1.5 rounded-md px-1 py-1 text-[11px] text-zinc-500 hover:text-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70"
                 >
                   <MessageSquare size={12} aria-hidden="true" />
-                  Ask about this
+                  {t('Ask about this')}
                 </button>
               </li>
             );

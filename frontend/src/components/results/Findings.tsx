@@ -1,6 +1,7 @@
 import React from 'react';
 import { FindingItem, FindingRef, FindingsBlock, Severity, inRange, isIndex, isObj, isText, parseCommon, uniqueIds } from '../../smartResults';
 import type { RendererProps } from './registry';
+import { t } from '../../i18n';
 
 const SEVERITIES: Severity[] = ['critical', 'high', 'medium', 'low', 'info'];
 const ORDER: Severity[] = ['critical', 'high', 'medium', 'low', 'info'];
@@ -47,7 +48,7 @@ export const Findings: React.FC<RendererProps<FindingsBlock>> = ({ block }) => {
         {groups.map((g) => (
           <span key={g.sev} className="flex items-center gap-1.5">
             <span className={`h-1.5 w-1.5 rounded-full ${DOT[g.sev]}`} aria-hidden="true" />
-            {block.items.find((i) => i.severity === g.sev)?.severity_text ?? g.sev}: {g.items.length}
+            {t('{severity}: {n}', { severity: block.items.find((i) => i.severity === g.sev)?.severity_text ?? g.sev, n: g.items.length })}
           </span>
         ))}
       </div>
@@ -55,7 +56,7 @@ export const Findings: React.FC<RendererProps<FindingsBlock>> = ({ block }) => {
         <div key={g.sev}>
           <h4 className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
             <span className={`h-1.5 w-1.5 rounded-full ${DOT[g.sev]}`} aria-hidden="true" />
-            {g.items[0].severity_text} ({g.items.length})
+            {t('{severity} ({n})', { severity: g.items[0].severity_text, n: g.items.length })}
           </h4>
           <ul role="list" className="space-y-1.5">
             {g.items.map((item) => (

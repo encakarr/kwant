@@ -1,5 +1,6 @@
 // Engines: whether each way of running a model (a CLI, an API key, Ollama) can run right now, from
 // GET /api/engines, and the shared Engine → Model choice stored in a kwant's preferred_model.
+import { t } from './i18n';
 
 export type EngineId = 'claude' | 'codex' | 'grok' | 'anthropic_api' | 'openai_api' | 'xai_api' | 'ollama' | 'custom_api';
 export type EngineKind = 'cli' | 'api' | 'local';
@@ -49,8 +50,9 @@ export const FAMILIES: Array<{ id: Family; label: string }> = [
   { id: 'claude', label: 'Claude' },
   { id: 'codex', label: 'Codex (OpenAI)' },
   { id: 'grok', label: 'Grok (xAI)' },
-  { id: 'ollama', label: 'Ollama (local)' },
-  { id: 'custom', label: 'Custom API' },
+  // Translations keep the ASCII " (…)" so the `/ \(.*\)$/` trims below and in routing.ts still apply.
+  { id: 'ollama', label: t('Ollama (local)') },
+  { id: 'custom', label: t('Custom API') },
 ];
 
 export const familyLabel = (f: Family) => FAMILIES.find((x) => x.id === f)?.label ?? f;
@@ -70,20 +72,20 @@ export function canRunNow(engines: EngineInfo[] | null | undefined): boolean | n
 }
 
 export function statusView(e: Pick<EngineInfo, 'status' | 'enabled' | 'ready'> & { kind?: EngineKind; id?: EngineId }): { label: string; tone: Tone } {
-  if (e.enabled === false || e.status === 'disabled') return { label: 'Off', tone: 'muted' };
-  if (isUsable(e)) return { label: 'Ready', tone: 'ok' };
+  if (e.enabled === false || e.status === 'disabled') return { label: t('Off'), tone: 'muted' };
+  if (isUsable(e)) return { label: t('Ready'), tone: 'ok' };
   switch (e.status) {
     case 'ready':
-      return { label: 'Ready', tone: 'ok' };
+      return { label: t('Ready'), tone: 'ok' };
     case 'signed_out':
-      return { label: 'Not signed in', tone: 'warn' };
+      return { label: t('Not signed in'), tone: 'warn' };
     case 'not_installed':
       // An API engine without a key, or Ollama that isn't running, isn't "installed" either way.
-      return { label: e.id === 'custom_api' ? 'No server' : e.kind === 'api' ? 'No key' : e.kind === 'local' ? 'Not running' : 'Not installed', tone: 'muted' };
+      return { label: e.id === 'custom_api' ? t('No server') : e.kind === 'api' ? t('No key') : e.kind === 'local' ? t('Not running') : t('Not installed'), tone: 'muted' };
     case 'error':
-      return { label: 'Error', tone: 'error' };
+      return { label: t('Error'), tone: 'error' };
     default:
-      return { label: 'Checking…', tone: 'busy' };
+      return { label: t('Checking…'), tone: 'busy' };
   }
 }
 
@@ -119,9 +121,9 @@ export const onlyCliReady = (list: EngineInfo[]) => {
 // ---- Tiers ----
 
 export const TIERS: Array<{ id: Tier; label: string }> = [
-  { id: 'fast', label: 'Fast' },
-  { id: 'balanced', label: 'Balanced' },
-  { id: 'deep', label: 'Deep' },
+  { id: 'fast', label: t('Fast') },
+  { id: 'balanced', label: t('Balanced') },
+  { id: 'deep', label: t('Deep') },
 ];
 
 /** The server's tier, else a guess from well-known names; null when it can't tell. */
@@ -136,7 +138,7 @@ export function tierOf(m: EngineModel): Tier | null {
 
 /** Models grouped Fast → Balanced → Deep, then the rest under "Other". Empty groups left out. */
 export function groupByTier(models: EngineModel[]): Array<{ label: string; models: EngineModel[] }> {
-  const groups = [...TIERS.map((t) => ({ tier: t.id as Tier | null, label: t.label })), { tier: null, label: 'Other' }];
+  const groups = [...TIERS.map((x) => ({ tier: x.id as Tier | null, label: x.label })), { tier: null, label: t('Other') }];
   return groups
     .map((g) => ({ label: g.label, models: models.filter((m) => tierOf(m) === g.tier) }))
     .filter((g) => g.models.length > 0);
@@ -250,7 +252,7 @@ export function pickHealth(value: string, engines: EngineInfo[] | null, custom: 
     // The CLI that's installed but off says more than "No API key" on its API sibling.
     const installed = mine.filter((e) => e.status !== 'not_installed');
     const reason = installed.some((e) => e.enabled === false) || (mine.length > 0 && mine.every((e) => e.enabled === false))
-      ? 'Switched off in Settings'
+      ? t('Switched off in Settings')
       : (installed.find((e) => e.detail) ?? mine.find((e) => e.enabled !== false && e.detail))?.detail ?? null;
     return { kind: 'engine_unavailable', family, reason };
   }
@@ -264,7 +266,7 @@ export function pickHealth(value: string, engines: EngineInfo[] | null, custom: 
 /** Short name for a pick, e.g. "Auto", "Claude", "Claude · Sonnet". */
 export function pickLabel(value: string, engines: EngineInfo[] | null = null): string {
   const pick = parsePick(value);
-  if (pick.family === 'auto') return 'Auto';
+  if (pick.family === 'auto') return t('Auto');
   if (pick.family === null) return value;
   const family = familyLabel(pick.family).replace(/ \(.*\)$/, '');
   if (!pick.model) return family;
@@ -275,7 +277,7 @@ export function pickLabel(value: string, engines: EngineInfo[] | null = null): s
 
 /** A bot's engine in words, for its tooltip in the bot list: "Laya picks the model", "Runs on Claude · Sonnet". */
 export function engineTip(value: string, engines: EngineInfo[] | null = null): string {
-  return parsePick(value).family === 'auto' ? 'Laya picks the model' : `Runs on ${pickLabel(value, engines)}`;
+  return parsePick(value).family === 'auto' ? t('Laya picks the model') : t('Runs on {pick}', { pick: pickLabel(value, engines) });
 }
 
 /** "Claude Haiku (latest)" → "Haiku" when shown after the family name. */
@@ -308,14 +310,14 @@ export function ranOnLabel(meta: string | null | undefined, engines: EngineInfo[
 /** "checked 3 min ago" style age, or null when never checked. */
 export function checkedAgo(at: string | null, now = Date.now()): string | null {
   if (!at) return null;
-  const t = Date.parse(at);
-  if (Number.isNaN(t)) return null;
-  const s = Math.max(0, Math.round((now - t) / 1000));
-  if (s < 60) return 'just now';
+  const ms = Date.parse(at);
+  if (Number.isNaN(ms)) return null;
+  const s = Math.max(0, Math.round((now - ms) / 1000));
+  if (s < 60) return t('just now');
   const m = Math.round(s / 60);
-  if (m < 60) return `${m} min ago`;
+  if (m < 60) return t('{n} min ago', { n: m });
   const h = Math.round(m / 60);
-  return h < 24 ? `${h} h ago` : `${Math.round(h / 24)} d ago`;
+  return h < 24 ? t('{n} h ago', { n: h }) : t('{n} d ago', { n: Math.round(h / 24) });
 }
 
 /** An account as the card summary needs it. */
@@ -329,34 +331,35 @@ export interface SummaryAccount {
   outUntil?: string | null;
 }
 
-/** The line under an engine's name: which account kwants use, or the one next step. */
-export function engineSummary(e: EngineInfo, accounts: SummaryAccount[] = []): { text: string; tone: Tone } {
+/** The line under an engine's name: which account kwants use, or the one next step. `turnOnFor`: it's
+ *  off and that account could run it once it's on. */
+export function engineSummary(e: EngineInfo, accounts: SummaryAccount[] = []): { text: string; tone: Tone; turnOnFor?: string } {
   // The order turns try them: the default, then by priority.
   const next = [...accounts]
     .sort((a, b) => Number(b.is_default) - Number(a.is_default) || a.priority - b.priority)
     .find((a) => a.usable);
   if (e.enabled === false || e.status === 'disabled') {
-    if (next) return { text: `Off · Turn on to use ${next.name}`, tone: 'muted' };
-    return { text: e.kind === 'local' || accounts.length === 0 ? 'Off · Turn on to use it' : 'Off · Turn on, then sign in to an account', tone: 'muted' };
+    if (next) return { text: t('Off · Turn on to use {name}', { name: next.name }), tone: 'muted', turnOnFor: next.name };
+    return { text: e.kind === 'local' || accounts.length === 0 ? t('Off · Turn on to use it') : t('Off · Turn on, then sign in to an account'), tone: 'muted' };
   }
-  if (isUsable(e)) return e.uses ? { text: `Bots use ${e.uses.label}`, tone: 'ok' } : { text: 'Bots can use it', tone: 'ok' };
+  if (isUsable(e)) return e.uses ? { text: t('Bots use {name}', { name: e.uses.label }), tone: 'ok' } : { text: t('Bots can use it'), tone: 'ok' };
   switch (e.status) {
     case 'checking':
-      return { text: 'Checking…', tone: 'busy' };
+      return { text: t('Checking…'), tone: 'busy' };
     case 'not_installed':
       if (e.id === 'custom_api')
         return accounts.length
-          ? { text: 'None of its servers answered · Check them below', tone: 'warn' }
-          : { text: 'Add a server below: Agent Maestro (GitHub Copilot), OpenRouter, LM Studio or any OpenAI- or Anthropic-compatible one', tone: 'muted' };
-      if (e.kind === 'api') return { text: 'No key yet · Add a key below to use it', tone: 'muted' };
-      return { text: e.detail ?? (e.kind === 'local' ? 'Not running on this computer' : 'Not installed on this computer'), tone: 'muted' };
+          ? { text: t('None of its servers answered · Check them below'), tone: 'warn' }
+          : { text: t('Add a server below: Agent Maestro (GitHub Copilot), OpenRouter, LM Studio or any OpenAI- or Anthropic-compatible one'), tone: 'muted' };
+      if (e.kind === 'api') return { text: t('No key yet · Add a key below to use it'), tone: 'muted' };
+      return { text: e.detail ?? (e.kind === 'local' ? t('Not running on this computer') : t('Not installed on this computer')), tone: 'muted' };
     case 'error':
-      return { text: `${e.detail ?? 'The check failed'} · Try Re-check`, tone: 'error' };
+      return { text: t('{reason} · Try Re-check', { reason: e.detail ?? t('The check failed') }), tone: 'error' };
     default: {
       const out = accounts.find((a) => a.outUntil);
-      if (out) return { text: `${out.name} is out of usage, back ${out.outUntil} · Sign in to another account below`, tone: 'warn' };
-      if (accounts.length === 0) return { text: e.detail ?? 'Not signed in', tone: 'warn' };
-      return { text: 'No account is signed in · Sign in to one below', tone: 'warn' };
+      if (out) return { text: t('{name} is out of usage, back {when} · Sign in to another account below', { name: out.name, when: out.outUntil ?? '' }), tone: 'warn' };
+      if (accounts.length === 0) return { text: e.detail ?? t('Not signed in'), tone: 'warn' };
+      return { text: t('No account is signed in · Sign in to one below'), tone: 'warn' };
     }
   }
 }

@@ -1,6 +1,7 @@
 // LLM accounts (GET /api/profiles) for the Engines & accounts cards.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Profile, profilesApi } from './profiles';
+import { t } from './i18n';
 
 export interface ProfilesState {
   /** null until the first load. */
@@ -29,7 +30,7 @@ export function useProfiles(active: boolean, onChanged?: (profiles: Profile[]) =
       setError(null);
       changed.current?.(list);
     } catch (e) {
-      if (alive.current) setError(e instanceof Error ? e.message : 'Could not load accounts.');
+      if (alive.current) setError(e instanceof Error ? e.message : t('Could not load accounts.'));
     }
   }, []);
 

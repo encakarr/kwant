@@ -2,6 +2,7 @@
 // scoped `activity` events while the turn runs, thinking text streams as `ThinkingDelta`, and the
 // saved reply keeps them in `meta.activity`.
 import { parseMetaObject } from './questions';
+import { t } from './i18n';
 
 export type StepKind = 'thinking' | 'tool' | 'approval' | 'human_step' | 'note';
 export type StepStatus = 'running' | 'waiting' | 'ok' | 'failed' | 'done' | 'declined' | 'stopped';
@@ -102,8 +103,8 @@ export function appendThinking(live: LiveActivity | undefined, turnId: string | 
 export const thinkingText = (step: ActivityStep, live?: LiveActivity) => step.text ?? live?.thinking[step.id] ?? '';
 
 const ms = (iso?: string) => {
-  const t = iso ? Date.parse(iso) : NaN;
-  return Number.isFinite(t) ? t : null;
+  const at = iso ? Date.parse(iso) : NaN;
+  return Number.isFinite(at) ? at : null;
 };
 
 /** From the first step's start to the last end, in ms (null when unknown). */
@@ -121,12 +122,12 @@ export function activitySpan(steps: ActivityStep[]): number | null {
 
 /** "840 ms", "8.4s", "41s", "2m 05s". */
 export function formatDuration(msTotal: number): string {
-  if (msTotal < 1000) return `${Math.round(msTotal)} ms`;
+  if (msTotal < 1000) return t('{n} ms', { n: Math.round(msTotal) });
   const s = msTotal / 1000;
-  if (s < 10) return `${s.toFixed(1)}s`;
-  if (s < 60) return `${Math.round(s)}s`;
+  if (s < 10) return t('{n}s', { n: s.toFixed(1) });
+  if (s < 60) return t('{n}s', { n: Math.round(s) });
   const m = Math.floor(s / 60);
-  return `${m}m ${String(Math.round(s % 60)).padStart(2, '0')}s`;
+  return t('{m}m {s}s', { m, s: String(Math.round(s % 60)).padStart(2, '0') });
 }
 
 /** Steps that count in the summary: notes explain a limit and aren't work. */
@@ -135,11 +136,11 @@ const counted = (steps: ActivityStep[]) => steps.filter((s) => s.kind !== 'note'
 /** "12 steps · 41s", "1 step", plus "· 2 failed" when any failed. */
 export function activitySummary(a: SavedActivity): string {
   const n = counted(a.steps).length + a.dropped;
-  const parts = [`${n} ${n === 1 ? 'step' : 'steps'}`];
+  const parts = [t(n === 1 ? '{n} step' : '{n} steps', { n })];
   const span = activitySpan(a.steps);
   if (span !== null && span >= 1000) parts.push(formatDuration(span));
   const failed = a.steps.filter((s) => s.status === 'failed').length;
-  if (failed) parts.push(`${failed} failed`);
+  if (failed) parts.push(t('{n} failed', { n: failed }));
   return parts.join(' · ');
 }
 
@@ -147,24 +148,24 @@ export function activitySummary(a: SavedActivity): string {
 export function statusLabel(s: ActivityStep): string {
   switch (s.status) {
     case 'running':
-      return s.kind === 'thinking' ? 'Thinking' : 'Running';
+      return s.kind === 'thinking' ? t('Thinking') : t('Running');
     case 'waiting':
-      return 'Waiting for you';
+      return t('Waiting for you');
     case 'ok':
-      return s.kind === 'approval' ? 'Allowed' : 'Done';
+      return s.kind === 'approval' ? t('Allowed') : t('Done');
     case 'done':
-      return 'Done';
+      return t('Done');
     case 'failed':
-      return 'Failed';
+      return t('Failed');
     case 'declined':
-      return s.kind === 'approval' ? 'Denied' : 'Skipped';
+      return s.kind === 'approval' ? t('Denied') : t('Skipped');
     case 'stopped':
-      return 'Stopped';
+      return t('Stopped');
   }
 }
 
 /** The step's title without markdown backticks (titles quote commands like "Running `cargo test`"). */
-export const plainTitle = (t: string) => t.replace(/`([^`]*)`/g, '$1');
+export const plainTitle = (title: string) => title.replace(/`([^`]*)`/g, '$1');
 
 /** Whether the saved activity has thinking text, so the old reasoning block would repeat it. */
 export const hasThinkingText = (a: SavedActivity | null) => !!a?.steps.some((s) => s.kind === 'thinking' && s.text);

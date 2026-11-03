@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { AlertTriangle, CalendarClock, CheckCircle2, Loader2, MinusCircle, Pause, Pencil, ShieldQuestion, Undo2, Wrench } from 'lucide-react';
 import { ModernAvatar } from './ModernAvatar';
 import { BotActionMeta, actionStateText, botGone, actionVerb, botActionView, routineButtons, routineFacts, sentence } from '../botActions';
+import { t, tj } from '../i18n';
 
 export type BotActionDecision = 'undo' | 'confirm' | 'decline';
 
@@ -70,12 +71,11 @@ export const BotActionCard: React.FC<BotActionCardProps> = ({ meta, messageId, k
             </span>
           </span>
           <p className={`text-sm break-words leading-relaxed ${resolved ? 'text-zinc-400 line-through decoration-zinc-600' : 'text-zinc-100'}`}>
-            {sentence(view.summary) || 'A change in the app.'}
+            {sentence(view.summary) || t('A change in the app.')}
           </p>
           {reason && (
             <p className="text-sm text-zinc-300 break-words leading-relaxed">
-              <span className="text-zinc-500">Why: </span>
-              {reason}
+              {tj('{label} {reason}', { label: <span className="text-zinc-500">{t('Why:')}</span>, reason })}
             </p>
           )}
         </div>
@@ -118,10 +118,10 @@ export const BotActionCard: React.FC<BotActionCardProps> = ({ meta, messageId, k
                     className={`${btn} bg-amber-500 text-zinc-950 hover:bg-amber-400 focus-visible:outline-amber-400`}
                   >
                     {busy === 'confirm' && <Loader2 size={13} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />}
-                    {busy === 'confirm' ? 'Confirming…' : 'Confirm'}
+                    {busy === 'confirm' ? t('Confirming…') : t('Confirm')}
                   </button>
                   <button type="button" onClick={() => decide('decline')} disabled={busy !== null} className={quiet}>
-                    {busy === 'decline' ? 'Declining…' : 'Decline'}
+                    {busy === 'decline' ? t('Declining…') : t('Decline')}
                   </button>
                 </>
               )}
@@ -132,17 +132,17 @@ export const BotActionCard: React.FC<BotActionCardProps> = ({ meta, messageId, k
                   ) : (
                     <Undo2 size={13} aria-hidden="true" />
                   )}
-                  {busy === 'undo' ? 'Undoing…' : 'Undo'}
+                  {busy === 'undo' ? t('Undoing…') : t('Undo')}
                 </button>
               )}
               {edit && onOpenRoutine && view.target_id && (
                 <button type="button" onClick={() => onOpenRoutine(view.target_id!, 'edit')} disabled={busy !== null} className={quiet}>
-                  <Pencil size={12} aria-hidden="true" /> Edit
+                  <Pencil size={12} aria-hidden="true" /> {t('Edit')}
                 </button>
               )}
               {pause && onOpenRoutine && view.target_id && (
                 <button type="button" onClick={() => onOpenRoutine(view.target_id!, 'pause')} disabled={busy !== null} className={quiet}>
-                  <Pause size={12} aria-hidden="true" /> Pause
+                  <Pause size={12} aria-hidden="true" /> {t('Pause')}
                 </button>
               )}
             </div>

@@ -6,6 +6,7 @@
 // says that it keeps sign-ins on Composio's servers.
 
 import { PersonCancelledError, personFetch } from './auth';
+import { t } from './i18n';
 
 export type ConnectionKind = 'mcp' | 'account' | 'browser_login' | 'email' | 'github';
 export type ConnectionStatus = 'connected' | 'needs_sign_in' | 'limited' | 'error' | 'off' | 'locked' | 'unknown';
@@ -84,8 +85,8 @@ export const isRawCommand = (c: Pick<Connection, 'kind' | 'detail'>): boolean =>
   c.kind === 'mcp' && !!c.detail && !/^[\w-]+(\.[\w-]+)+(:\d+)?$/.test(c.detail);
 
 const sentence = (s: string) => {
-  const t = s.trim();
-  const up = t.charAt(0).toUpperCase() + t.slice(1);
+  const trimmed = s.trim();
+  const up = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
   return /[.!?]$/.test(up) ? up : `${up}.`;
 };
 
@@ -100,14 +101,14 @@ async function call<T>(url: string, method = 'GET', body?: unknown): Promise<T> 
     });
   } catch (e) {
     if (e instanceof PersonCancelledError) throw new ConnectionsError(e.message, 401);
-    throw new ConnectionsError('Couldn’t reach the server. Check your connection and try again.', 0);
+    throw new ConnectionsError(t('Couldn’t reach the server. Check your connection and try again.'), 0);
   }
   const answer = await res.json().catch(() => null);
   if (res.ok) return answer as T;
   const err = answer && typeof answer === 'object' ? (answer as Record<string, unknown>).error : null;
-  if (res.status === 403) throw new ConnectionsError('Only you can see and change connections.', 403);
-  if (res.status === 404 && !err) throw new ConnectionsError('This server doesn’t list connections yet. Update the app and try again.', 404);
-  throw new ConnectionsError(typeof err === 'string' && err.trim() ? sentence(err) : `Something went wrong (HTTP ${res.status}).`, res.status);
+  if (res.status === 403) throw new ConnectionsError(t('Only you can see and change connections.'), 403);
+  if (res.status === 404 && !err) throw new ConnectionsError(t('This server doesn’t list connections yet. Update the app and try again.'), 404);
+  throw new ConnectionsError(typeof err === 'string' && err.trim() ? sentence(err) : t('Something went wrong (HTTP {status}).', { status: res.status }), res.status);
 }
 
 const enc = encodeURIComponent;
@@ -128,7 +129,7 @@ export const connectionsApi = {
   composioAppStatus: async (slug: string): Promise<{ connected: boolean }> => {
     const answer = await call<unknown>(`/api/connections/composio/apps/${enc(slug)}/status`);
     const connected = answer && typeof answer === 'object' ? (answer as { connected?: unknown }).connected : undefined;
-    if (typeof connected !== 'boolean') throw new ConnectionsError('This server can’t tell whether an app is connected yet.', 404);
+    if (typeof connected !== 'boolean') throw new ConnectionsError(t('This server can’t tell whether an app is connected yet.'), 404);
     return { connected };
   },
   /** "Check now" for an MCP server: the server records the result as its last check. */
@@ -137,17 +138,17 @@ export const connectionsApi = {
 
 /** The groups the page shows, in order. */
 export const GROUPS: Array<{ key: string; kinds: string[]; label: string; empty: string }> = [
-  { key: 'mcp', kinds: ['mcp'], label: 'Tool servers (MCP)', empty: 'No tool servers yet.' },
-  { key: 'account', kinds: ['account'], label: 'Engine accounts', empty: 'No engine accounts yet.' },
-  { key: 'browser_login', kinds: ['browser_login'], label: 'Saved website logins', empty: 'No saved website logins.' },
-  { key: 'sources', kinds: ['email', 'github'], label: 'Mail and GitHub (Loose ends)', empty: 'No mail or GitHub sources.' },
+  { key: 'mcp', kinds: ['mcp'], label: t('Tool servers (MCP)'), empty: t('No tool servers yet.') },
+  { key: 'account', kinds: ['account'], label: t('Engine accounts'), empty: t('No engine accounts yet.') },
+  { key: 'browser_login', kinds: ['browser_login'], label: t('Saved website logins'), empty: t('No saved website logins.') },
+  { key: 'sources', kinds: ['email', 'github'], label: t('Mail and GitHub (Loose ends)'), empty: t('No mail or GitHub sources.') },
 ];
 
 export function groupConnections(list: Connection[]): Array<{ key: string; label: string; empty: string; items: Connection[] }> {
   const known = new Set(GROUPS.flatMap((g) => g.kinds));
   const groups = GROUPS.map((g) => ({ key: g.key, label: g.label, empty: g.empty, items: list.filter((c) => g.kinds.includes(c.kind)) }));
   const other = list.filter((c) => !known.has(c.kind));
-  if (other.length) groups.push({ key: 'other', label: 'Other', empty: '', items: other });
+  if (other.length) groups.push({ key: 'other', label: t('Other'), empty: '', items: other });
   return groups;
 }
 
@@ -157,19 +158,19 @@ export type Tone = 'emerald' | 'amber' | 'rose' | 'zinc';
 export function statusBadge(status: string): { label: string; tone: Tone } {
   switch (status) {
     case 'connected':
-      return { label: 'Connected', tone: 'emerald' };
+      return { label: t('Connected'), tone: 'emerald' };
     case 'needs_sign_in':
-      return { label: 'Needs sign-in', tone: 'amber' };
+      return { label: t('Needs sign-in'), tone: 'amber' };
     case 'limited':
-      return { label: 'Limited', tone: 'amber' };
+      return { label: t('Limited'), tone: 'amber' };
     case 'error':
-      return { label: 'Error', tone: 'rose' };
+      return { label: t('Error'), tone: 'rose' };
     case 'off':
-      return { label: 'Off', tone: 'zinc' };
+      return { label: t('Off'), tone: 'zinc' };
     case 'locked':
-      return { label: 'Locked', tone: 'amber' };
+      return { label: t('Locked'), tone: 'amber' };
     default:
-      return { label: 'Not checked', tone: 'zinc' };
+      return { label: t('Not checked'), tone: 'zinc' };
   }
 }
 
@@ -178,36 +179,37 @@ export const needsAttention = (status: string) => status === 'needs_sign_in' || 
 
 /** "4 connected · 1 needs you · 1 off" for the page header. */
 export function countsLine(list: Connection[]): string {
-  if (list.length === 0) return 'Nothing connected yet';
+  if (list.length === 0) return t('Nothing connected yet');
   const connected = list.filter((c) => c.status === 'connected').length;
   const attention = list.filter((c) => needsAttention(c.status)).length;
   const off = list.filter((c) => c.status === 'off').length;
-  const parts = [`${connected} connected`];
-  if (attention) parts.push(`${attention} ${attention === 1 ? 'needs' : 'need'} you`);
-  if (off) parts.push(`${off} off`);
+  const parts = [t('{n} connected', { n: connected })];
+  if (attention) parts.push(t(attention === 1 ? '{n} needs you' : '{n} need you', { n: attention }));
+  if (off) parts.push(t('{n} off', { n: off }));
   return parts.join(' · ');
 }
 
 export function storedLabel(stored: string, kind = ''): string {
-  if (kind === 'mcp' && stored === 'kwnt') return 'Keys and settings kept on this computer';
+  if (kind === 'mcp' && stored === 'kwnt') return t('Keys and settings kept on this computer');
   switch (stored) {
     case 'vault':
-      return 'Login in your vault';
+      return t('Login in your vault');
     case 'kwnt':
-      return 'Login kept on this computer';
+      return t('Login kept on this computer');
     case 'composio':
-      return 'Login on Composio’s servers';
+      return t('Login on Composio’s servers');
     default:
-      return `Login stored: ${stored}`;
+      return t('Login stored: {place}', { place: stored });
   }
 }
 
 /** "Ada, Lin and 3 more", or who uses it when nobody does. */
 export function usedByText(used: UsedBy[], status: string): string {
-  if (used.length === 0) return status === 'off' ? 'No bot while it’s off' : 'No bot uses it';
+  if (used.length === 0) return status === 'off' ? t('No bot while it’s off') : t('No bot uses it');
   const names = used.map((u) => u.name);
-  if (names.length <= 3) return names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
-  return `${names.slice(0, 2).join(', ')} and ${names.length - 2} more`;
+  if (names.length <= 3)
+    return names.length === 1 ? names[0] : t('{names} and {last}', { names: names.slice(0, -1).join(', '), last: names[names.length - 1] });
+  return t('{names} and {n} more', { names: names.slice(0, 2).join(', '), n: names.length - 2 });
 }
 
 /** The MCP server id inside a connection id (`mcp:<id>`), for "Check now". */
@@ -233,15 +235,15 @@ export interface ComposioBody {
 /** The add form as the API wants it, or why it can't be sent yet. */
 export function composioBody(url: string, apiKey: string, enabled: boolean): ComposioBody | { error: string } {
   const u = url.trim();
-  if (!u) return { error: 'Paste the MCP URL from your Composio dashboard.' };
-  if (!isComposioUrl(u)) return { error: 'That isn’t a Composio address. It should start with https:// and end in composio.dev.' };
+  if (!u) return { error: t('Paste the MCP URL from your Composio dashboard.') };
+  if (!isComposioUrl(u)) return { error: t('That isn’t a Composio address. It should start with https:// and end in composio.dev.') };
   const key = apiKey.trim();
   return key ? { url: u, api_key: key, enabled } : { url: u, enabled };
 }
 
 /** What the add form says when the server refuses. */
 export function composioErrorText(e: unknown): string {
-  if (e instanceof ConnectionsError && e.status === 409) return 'Composio is already added. Change it under Tools instead.';
+  if (e instanceof ConnectionsError && e.status === 409) return t('Composio is already added. Change it under Tools instead.');
   if (e instanceof ConnectionsError && e.status === 400) return e.message;
-  return e instanceof Error ? e.message : 'Something went wrong.';
+  return e instanceof Error ? e.message : t('Something went wrong.');
 }

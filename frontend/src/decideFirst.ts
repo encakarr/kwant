@@ -4,6 +4,7 @@
 // person was away arrives as a message with meta kind "work_ahead".
 import { parseMetaObject } from './questions';
 import { request } from './threads';
+import { t } from './i18n';
 
 export interface Decision {
   index: number;
@@ -121,7 +122,8 @@ export function messageDecisions(text: string, meta: unknown): { text: string; d
 }
 
 /** What the chip says: the current choice. */
-export const decisionLabel = (d: Decision): string => (d.status === 'changed' ? `You chose: ${d.changed_to}` : `Decided: ${d.picked}`);
+export const decisionLabel = (d: Decision): string =>
+  d.status === 'changed' ? t('You chose: {choice}', { choice: d.changed_to ?? '' }) : t('Decided: {choice}', { choice: d.picked });
 
 /** The options the person can switch to: every other one. Empty means no Change button. */
 export const changeOptions = (d: Decision): string[] => (d.status === 'changed' ? [] : d.options.filter((o) => o !== d.picked));
@@ -134,11 +136,17 @@ export function consultedNames(raw: unknown): string[] {
   return Array.isArray(c) ? c.filter((n): n is string => typeof n === 'string' && n.trim() !== '') : [];
 }
 
+/** "Designer, Writer and Editor". */
+function nameList(names: string[]): string {
+  if (names.length === 1) return names[0];
+  const list = names.slice(0, -1).reduce((a, b) => t('{a}, {b}', { a, b }));
+  return t('{list} and {last}', { list, last: names[names.length - 1] });
+}
+
 /** "Asked Designer and Writer first." */
 export function consultedLine(names: string[]): string {
   if (!names.length) return '';
-  const list = names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
-  return `Asked ${list} first.`;
+  return t('Asked {names} first.', { names: nameList(names) });
 }
 
 export interface ChangeResult<M> {
@@ -198,9 +206,9 @@ export function hydrateDeciding(turns: Array<{ context_id?: string; kwant_id?: s
 
 /** The line under "Team is deciding…". */
 export function decidingDetail(botName: string, consulted: string[]): string {
-  const who = botName || 'The bot';
-  if (!consulted.length) return `${who} is running the checks it listed and making the call, instead of asking you.`;
-  return `${who} is checking with ${consultedLine(consulted).replace(/^Asked /, '').replace(/ first\.$/, '')} and making the call, instead of asking you.`;
+  const who = botName || t('The bot');
+  if (!consulted.length) return t('{who} is running the checks it listed and making the call, instead of asking you.', { who });
+  return t('{who} is checking with {names} and making the call, instead of asking you.', { who, names: nameList(consulted) });
 }
 
 // ---------------------------------------------------------------------------
@@ -234,12 +242,12 @@ export function workAheadSummary(text: string, max = 140): string {
 export type WhyYou = 'irreversible' | 'outside' | 'money' | 'secret_or_signin' | 'taste_no_signal' | 'missing_after_research';
 
 const WHY_YOU: Record<WhyYou, string> = {
-  irreversible: 'It can’t be undone.',
-  outside: 'It sends something or contacts someone.',
-  money: 'It spends money.',
-  secret_or_signin: 'It needs a password or a sign-in.',
-  taste_no_signal: 'It’s a matter of taste and there’s nothing to go on yet.',
-  missing_after_research: 'The bot looked and couldn’t find it.',
+  irreversible: t('It can’t be undone.'),
+  outside: t('It sends something or contacts someone.'),
+  money: t('It spends money.'),
+  secret_or_signin: t('It needs a password or a sign-in.'),
+  taste_no_signal: t('It’s a matter of taste and there’s nothing to go on yet.'),
+  missing_after_research: t('The bot looked and couldn’t find it.'),
 };
 
 export const whyYouText = (v: unknown): string | null => (typeof v === 'string' && v in WHY_YOU ? WHY_YOU[v as WhyYou] : null);

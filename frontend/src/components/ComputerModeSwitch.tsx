@@ -19,6 +19,7 @@ import {
   switchReducer,
   unavailableReason,
 } from '../computerMode';
+import { t } from '../i18n';
 
 export interface ComputerModeApi {
   state: SwitchState;
@@ -105,7 +106,7 @@ export const ComputerModeError: React.FC<{ error: string; onDismiss?: () => void
     <AlertTriangle size={13} className="shrink-0 mt-px" aria-hidden="true" />
     <span className="flex-1">{error}</span>
     {onDismiss && (
-      <button type="button" onClick={onDismiss} aria-label="Dismiss" className="shrink-0 text-rose-300/70 hover:text-rose-200">
+      <button type="button" onClick={onDismiss} aria-label={t('Dismiss')} className="shrink-0 text-rose-300/70 hover:text-rose-200">
         <X size={12} />
       </button>
     )}
@@ -163,7 +164,7 @@ export const ComputerModeControl: React.FC<{ api: ComputerModeApi }> = ({ api })
               <span className={`flex items-center gap-2 text-xs font-medium ${reason ? 'text-zinc-500' : 'text-zinc-100'}`}>
                 {saving ? <Loader2 size={14} className="animate-spin text-sky-400" aria-hidden="true" /> : <Icon size={14} className={checked ? 'text-sky-400' : 'text-zinc-500'} aria-hidden="true" />}
                 {label}
-                {saving && <span className="sr-only">(switching)</span>}
+                {saving && <span className="sr-only">{t('(switching)')}</span>}
               </span>
               <span id={`computer-mode-${id}-hint`} className="block mt-1 text-[11px] leading-snug">
                 <span className={reason ? 'text-zinc-600' : 'text-zinc-500'}>{hint}</span>
@@ -173,7 +174,7 @@ export const ComputerModeControl: React.FC<{ api: ComputerModeApi }> = ({ api })
                     <span className={`block mt-1 ${reason ? 'text-zinc-600' : 'text-zinc-400'}`}>{note}</span>
                   </>
                 )}
-                {reason && <span className="block mt-1 text-amber-300/90">Unavailable: {reason}</span>}
+                {reason && <span className="block mt-1 text-amber-300/90">{t('Unavailable: {reason}', { reason })}</span>}
               </span>
             </button>
           );
@@ -196,10 +197,10 @@ export const ComputerModeChip: React.FC<{ api: ComputerModeApi }> = ({ api }) =>
   const short = computerModes(settings).find((m) => m.id === current)!.short;
   const label = (m: ComputerMode) => modeLabel(m, settings);
   const title = state.pending
-    ? `Switching to ${label(current)}…`
+    ? t('Switching to {mode}…', { mode: label(current) })
     : reason
-      ? `Using ${label(current)}. ${label(next)} is unavailable: ${reason}`
-      : `Using ${label(current)}. Click to switch to ${label(next)}.`;
+      ? t('Using {mode}. {other} is unavailable: {reason}', { mode: label(current), other: label(next), reason })
+      : t('Using {mode}. Click to switch to {other}.', { mode: label(current), other: label(next) });
   return (
     <button
       type="button"
@@ -226,8 +227,8 @@ export const OpenWindowButton: React.FC<{ api: ComputerModeApi; label?: boolean 
   if (settings?.mode !== 'local' || settings.window.visible) return null;
   const reason = settings.window.available ? null : settings.window.reason;
   const title = reason
-    ? `Can't open a window: ${reason}`
-    : 'Open this browser as a window on your computer, to sign in or solve a CAPTCHA yourself';
+    ? t("Can't open a window: {reason}", { reason })
+    : t('Open this browser as a window on your computer, to sign in or solve a CAPTCHA yourself');
   return (
     <button
       type="button"
@@ -239,7 +240,7 @@ export const OpenWindowButton: React.FC<{ api: ComputerModeApi; label?: boolean 
       className="flex items-center gap-1 p-1.5 rounded-md text-zinc-400 enabled:hover:text-zinc-100 enabled:hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed"
     >
       {api.windowPending ? <Loader2 size={13} className="animate-spin" aria-hidden="true" /> : <AppWindow size={13} aria-hidden="true" />}
-      {label && <span className="text-[10px] font-semibold whitespace-nowrap">Open as window</span>}
+      {label && <span className="text-[10px] font-semibold whitespace-nowrap">{t('Open as window')}</span>}
     </button>
   );
 };
@@ -250,7 +251,7 @@ export const LocalBrowserNote: React.FC<{ api?: ComputerModeApi }> = ({ api }) =
     <div className="max-w-xs space-y-2">
       <Laptop size={28} className="mx-auto text-amber-300/80" aria-hidden="true" />
       <p className="text-xs font-medium text-zinc-200">{LOCAL_BROWSER_NOTE}</p>
-      <p className="text-[11px] text-zinc-500">Sign in or finish what you need there. Closing the window, or the button below, brings it back here.</p>
+      <p className="text-[11px] text-zinc-500">{t('Sign in or finish what you need there. Closing the window, or the button below, brings it back here.')}</p>
       {api && (
         <button
           type="button"
@@ -260,7 +261,7 @@ export const LocalBrowserNote: React.FC<{ api?: ComputerModeApi }> = ({ api }) =
           className="inline-flex items-center gap-1.5 mt-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold border border-sky-500/30 bg-sky-500/10 text-sky-200 enabled:hover:bg-sky-500/20 disabled:opacity-60"
         >
           {api.windowPending ? <Loader2 size={12} className="animate-spin" aria-hidden="true" /> : <PanelRight size={12} aria-hidden="true" />}
-          Show it here instead
+          {t('Show it here instead')}
         </button>
       )}
     </div>

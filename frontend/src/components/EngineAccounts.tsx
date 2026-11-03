@@ -19,7 +19,9 @@ import {
   customKindText,
   customModelText,
   safeExternalUrl,
+  accountLabelText,
 } from '../profiles';
+import { t, tj } from '../i18n';
 
 const input =
   'w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-100 placeholder-zinc-600 focus:border-sky-500 focus:outline-none transition-colors';
@@ -53,7 +55,7 @@ export const StatusPill: React.FC<{ tone: Tone; children: React.ReactNode; class
   </span>
 );
 
-/** An account's chip and the line under its name. */
+/** An account's chip and the line under its name. `label` stays English (code compares it); show it with accountLabelText(). */
 export interface RowStatus {
   tone: Tone;
   label: string;
@@ -62,9 +64,9 @@ export interface RowStatus {
 
 /** "This machine" is the engine's own login, so its state comes from the engine's check; Off wins either way. */
 export function accountStatus(p: Profile, engine: EngineInfo, now = Date.now()): RowStatus {
-  if (engine.enabled === false || engine.status === 'disabled') return { tone: 'muted', label: 'Off', detail: `Not checked while ${engine.name} is off` };
+  if (engine.enabled === false || engine.status === 'disabled') return { tone: 'muted', label: 'Off', detail: t('Not checked while {engine} is off', { engine: engine.name }) };
   if (p.kind !== 'system') return accountState(p, now);
-  if (!p.enabled) return { tone: 'muted', label: 'Off', detail: 'Bots skip it while another account here is on' };
+  if (!p.enabled) return { tone: 'muted', label: 'Off', detail: t('Bots skip it while another account here is on') };
   switch (engine.status) {
     case 'ready':
       return isThirdPartyLabel(p.account_label) ? accountState(p, now) : { tone: 'ok', label: 'Ready', detail: p.account_label };
@@ -88,7 +90,7 @@ const Switch: React.FC<{ on: boolean; label: string; disabled?: boolean; onChang
     role="switch"
     aria-checked={on}
     aria-label={label}
-    title={on ? 'On: bots may use it' : 'Off: bots skip it'}
+    title={on ? t('On: bots may use it') : t('Off: bots skip it')}
     disabled={disabled}
     onClick={() => {
       playSfx('click');
@@ -121,7 +123,7 @@ export const AccountList: React.FC<{
   return (
     <div className="space-y-2">
       {accounts.length > 0 ? (
-        <ul className="space-y-1.5" aria-label={`${engine.name} accounts`}>
+        <ul className="space-y-1.5" aria-label={t('{engine} accounts', { engine: engine.name })}>
           {accounts.map((p) => (
             <AccountRow
               key={p.id}
@@ -135,7 +137,7 @@ export const AccountList: React.FC<{
         </ul>
       ) : (
         <p className="text-[11px] text-zinc-500">
-          {spec?.kind === 'custom_api' ? 'No servers yet.' : spec?.kind === 'api_key' ? 'No accounts with a key yet.' : 'No accounts yet.'}
+          {spec?.kind === 'custom_api' ? t('No servers yet.') : spec?.kind === 'api_key' ? t('No accounts with a key yet.') : t('No accounts yet.')}
         </p>
       )}
       {spec &&
@@ -163,7 +165,7 @@ export const AccountList: React.FC<{
             className={quietBtn}
           >
             <Plus size={12} aria-hidden="true" />{' '}
-            {spec.kind === 'custom_api' ? 'Add a custom server' : spec.kind === 'api_key' ? 'Add an account with a key' : 'Add account'}
+            {spec.kind === 'custom_api' ? t('Add a custom server') : spec.kind === 'api_key' ? t('Add an account with a key') : t('Add account')}
           </button>
         ))}
     </div>
@@ -216,7 +218,7 @@ const KeyOrLoginForm: React.FC<{
       setApiKey('');
       onCreated();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not add the account.');
+      setError(err instanceof Error ? err.message : t('Could not add the account.'));
     } finally {
       setBusy(false);
     }
@@ -227,33 +229,33 @@ const KeyOrLoginForm: React.FC<{
       onSubmit={submit}
       {...editorProps(!!(name.trim() || apiKey.trim() || homeDir.trim() || isDefault), onCancel)}
       className="bg-zinc-950/60 border border-sky-500/30 rounded-lg p-3 space-y-3"
-      aria-label="New account"
+      aria-label={t('New account')}
     >
       <div>
         <label htmlFor={`${id}-name`} className="block text-[11px] font-medium text-zinc-400 mb-1">
-          Name
+          {t('Name')}
         </label>
-        <input id={`${id}-name`} autoFocus required maxLength={60} value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Work" className={input} />
+        <input id={`${id}-name`} autoFocus required maxLength={60} value={name} onChange={(e) => setName(e.target.value)} placeholder={t('e.g. Work')} className={input} />
       </div>
       {kind === 'api_key' ? (
         <div>
           <label htmlFor={`${id}-key`} className="block text-[11px] font-medium text-zinc-400 mb-1">
-            API key <span className="text-zinc-600 font-normal">· can be added later, never shown again</span>
+            {t('API key')} <span className="text-zinc-600 font-normal">{t('· can be added later, never shown again')}</span>
           </label>
           <input id={`${id}-key`} type="password" autoComplete="off" spellCheck={false} value={apiKey} onChange={(e) => setApiKey(e.target.value)} className={input} />
         </div>
       ) : (
         <div>
           <label htmlFor={`${id}-home`} className="block text-[11px] font-medium text-zinc-400 mb-1">
-            Config folder <span className="text-zinc-600 font-normal">· optional; leave empty and the app keeps its own</span>
+            {t('Config folder')} <span className="text-zinc-600 font-normal">{t('· optional; leave empty and the app keeps its own')}</span>
           </label>
           <input id={`${id}-home`} value={homeDir} onChange={(e) => setHomeDir(e.target.value)} placeholder="/home/me/.claude-work" className={`${input} font-mono`} />
-          <p className="mt-1 text-[11px] text-zinc-500">Next, use “Sign in” on the new account to log it in.</p>
+          <p className="mt-1 text-[11px] text-zinc-500">{t('Next, use “Sign in” on the new account to log it in.')}</p>
         </div>
       )}
       <label className="flex items-center gap-2 text-[11px] text-zinc-300">
         <input type="checkbox" checked={isDefault} onChange={(e) => setIsDefault(e.target.checked)} className="accent-sky-500" />
-        Make it the default
+        {t('Make it the default')}
       </label>
       {error && (
         <p className="text-[11px] text-rose-300" role="alert">
@@ -262,10 +264,10 @@ const KeyOrLoginForm: React.FC<{
       )}
       <div className="flex justify-end gap-2">
         <button type="button" onClick={onCancel} className={quietBtn}>
-          Cancel
+          {t('Cancel')}
         </button>
         <button type="submit" disabled={busy || !name.trim()} className={primaryBtn}>
-          {busy && <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />} Add account
+          {busy && <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />} {t('Add account')}
         </button>
       </div>
     </form>
@@ -344,7 +346,7 @@ export const CustomServerForm: React.FC<{
       setApiKey('');
       onSaved();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not save the server.');
+      setError(err instanceof Error ? err.message : t('Could not save the server.'));
     } finally {
       setBusy(false);
     }
@@ -356,14 +358,14 @@ export const CustomServerForm: React.FC<{
       {...editorProps(unsaved, onCancel)}
       data-custom-form={editing ? 'edit' : 'new'}
       className="bg-zinc-950/60 border border-sky-500/30 rounded-lg p-3 space-y-3"
-      aria-label={editing ? `Server for ${account!.name}` : 'New custom server'}
+      aria-label={editing ? t('Server for {name}', { name: account!.name }) : t('New custom server')}
     >
       <div>
-        <p className="text-[11px] font-medium text-zinc-400 mb-1">Fill in for</p>
+        <p className="text-[11px] font-medium text-zinc-400 mb-1">{t('Fill in for')}</p>
         <div className="flex flex-wrap gap-1.5">
           {CUSTOM_PRESETS.map((p) => (
             <button key={p.id} type="button" aria-pressed={preset === p.id} onClick={() => applyPreset(p.id)} className={preset === p.id ? primaryBtn : quietBtn}>
-              {p.id === 'maestro' ? `Use ${p.label}` : p.label}
+              {p.id === 'maestro' ? t('Use {name}', { name: p.label }) : p.label}
             </button>
           ))}
         </div>
@@ -373,14 +375,14 @@ export const CustomServerForm: React.FC<{
       {!editing && (
         <div>
           <label htmlFor={`${id}-name`} className="block text-[11px] font-medium text-zinc-400 mb-1">
-            Name <span className="text-zinc-600 font-normal">· shown on replies as “ran on …”</span>
+            {t('Name')} <span className="text-zinc-600 font-normal">{t('· shown on replies as “ran on …”')}</span>
           </label>
-          <input id={`${id}-name`} autoFocus required maxLength={60} value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Copilot" className={input} />
+          <input id={`${id}-name`} autoFocus required maxLength={60} value={name} onChange={(e) => setName(e.target.value)} placeholder={t('e.g. Copilot')} className={input} />
         </div>
       )}
 
       <fieldset>
-        <legend className="block text-[11px] font-medium text-zinc-400 mb-1">Format</legend>
+        <legend className="block text-[11px] font-medium text-zinc-400 mb-1">{t('Format')}</legend>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
           {PROTOCOLS.map((p) => (
             <label
@@ -401,7 +403,7 @@ export const CustomServerForm: React.FC<{
 
       <div>
         <label htmlFor={`${id}-url`} className="block text-[11px] font-medium text-zinc-400 mb-1">
-          Server address
+          {t('Server address')}
         </label>
         <input
           id={`${id}-url`}
@@ -416,14 +418,14 @@ export const CustomServerForm: React.FC<{
           className={`${input} font-mono`}
         />
         <p id={`${id}-url-hint`} className="mt-1 text-[11px] text-zinc-500">
-          The API’s root. A pasted …/chat/completions or …/messages address works too.
+          {t('The API’s root. A pasted …/chat/completions or …/messages address works too.')}
         </p>
       </div>
 
       {!editing && (
         <div>
           <label htmlFor={`${id}-key`} className="block text-[11px] font-medium text-zinc-400 mb-1">
-            API key <span className="text-zinc-600 font-normal">· optional, never shown again</span>
+            {t('API key')} <span className="text-zinc-600 font-normal">{t('· optional, never shown again')}</span>
           </label>
           <input id={`${id}-key`} type="password" autoComplete="off" spellCheck={false} value={apiKey} onChange={(e) => setApiKey(e.target.value)} className={input} />
         </div>
@@ -431,7 +433,7 @@ export const CustomServerForm: React.FC<{
 
       <div>
         <label htmlFor={`${id}-model`} className="block text-[11px] font-medium text-zinc-400 mb-1">
-          Model <span className="text-zinc-600 font-normal">· optional; bots can pick their own</span>
+          {t('Model')} <span className="text-zinc-600 font-normal">{t('· optional; bots can pick their own')}</span>
         </label>
         {listed.length > 0 && !typing ? (
           <select
@@ -445,13 +447,13 @@ export const CustomServerForm: React.FC<{
             }}
             className={input}
           >
-            <option value="">Let the server’s list decide</option>
+            <option value="">{t('Let the server’s list decide')}</option>
             {listed.map((m) => (
               <option key={m.id} value={m.id}>
                 {m.label === m.id ? m.id : `${m.label} (${m.id})`}
               </option>
             ))}
-            <option value={OTHER_MODEL}>Another model id…</option>
+            <option value={OTHER_MODEL}>{t('Another model id…')}</option>
           </select>
         ) : (
           <input
@@ -460,19 +462,21 @@ export const CustomServerForm: React.FC<{
             spellCheck={false}
             value={model}
             onChange={(e) => setModel(e.target.value)}
-            placeholder="e.g. gpt-4.1"
+            placeholder={t('e.g. gpt-4.1')}
             className={`${input} font-mono`}
           />
         )}
         <p className="mt-1 text-[11px] text-zinc-500">
-          {editing && listed.length > 0 ? `${listed.length === 1 ? '1 model' : `${listed.length} models`} on this server.` : 'Needed only if the server doesn’t list its models.'}
+          {editing && listed.length > 0
+            ? t(listed.length === 1 ? '{n} model on this server.' : '{n} models on this server.', { n: listed.length })
+            : t('Needed only if the server doesn’t list its models.')}
         </p>
       </div>
 
       {!editing && (
         <label className="flex items-center gap-2 text-[11px] text-zinc-300">
           <input type="checkbox" checked={isDefault} onChange={(e) => setIsDefault(e.target.checked)} className="accent-sky-500" />
-          Make it the default
+          {t('Make it the default')}
         </label>
       )}
       {error && (
@@ -481,12 +485,12 @@ export const CustomServerForm: React.FC<{
         </p>
       )}
       <div className="flex flex-wrap items-center justify-end gap-2">
-        {busy && <span className="text-[11px] text-zinc-500 mr-auto">Checking the server…</span>}
+        {busy && <span className="text-[11px] text-zinc-500 mr-auto">{t('Checking the server…')}</span>}
         <button type="button" onClick={onCancel} className={quietBtn}>
-          Cancel
+          {t('Cancel')}
         </button>
         <button type="submit" disabled={busy || !baseUrl.trim() || (!editing && !name.trim())} className={primaryBtn}>
-          {busy && <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />} {editing ? 'Save and check' : 'Add server'}
+          {busy && <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />} {editing ? t('Save and check') : t('Add server')}
         </button>
       </div>
     </form>
@@ -528,7 +532,7 @@ const AccountRow: React.FC<{
       after?.();
       await onChanged();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'That didn’t work. Try again.');
+      setError(e instanceof Error ? e.message : t('That didn’t work. Try again.'));
     } finally {
       setBusy(false);
     }
@@ -556,12 +560,12 @@ const AccountRow: React.FC<{
   const off = status.label === 'Off';
   const isClaude = p.engine === 'claude';
   const kindText = isSystem
-    ? `The ${engine.name.replace(/ CLI$/, '')} login on this computer`
+    ? t('The {engine} login on this computer', { engine: engine.name.replace(/ CLI$/, '') })
     : isCustom
       ? customKindText(p)
       : p.kind === 'api_key'
-        ? 'API key'
-        : `${engine.name.replace(/ CLI$/, '')} subscription`;
+        ? t('API key')
+        : t('{engine} subscription', { engine: engine.name.replace(/ CLI$/, '') });
   const statusText = status.tone === 'error' ? 'text-rose-300' : status.tone === 'warn' ? 'text-amber-200' : status.tone === 'ok' ? 'text-zinc-200' : '';
   const needsSignIn = p.kind === 'cli_home' && !p.signed_in && !login;
 
@@ -587,7 +591,7 @@ const AccountRow: React.FC<{
                 }}
               >
                 <label htmlFor={`name-${p.id}`} className="sr-only">
-                  Account name
+                  {t('Account name')}
                 </label>
                 <input
                   id={`name-${p.id}`}
@@ -597,7 +601,7 @@ const AccountRow: React.FC<{
                   onChange={(e) => setName(e.target.value)}
                   className={`${input} py-1 w-36`}
                 />
-                <button type="submit" disabled={busy} className={quietBtn} aria-label="Save name">
+                <button type="submit" disabled={busy} className={quietBtn} aria-label={t('Save name')}>
                   <Check size={12} />
                 </button>
               </form>
@@ -611,7 +615,7 @@ const AccountRow: React.FC<{
                     type="button"
                     onClick={() => setEditingName(true)}
                     className="p-0.5 rounded text-zinc-500 hover:text-zinc-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400"
-                    aria-label={`Rename ${p.name}`}
+                    aria-label={t('Rename {name}', { name: p.name })}
                   >
                     <Pencil size={11} />
                   </button>
@@ -619,11 +623,11 @@ const AccountRow: React.FC<{
               </span>
             )}
             {p.is_default && (
-              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-sky-500/15 text-[10px] text-sky-200" title="Bots try this account first">
-                <Star size={9} aria-hidden="true" /> Default
+              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-sky-500/15 text-[10px] text-sky-200" title={t('Bots try this account first')}>
+                <Star size={9} aria-hidden="true" /> {t('Default')}
               </span>
             )}
-            {inUse && <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-[10px] font-medium text-emerald-200">In use</span>}
+            {inUse && <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-[10px] font-medium text-emerald-200">{t('In use')}</span>}
           </div>
           <p className="text-[11px] leading-snug text-zinc-400 break-words">
             {status.detail && <span className={isCustom ? statusText : status.tone === 'warn' || status.tone === 'error' ? 'text-amber-200' : status.tone === 'ok' ? 'text-zinc-200' : ''}>{status.detail}</span>}
@@ -640,24 +644,24 @@ const AccountRow: React.FC<{
               </p>
               {customModelText(p.custom) !== null && (
                 <p className="text-[11px] text-zinc-500" data-custom-model>
-                  Model: <span className="text-zinc-300">{customModelText(p.custom)}</span>
+                  {t('Model:')} <span className="text-zinc-300">{customModelText(p.custom)}</span>
                 </p>
               )}
               {!p.custom.supports_tools && (
                 <p data-no-tools className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/25 text-[10.5px] text-amber-200">
-                  <Wrench size={10} aria-hidden="true" /> No tools (Anthropic format)
+                  <Wrench size={10} aria-hidden="true" /> {t('No tools (Anthropic format)')}
                 </p>
               )}
             </div>
           )}
         </div>
         <StatusPill tone={status.tone} className="mt-px">
-          {status.label}
+          {accountLabelText(status.label)}
         </StatusPill>
         <Switch
           on={p.enabled}
           disabled={busy}
-          label={`Use ${isSystem ? KIND_LABELS.system : p.name} for bots`}
+          label={t('Use {name} for bots', { name: isSystem ? KIND_LABELS.system : p.name })}
           onChange={(on) => run(() => profilesApi.update(p.id, { enabled: on }))}
         />
       </div>
@@ -673,17 +677,17 @@ const AccountRow: React.FC<{
             className={p.signed_in ? quietBtn : primaryBtn}
             aria-describedby={needsSignIn ? `signin-hint-${p.id}` : undefined}
           >
-            <LogIn size={11} aria-hidden="true" /> {p.signed_in ? 'Sign in again' : 'Sign in'}
+            <LogIn size={11} aria-hidden="true" /> {p.signed_in ? t('Sign in again') : t('Sign in')}
           </button>
         )}
         {needsSignIn && (
           <span id={`signin-hint-${p.id}`} className="text-[10.5px] text-zinc-500">
-            {isClaude ? 'Opens claude.ai, then you paste back a one-time code.' : 'Opens the sign-in page; you may copy a code between it and here.'}
+            {isClaude ? t('Opens claude.ai, then you paste back a one-time code.') : t('Opens the sign-in page; you may copy a code between it and here.')}
           </span>
         )}
         {p.kind === 'cli_home' && p.signed_in && (
           <button type="button" disabled={busy} onClick={() => run(() => profilesApi.logout(p.id))} className={quietBtn}>
-            <LogOut size={11} aria-hidden="true" /> Sign out
+            <LogOut size={11} aria-hidden="true" /> {t('Sign out')}
           </button>
         )}
         {isCustom && (
@@ -694,10 +698,10 @@ const AccountRow: React.FC<{
               onClick={() => run(() => profilesApi.check(p.id))}
               className={p.custom?.status && p.custom.status !== 'ready' ? primaryBtn : quietBtn}
             >
-              <RefreshCw size={11} aria-hidden="true" /> Check again
+              <RefreshCw size={11} aria-hidden="true" /> {t('Check again')}
             </button>
             <button type="button" disabled={busy} onClick={() => setEditingServer((v) => !v)} className={quietBtn} aria-expanded={editingServer}>
-              <Pencil size={11} aria-hidden="true" /> Edit server
+              <Pencil size={11} aria-hidden="true" /> {t('Edit server')}
             </button>
           </>
         )}
@@ -710,20 +714,20 @@ const AccountRow: React.FC<{
             className={p.custom?.status === 'key_rejected' || (!isCustom && !p.has_key) ? primaryBtn : quietBtn}
             aria-expanded={keyOpen}
           >
-            <KeyRound size={11} aria-hidden="true" /> {p.has_key ? 'Replace key' : 'Add key'}
+            <KeyRound size={11} aria-hidden="true" /> {p.has_key ? t('Replace key') : t('Add key')}
           </button>
         )}
         {hasKeySlot && p.has_key && (
           <button type="button" disabled={busy} onClick={() => run(() => profilesApi.removeKey(p.id))} className={quietBtn}>
-            Remove key
+            {t('Remove key')}
           </button>
         )}
         {!p.is_default && p.enabled && (
           <button type="button" disabled={busy} onClick={() => run(() => profilesApi.update(p.id, { is_default: true }))} className={quietBtn}>
-            <Star size={11} aria-hidden="true" /> Make default
+            <Star size={11} aria-hidden="true" /> {t('Make default')}
           </button>
         )}
-        {busy && <Loader2 size={12} className="text-sky-400 animate-spin motion-reduce:animate-none" aria-label="Saving" />}
+        {busy && <Loader2 size={12} className="text-sky-400 animate-spin motion-reduce:animate-none" aria-label={t('Saving')} />}
         <span className="ml-auto inline-flex items-center gap-1">
           <button
             type="button"
@@ -732,22 +736,22 @@ const AccountRow: React.FC<{
             onClick={() => setDetailsOpen((v) => !v)}
             className="inline-flex items-center gap-0.5 px-1.5 py-1 rounded-md text-[11px] text-zinc-500 hover:text-zinc-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400"
           >
-            {detailsOpen ? <ChevronDown size={12} aria-hidden="true" /> : <ChevronRight size={12} aria-hidden="true" />} Details
+            {detailsOpen ? <ChevronDown size={12} aria-hidden="true" /> : <ChevronRight size={12} aria-hidden="true" />} {t('Details')}
           </button>
           {!isSystem &&
             (confirmDelete ? (
               <>
-                <span className="text-[11px] text-rose-300">Remove?</span>
+                <span className="text-[11px] text-rose-300">{t('Remove?')}</span>
                 <button
                   type="button"
                   disabled={busy}
                   onClick={() => run(() => profilesApi.remove(p.id))}
                   className={`${smallBtn} border-rose-500/40 bg-rose-500/15 text-rose-200 hover:bg-rose-500/25`}
                 >
-                  Remove
+                  {t('Remove')}
                 </button>
                 <button type="button" onClick={() => setConfirmDelete(false)} className={quietBtn}>
-                  Keep
+                  {t('Keep')}
                 </button>
               </>
             ) : (
@@ -756,7 +760,7 @@ const AccountRow: React.FC<{
                 disabled={busy}
                 onClick={() => setConfirmDelete(true)}
                 className={`${quietBtn} hover:text-rose-200`}
-                aria-label={`Remove ${p.name}`}
+                aria-label={t('Remove {name}', { name: p.name })}
               >
                 <Trash2 size={11} />
               </button>
@@ -767,7 +771,7 @@ const AccountRow: React.FC<{
       {detailsOpen && (
         <div id={`account-${p.id}-details`} className="rounded-md border border-zinc-800 bg-zinc-950/60 px-2.5 py-2 space-y-1.5">
           <label className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-zinc-400">
-            <span>Priority</span>
+            <span>{t('Priority')}</span>
             <input
               type="number"
               min={0}
@@ -779,11 +783,11 @@ const AccountRow: React.FC<{
               onKeyDown={(e) => e.key === 'Enter' && (e.currentTarget as HTMLInputElement).blur()}
               className="w-16 bg-zinc-950 border border-zinc-800 rounded-md px-1.5 py-0.5 text-[11px] text-zinc-100 focus:border-sky-500 focus:outline-none"
             />
-            <span className="text-zinc-500">After the default, bots try lower numbers first.</span>
+            <span className="text-zinc-500">{t('After the default, bots try lower numbers first.')}</span>
           </label>
           {p.home_dir && (
             <p className="text-[10.5px] text-zinc-500">
-              Login folder: <span className="font-mono text-zinc-400 break-all select-text">{p.home_dir}</span>
+              {t('Login folder:')} <span className="font-mono text-zinc-400 break-all select-text">{p.home_dir}</span>
             </p>
           )}
         </div>
@@ -791,7 +795,7 @@ const AccountRow: React.FC<{
 
       {confirmDelete && (
         <p className="text-[11px] text-zinc-500">
-          {isCustom ? 'Bots pinned to it go back to the default. Its server settings and key are removed.' : 'Bots pinned to it go back to the default. Its folder stays on disk.'}
+          {isCustom ? t('Bots pinned to it go back to the default. Its server settings and key are removed.') : t('Bots pinned to it go back to the default. Its folder stays on disk.')}
         </p>
       )}
 
@@ -823,7 +827,7 @@ const AccountRow: React.FC<{
           }}
         >
           <label htmlFor={`key-${p.id}`} className="sr-only">
-            API key for {p.name}
+            {t('API key for {name}', { name: p.name })}
           </label>
           <input
             id={`key-${p.id}`}
@@ -833,11 +837,11 @@ const AccountRow: React.FC<{
             autoFocus
             value={keyValue}
             onChange={(e) => setKeyValue(e.target.value)}
-            placeholder="Paste the key (it can't be shown again)"
+            placeholder={t("Paste the key (it can't be shown again)")}
             className={`${input} py-1`}
           />
           <button type="submit" disabled={busy || !keyValue.trim()} className={primaryBtn}>
-            Save
+            {t('Save')}
           </button>
         </form>
       )}
@@ -891,17 +895,17 @@ const LoginPanel: React.FC<{
   useEffect(() => {
     if (done) return;
     let cancelled = false;
-    const t = setTimeout(async () => {
+    const timer = setTimeout(async () => {
       try {
         const next = await profilesApi.getLogin(profileId, login.flow_id);
         if (!cancelled) onUpdate(next);
       } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : 'Lost track of the sign-in.');
+        if (!cancelled) setError(e instanceof Error ? e.message : t('Lost track of the sign-in.'));
       }
     }, LOGIN_POLL_MS);
     return () => {
       cancelled = true;
-      clearTimeout(t);
+      clearTimeout(timer);
     };
   }, [login, done, profileId, onUpdate]);
 
@@ -931,7 +935,7 @@ const LoginPanel: React.FC<{
       onUpdate(await profilesApi.submitCode(profileId, login.flow_id, c));
       setCode('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'The code was not accepted.');
+      setError(err instanceof Error ? err.message : t('The code was not accepted.'));
     } finally {
       setBusy(false);
     }
@@ -939,37 +943,39 @@ const LoginPanel: React.FC<{
 
   const failure =
     login.status === 'failed'
-      ? login.error || 'Sign-in failed. Start it again.'
+      ? login.error || t('Sign-in failed. Start it again.')
       : login.status === 'expired'
-        ? 'The sign-in expired. Start it again.'
+        ? t('The sign-in expired. Start it again.')
         : login.status === 'cancelled'
-          ? 'Sign-in cancelled.'
+          ? t('Sign-in cancelled.')
           : null;
 
   return (
     <div className="rounded-lg border border-sky-500/30 bg-sky-500/5 p-3 space-y-2.5" aria-live="polite">
       {login.status === 'starting' && (
         <p className="flex items-center gap-2 text-[11px] text-zinc-300">
-          <Loader2 size={12} className="animate-spin motion-reduce:animate-none" /> Starting the sign-in…
+          <Loader2 size={12} className="animate-spin motion-reduce:animate-none" /> {t('Starting the sign-in…')}
         </p>
       )}
       {login.status === 'waiting' && (
         <>
-          <p className="text-[11px] font-medium text-zinc-100">Sign in to {accountName}</p>
+          <p className="text-[11px] font-medium text-zinc-100">{t('Sign in to {name}', { name: accountName })}</p>
           <ol className="list-decimal list-outside pl-4 space-y-1 text-[11px] text-zinc-300 marker:text-zinc-500">
             <li>
-              {url ? (
-                <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sky-300 underline underline-offset-2 hover:text-sky-200">
-                  Open the sign-in page <ExternalLink size={11} />
-                </a>
-              ) : (
-                'Waiting for the sign-in link…'
-              )}{' '}
-              and sign in with the account you want for {accountName}.
+              {tj('{link} and sign in with the account you want for {name}.', {
+                link: url ? (
+                  <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sky-300 underline underline-offset-2 hover:text-sky-200">
+                    {t('Open the sign-in page')} <ExternalLink size={11} />
+                  </a>
+                ) : (
+                  t('Waiting for the sign-in link…')
+                ),
+                name: accountName,
+              })}
             </li>
             {login.user_code && (
               <li>
-                Enter this code there:{' '}
+                {t('Enter this code there:')}{' '}
                 <span className="font-mono text-sm tracking-wider text-zinc-100 bg-zinc-950 border border-zinc-800 rounded px-1.5 py-0.5 select-all">{login.user_code}</span>{' '}
                 <button
                   type="button"
@@ -984,21 +990,21 @@ const LoginPanel: React.FC<{
                   }}
                   className="inline-flex items-center gap-0.5 text-[10px] text-zinc-400 hover:text-zinc-100"
                 >
-                  <Copy size={10} /> {copied ? 'Copied' : 'Copy'}
+                  <Copy size={10} /> {copied ? t('Copied') : t('Copy')}
                 </button>
               </li>
             )}
             {login.needs_code && (
               <>
-                <li>The page then shows a one-time code. Copy it.</li>
-                <li>Paste it below and press Finish sign-in.</li>
+                <li>{t('The page then shows a one-time code. Copy it.')}</li>
+                <li>{t('Paste it below and press Finish sign-in.')}</li>
               </>
             )}
           </ol>
           {login.needs_code && (
             <form onSubmit={submitCode} className="flex items-center gap-1.5">
               <label htmlFor={`code-${login.flow_id}`} className="sr-only">
-                Code from the sign-in page
+                {t('Code from the sign-in page')}
               </label>
               <input
                 id={`code-${login.flow_id}`}
@@ -1006,21 +1012,21 @@ const LoginPanel: React.FC<{
                 spellCheck={false}
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                placeholder="Paste the code"
+                placeholder={t('Paste the code')}
                 className={`${input} py-1 font-mono`}
               />
               <button type="submit" disabled={busy || !code.trim()} className={`${primaryBtn} shrink-0`}>
-                {busy && <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />} Finish sign-in
+                {busy && <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />} {t('Finish sign-in')}
               </button>
             </form>
           )}
           {login.needs_code && (
             <p className="text-[10.5px] text-zinc-500 leading-snug">
-              Why a code? The server runs the sign-in in the background, so the page can’t hand the login back by itself. The code works once and isn’t kept.
+              {t('Why a code? The server runs the sign-in in the background, so the page can’t hand the login back by itself. The code works once and isn’t kept.')}
             </p>
           )}
           <p className="flex items-center gap-1.5 text-[10px] text-zinc-500">
-            <Loader2 size={10} className="animate-spin motion-reduce:animate-none" /> Waiting for you to finish…
+            <Loader2 size={10} className="animate-spin motion-reduce:animate-none" /> {t('Waiting for you to finish…')}
           </p>
         </>
       )}
@@ -1036,7 +1042,7 @@ const LoginPanel: React.FC<{
       )}
       <div className="flex justify-end">
         <button type="button" disabled={busy} onClick={cancel} className={quietBtn}>
-          {done ? 'Close' : 'Cancel sign-in'}
+          {done ? t('Close') : t('Cancel sign-in')}
         </button>
       </div>
     </div>

@@ -1,5 +1,6 @@
 // Human steps: a bot asks the person to do one thing in its browser (sign in, a CAPTCHA, a code),
 // then waits for Done or Skip (docs/live-activity.md, part 2).
+import { t } from './i18n';
 import { parseMetaObject } from './questions';
 import { request } from './threads';
 
@@ -56,11 +57,11 @@ const statusOf = (v: unknown): HumanStepStatus => (STATUSES.includes(v as HumanS
 /** A usable widget box (finite, non-empty), else null. */
 export function parseCaptchaTarget(raw: unknown): CaptchaTarget | null {
   if (!raw || typeof raw !== 'object') return null;
-  const t = raw as Record<string, unknown>;
+  const o = raw as Record<string, unknown>;
   const n = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : NaN);
-  const [x, y, width, height] = [n(t.x), n(t.y), n(t.width), n(t.height)];
+  const [x, y, width, height] = [n(o.x), n(o.y), n(o.width), n(o.height)];
   if ([x, y, width, height].some(Number.isNaN) || width <= 0 || height <= 0) return null;
-  return { kind: typeof t.kind === 'string' ? t.kind : 'puzzle', x, y, width, height };
+  return { kind: typeof o.kind === 'string' ? o.kind : 'puzzle', x, y, width, height };
 }
 
 export function parseHumanStepMeta(raw: unknown): HumanStepMeta | null {
@@ -150,10 +151,10 @@ export function turnsAwaitingStep(map: Record<string, HumanStep>): Set<string> {
 
 /** Heading and the Done button's words for each kind. */
 export const KIND_TEXT: Record<HumanStepKind, { heading: string; done: string }> = {
-  sign_in: { heading: 'Sign in needed', done: 'Done, I’m signed in' },
-  captcha: { heading: 'Human check needed', done: 'Done, I solved it' },
-  two_factor: { heading: 'Sign-in code needed', done: 'Done, I entered the code' },
-  other: { heading: 'Your help is needed', done: 'Done' },
+  sign_in: { heading: t('Sign in needed'), done: t('Done, I’m signed in') },
+  captcha: { heading: t('Human check needed'), done: t('Done, I solved it') },
+  two_factor: { heading: t('Sign-in code needed'), done: t('Done, I entered the code') },
+  other: { heading: t('Your help is needed'), done: t('Done') },
 };
 
 /** Only the host of a step's address ("github.com"), so the card never shows paths. */

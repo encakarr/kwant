@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Check, Copy, ExternalLink, Eye, EyeOff, Key, KeyRound, Loader2, Lock, LockOpen, Plus, Search, ShieldCheck, Trash2 } from 'lucide-react';
 import { PERSON_SIGNED_IN_EVENT, requestPersonToken } from '../auth';
 import { playSfx } from '../audio/chiptune';
+import { t, tj } from '../i18n';
 import {
   PROBLEM_TEXT,
   PasswordsError,
@@ -72,8 +73,8 @@ export function useSavedPasswords(sandboxId: string | undefined, refreshKey: unk
       first.current = false;
       return;
     }
-    const t = setTimeout(reload, 1500);
-    return () => clearTimeout(t);
+    const timer = setTimeout(reload, 1500);
+    return () => clearTimeout(timer);
   }, [refreshKey, reload]);
 
   useEffect(() => {
@@ -103,7 +104,7 @@ export const PendingLoginPrompt: React.FC<{
       playSfx(kind === 'save' ? 'coin' : 'click');
       onDone();
     } catch (e) {
-      setError(errorText(e, 'Couldn’t do that. Try again.'));
+      setError(errorText(e, t('Couldn’t do that. Try again.')));
       // 404: nothing is waiting any more (saved or discarded elsewhere).
       if (e instanceof PasswordsError && e.status === 404) onDone();
     } finally {
@@ -111,20 +112,17 @@ export const PendingLoginPrompt: React.FC<{
     }
   };
   return (
-    <div role="region" aria-label="Save password?" data-pending-login className="mx-3 mt-2 p-2.5 rounded-xl border border-sky-500/30 bg-sky-500/5 text-xs space-y-2">
+    <div role="region" aria-label={t('Save password?')} data-pending-login className="mx-3 mt-2 p-2.5 rounded-xl border border-sky-500/30 bg-sky-500/5 text-xs space-y-2">
       <p className="flex items-start gap-2 text-zinc-200 leading-snug">
         <KeyRound size={14} className="text-sky-400 flex-shrink-0 mt-px" aria-hidden="true" />
         <span>
-          Save password for <span className="font-semibold break-all">{originLabel(pending.origin)}</span>
-          {pending.username ? (
-            <>
-              {' '}as <span className="font-mono break-all">{pending.username}</span>
-            </>
-          ) : null}
-          ?
+          {tj(pending.username ? 'Save password for {site} as {user}?' : 'Save password for {site}?', {
+            site: <span className="font-semibold break-all">{originLabel(pending.origin)}</span>,
+            user: <span className="font-mono break-all">{pending.username}</span>,
+          })}
         </span>
       </p>
-      <p className="text-[11px] text-zinc-500 pl-[22px]">It’s filled in only on this exact address. Nothing is saved until you choose Save.</p>
+      <p className="text-[11px] text-zinc-500 pl-[22px]">{t('It’s filled in only on this exact address. Nothing is saved until you choose Save.')}</p>
       {error && (
         <p role="alert" className="flex items-center gap-1.5 text-[11px] text-rose-300 pl-[22px]">
           <AlertTriangle size={12} aria-hidden="true" /> {error}
@@ -137,7 +135,7 @@ export const PendingLoginPrompt: React.FC<{
           onClick={() => act('discard')}
           className="px-2.5 py-1.5 rounded-lg text-[11px] font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-200 disabled:opacity-50"
         >
-          {busy === 'discard' ? 'Discarding…' : 'Don’t save'}
+          {busy === 'discard' ? t('Discarding…') : t('Don’t save')}
         </button>
         <button
           type="button"
@@ -145,7 +143,7 @@ export const PendingLoginPrompt: React.FC<{
           onClick={() => act('save')}
           className="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-sky-500 hover:bg-sky-400 text-zinc-950 disabled:opacity-50"
         >
-          {busy === 'save' ? 'Saving…' : 'Save'}
+          {busy === 'save' ? t('Saving…') : t('Save')}
         </button>
       </div>
     </div>
@@ -164,7 +162,7 @@ export const PasswordsProblemNotice: React.FC<{ problem: PasswordsProblem; onRet
           onClick={requestPersonToken}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium text-white bg-sky-600 hover:bg-sky-500"
         >
-          <KeyRound size={12} aria-hidden="true" /> Enter access token
+          <KeyRound size={12} aria-hidden="true" /> {t('Enter access token')}
         </button>
       ) : problem === 'locked' && onUnlock ? (
         <button
@@ -172,11 +170,11 @@ export const PasswordsProblemNotice: React.FC<{ problem: PasswordsProblem; onRet
           onClick={onUnlock}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-zinc-950 bg-amber-400 hover:bg-amber-300"
         >
-          <LockOpen size={12} aria-hidden="true" /> Unlock Bitwarden
+          <LockOpen size={12} aria-hidden="true" /> {t('Unlock Bitwarden')}
         </button>
       ) : (
         <button type="button" onClick={onRetry} className="px-3 py-1.5 rounded-lg text-[11px] font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-200">
-          Try again
+          {t('Try again')}
         </button>
       )}
     </div>
@@ -222,8 +220,8 @@ export const SavedLoginRow: React.FC<RowProps> = ({
   // A revealed password disappears on its own; it's never kept anywhere else.
   useEffect(() => {
     if (revealed === null) return;
-    const t = setTimeout(() => setRevealed(null), REVEAL_MS);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setRevealed(null), REVEAL_MS);
+    return () => clearTimeout(timer);
   }, [revealed]);
 
   const reveal = async () => {
@@ -240,7 +238,7 @@ export const SavedLoginRow: React.FC<RowProps> = ({
     if (askMasterPassword) {
       master = masterRef.current?.value ?? '';
       if (!master) {
-        setError('Enter your Bitwarden master password.');
+        setError(t('Enter your Bitwarden master password.'));
         masterRef.current?.focus();
         return;
       }
@@ -256,7 +254,7 @@ export const SavedLoginRow: React.FC<RowProps> = ({
     } catch (e) {
       if (masterRef.current) masterRef.current.value = '';
       masterRef.current?.focus();
-      setError(errorText(e, 'Couldn’t show this password.'));
+      setError(errorText(e, t('Couldn’t show this password.')));
     } finally {
       master = undefined;
       setRevealing(false);
@@ -271,7 +269,7 @@ export const SavedLoginRow: React.FC<RowProps> = ({
       playSfx('click');
       onDeleted();
     } catch (e) {
-      setError(errorText(e, 'Couldn’t delete this login.'));
+      setError(errorText(e, t('Couldn’t delete this login.')));
       setDeleting(false);
     }
   };
@@ -294,7 +292,7 @@ export const SavedLoginRow: React.FC<RowProps> = ({
             {site}
           </span>
           {onThisPage && (
-            <span className="px-1.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 text-[9px] font-mono flex-shrink-0">This page</span>
+            <span className="px-1.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 text-[9px] font-mono flex-shrink-0">{t('This page')}</span>
           )}
         </div>
         <div className="flex items-center gap-0.5 flex-shrink-0">
@@ -302,8 +300,8 @@ export const SavedLoginRow: React.FC<RowProps> = ({
             <button
               type="button"
               onClick={() => onOpen(login.origin)}
-              aria-label={`Open ${site}`}
-              title="Open this site in the browser"
+              aria-label={t('Open {site}', { site })}
+              title={t('Open this site in the browser')}
               className="text-zinc-400 hover:text-sky-400 p-1.5 rounded hover:bg-zinc-800/60"
             >
               <ExternalLink size={12} />
@@ -312,8 +310,8 @@ export const SavedLoginRow: React.FC<RowProps> = ({
           <button
             type="button"
             onClick={() => setConfirmDelete(true)}
-            aria-label={`Delete login for ${site}`}
-            title="Delete"
+            aria-label={t('Delete login for {site}', { site })}
+            title={t('Delete')}
             className="text-zinc-500 hover:text-rose-400 p-1.5 rounded hover:bg-zinc-800/60"
           >
             <Trash2 size={12} />
@@ -322,9 +320,9 @@ export const SavedLoginRow: React.FC<RowProps> = ({
       </div>
 
       <div className="flex items-center justify-between py-1 px-2 rounded bg-zinc-950/70 border border-zinc-800/50 mb-1">
-        <span className="text-[11px] font-mono text-zinc-300 truncate">{login.username || <span className="text-zinc-500 font-sans">No username</span>}</span>
+        <span className="text-[11px] font-mono text-zinc-300 truncate">{login.username || <span className="text-zinc-500 font-sans">{t('No username')}</span>}</span>
         {login.username && (
-          <button type="button" onClick={() => copy(login.username, 'user')} aria-label="Copy username" className="text-zinc-500 hover:text-zinc-200 p-1 ml-1">
+          <button type="button" onClick={() => copy(login.username, 'user')} aria-label={t('Copy username')} className="text-zinc-500 hover:text-zinc-200 p-1 ml-1">
             {copied === 'user' ? <Check size={11} className="text-emerald-400" /> : <Copy size={11} />}
           </button>
         )}
@@ -332,11 +330,11 @@ export const SavedLoginRow: React.FC<RowProps> = ({
 
       <div className="flex items-center justify-between py-1 px-2 rounded bg-zinc-950/70 border border-zinc-800/50">
         <span className="text-[11px] font-mono text-zinc-400 truncate" aria-live="polite">
-          {revealed !== null ? <span data-revealed className="text-zinc-100">{revealed}</span> : <span aria-label="Password hidden">••••••••••••</span>}
+          {revealed !== null ? <span data-revealed className="text-zinc-100">{revealed}</span> : <span aria-label={t('Password hidden')}>••••••••••••</span>}
         </span>
         <div className="flex items-center gap-0.5 ml-1 flex-shrink-0">
           {revealed !== null && (
-            <button type="button" onClick={() => copy(revealed, 'pass')} aria-label="Copy password" className="text-zinc-500 hover:text-zinc-200 p-1">
+            <button type="button" onClick={() => copy(revealed, 'pass')} aria-label={t('Copy password')} className="text-zinc-500 hover:text-zinc-200 p-1">
               {copied === 'pass' ? <Check size={11} className="text-emerald-400" /> : <Copy size={11} />}
             </button>
           )}
@@ -347,11 +345,11 @@ export const SavedLoginRow: React.FC<RowProps> = ({
             className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60 disabled:opacity-50"
           >
             {revealing ? <Loader2 size={11} className="animate-spin motion-reduce:animate-none" /> : revealed !== null ? <EyeOff size={11} /> : <Eye size={11} />}
-            {revealed !== null ? 'Hide' : 'Reveal'}
+            {revealed !== null ? t('Hide') : t('Reveal')}
           </button>
         </div>
       </div>
-      {revealed !== null && <p className="mt-1 text-[10px] text-zinc-500">Hides again in 30 seconds.</p>}
+      {revealed !== null && <p className="mt-1 text-[10px] text-zinc-500">{t('Hides again in 30 seconds.')}</p>}
       {asking && revealed === null && (
         <form
           onSubmit={(e) => {
@@ -363,7 +361,7 @@ export const SavedLoginRow: React.FC<RowProps> = ({
           noValidate
         >
           <label className="flex-1 min-w-0">
-            <span className="text-[10px] text-zinc-400 block mb-0.5">Bitwarden master password, to show it</span>
+            <span className="text-[10px] text-zinc-400 block mb-0.5">{t('Bitwarden master password, to show it')}</span>
             <input
               ref={masterRef}
               type="password"
@@ -381,23 +379,23 @@ export const SavedLoginRow: React.FC<RowProps> = ({
             }}
             className="px-2 py-1 rounded text-[11px] bg-zinc-800 hover:bg-zinc-700 text-zinc-200"
           >
-            Cancel
+            {t('Cancel')}
           </button>
           <button type="submit" disabled={revealing} className="px-2 py-1 rounded text-[11px] font-semibold bg-sky-500 hover:bg-sky-400 text-zinc-950 disabled:opacity-50">
-            Show
+            {t('Show')}
           </button>
         </form>
       )}
 
       {confirmDelete && (
-        <div role="alertdialog" aria-label={`Delete login for ${site}?`} className="mt-2 p-2 rounded-lg border border-rose-500/30 bg-rose-500/5 space-y-1.5">
-          <p className="text-[11px] text-zinc-200">Delete this login? The bots can’t sign in to {site} with it any more.</p>
+        <div role="alertdialog" aria-label={t('Delete login for {site}?', { site })} className="mt-2 p-2 rounded-lg border border-rose-500/30 bg-rose-500/5 space-y-1.5">
+          <p className="text-[11px] text-zinc-200">{t('Delete this login? The bots can’t sign in to {site} with it any more.', { site })}</p>
           <div className="flex justify-end gap-1.5">
             <button type="button" autoFocus onClick={() => setConfirmDelete(false)} className="px-2.5 py-1 rounded text-[11px] bg-zinc-800 hover:bg-zinc-700 text-zinc-200">
-              Keep
+              {t('Keep')}
             </button>
             <button type="button" disabled={deleting} onClick={remove} className="px-2.5 py-1 rounded text-[11px] font-semibold bg-rose-500 hover:bg-rose-400 text-zinc-950 disabled:opacity-50">
-              {deleting ? 'Deleting…' : 'Delete'}
+              {deleting ? t('Deleting…') : t('Delete')}
             </button>
           </div>
         </div>
@@ -407,7 +405,7 @@ export const SavedLoginRow: React.FC<RowProps> = ({
           <AlertTriangle size={12} aria-hidden="true" /> {error}
         </p>
       )}
-      {login.last_used && <p className="mt-1 text-[9px] text-zinc-500 text-right">Last used {new Date(login.last_used).toLocaleDateString()}</p>}
+      {login.last_used && <p className="mt-1 text-[9px] text-zinc-500 text-right">{t('Last used {date}', { date: new Date(login.last_used).toLocaleDateString() })}</p>}
     </li>
   );
 };
@@ -423,7 +421,7 @@ const AddLoginForm: React.FC<{ sandboxId: string; onSaved: () => void; onCancel:
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!origin) {
-      setError('Enter an address like example.com or https://example.com.');
+      setError(t('Enter an address like example.com or https://example.com.'));
       return;
     }
     if (!password) return;
@@ -435,7 +433,7 @@ const AddLoginForm: React.FC<{ sandboxId: string; onSaved: () => void; onCancel:
       playSfx('coin');
       onSaved();
     } catch (err) {
-      setError(errorText(err, 'Couldn’t save this login.'));
+      setError(errorText(err, t('Couldn’t save this login.')));
       // It can't be saved here until Bitwarden is in use or approvals are back on: don't keep it typed.
       if (err instanceof PasswordsError && err.needsBitwarden) setPassword('');
     } finally {
@@ -447,19 +445,19 @@ const AddLoginForm: React.FC<{ sandboxId: string; onSaved: () => void; onCancel:
   return (
     <form onSubmit={submit} className="p-3 bg-zinc-900/90 border border-sky-500/30 rounded-xl space-y-2 text-xs">
       <div className="text-[11px] font-semibold text-sky-400 flex items-center gap-1">
-        <Key size={12} aria-hidden="true" /> Add a login
+        <Key size={12} aria-hidden="true" /> {t('Add a login')}
       </div>
       <label className="block">
-        <span className="text-[10px] text-zinc-400 block mb-0.5">Site</span>
+        <span className="text-[10px] text-zinc-400 block mb-0.5">{t('Site')}</span>
         <input type="text" required value={site} onChange={(e) => setSite(e.target.value)} placeholder="example.com" className={field} autoComplete="off" spellCheck={false} />
-        {origin && <span className="text-[10px] text-zinc-500 block mt-0.5">Filled in only on {origin}</span>}
+        {origin && <span className="text-[10px] text-zinc-500 block mt-0.5">{t('Filled in only on {origin}', { origin })}</span>}
       </label>
       <label className="block">
-        <span className="text-[10px] text-zinc-400 block mb-0.5">Username or email</span>
+        <span className="text-[10px] text-zinc-400 block mb-0.5">{t('Username or email')}</span>
         <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="you@example.com" className={field} autoComplete="off" spellCheck={false} />
       </label>
       <label className="block">
-        <span className="text-[10px] text-zinc-400 block mb-0.5">Password</span>
+        <span className="text-[10px] text-zinc-400 block mb-0.5">{t('Password')}</span>
         <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className={field} autoComplete="new-password" />
       </label>
       {error && (
@@ -469,10 +467,10 @@ const AddLoginForm: React.FC<{ sandboxId: string; onSaved: () => void; onCancel:
       )}
       <div className="flex justify-end gap-1.5 pt-1">
         <button type="button" onClick={onCancel} className="px-2.5 py-1 text-[11px] rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300">
-          Cancel
+          {t('Cancel')}
         </button>
         <button type="submit" disabled={busy || !password} className="px-2.5 py-1 text-[11px] rounded bg-sky-500 hover:bg-sky-400 text-zinc-950 font-semibold disabled:opacity-50">
-          {busy ? 'Saving…' : 'Save login'}
+          {busy ? t('Saving…') : t('Save login')}
         </button>
       </div>
     </form>
@@ -516,12 +514,12 @@ export const SavedPasswordsPanel: React.FC<{
         <div className="flex items-center gap-1.5">
           <label className="flex-1 flex items-center gap-1.5 px-2 py-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-xs focus-within:border-sky-500">
             <Search size={12} className="text-zinc-500 flex-shrink-0" aria-hidden="true" />
-            <span className="sr-only">Search saved logins</span>
+            <span className="sr-only">{t('Search saved logins')}</span>
             <input
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search sites or usernames"
+              placeholder={t('Search sites or usernames')}
               className="w-full bg-transparent text-zinc-200 text-[11px] focus:outline-none placeholder:text-zinc-600"
             />
           </label>
@@ -533,7 +531,7 @@ export const SavedPasswordsPanel: React.FC<{
               adding ? 'bg-zinc-800 text-zinc-200' : 'bg-sky-500/10 text-sky-400 border border-sky-500/20 hover:bg-sky-500/20'
             }`}
           >
-            <Plus size={12} aria-hidden="true" /> {adding ? 'Close' : 'Add'}
+            <Plus size={12} aria-hidden="true" /> {adding ? t('Close') : t('Add')}
           </button>
         </div>
       )}
@@ -554,20 +552,20 @@ export const SavedPasswordsPanel: React.FC<{
           <PasswordsProblemNotice problem={state.problem} onRetry={state.reload} onUnlock={store ? openUnlock : undefined} />
         ) : state.loading ? (
           <p className="flex items-center justify-center gap-2 py-10 text-xs text-zinc-500" role="status">
-            <Loader2 size={14} className="animate-spin motion-reduce:animate-none" /> Loading saved logins…
+            <Loader2 size={14} className="animate-spin motion-reduce:animate-none" /> {t('Loading saved logins…')}
           </p>
         ) : shown.length === 0 ? (
           <div className="text-center py-10 px-4 text-zinc-500 text-xs">
             <Lock size={28} className="mx-auto mb-2 opacity-30 text-zinc-400" aria-hidden="true" />
-            <p className="font-medium text-zinc-400">{state.logins.length === 0 ? 'No saved logins yet' : 'No logins match'}</p>
+            <p className="font-medium text-zinc-400">{state.logins.length === 0 ? t('No saved logins yet') : t('No logins match')}</p>
             {state.logins.length === 0 && (
               <p className="text-[11px] text-zinc-500 mt-1 leading-relaxed">
-                When a bot signs in on a site, you’re asked whether to save that login. You can also add one here.
+                {t('When a bot signs in on a site, you’re asked whether to save that login. You can also add one here.')}
               </p>
             )}
           </div>
         ) : (
-          <ul className="space-y-2" aria-label="Saved logins">
+          <ul className="space-y-2" aria-label={t('Saved logins')}>
             {shown.map((l) => (
               <SavedLoginRow
                 key={l.id}
@@ -587,7 +585,8 @@ export const SavedPasswordsPanel: React.FC<{
         <div className="flex items-start gap-2">
           <ShieldCheck size={14} className="text-emerald-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
           <p className="leading-snug">
-            <span className="text-zinc-300 font-medium">{bitwarden ? 'Kept in your Bitwarden, locked after every restart.' : 'Encrypted on the server, out of the bots’ folders.'}</span> A login is filled in only on the exact address it was saved for.
+            <span className="text-zinc-300 font-medium">{bitwarden ? t('Kept in your Bitwarden, locked after every restart.') : t('Encrypted on the server, out of the bots’ folders.')}</span>{' '}
+            {t('A login is filled in only on the exact address it was saved for.')}
           </p>
         </div>
         {/* The exposed banner above already says it. */}

@@ -2,6 +2,7 @@
 // the result to the in-process server; this module polls GET /api/app/update and drives the banner
 // and the About row in App settings. Off the Mac app (VPS, Docker, dev) the endpoint answers 404 or
 // supported=false, and then nothing renders and nothing polls again.
+import { t } from './i18n';
 
 export type UpdateState = 'idle' | 'checking' | 'available' | 'downloading' | 'ready' | 'error';
 
@@ -128,7 +129,7 @@ export function bannerView(m: UpdateModel, dismissed: string | null): BannerView
     return {
       kind: 'error',
       version: m.target,
-      error: 'The app didn’t come back after the update. Open kwant bots again from Applications.',
+      error: t('The app didn’t come back after the update. Open kwant bots again from Applications.'),
       url: m.status.available?.url ?? `https://github.com/alexsergivan/kwant/releases/tag/mac-v${m.target}`,
       notes: m.status.available?.notes ?? '',
     };
@@ -139,7 +140,7 @@ export function bannerView(m: UpdateModel, dismissed: string | null): BannerView
   if (s === 'ready') return { kind: 'restarting', version: a.version };
   if (s === 'downloading' || m.phase === 'installing') return { kind: 'downloading', version: a.version, progress: m.status.progress };
   if (s === 'error' || m.installError) {
-    return { kind: 'error', version: a.version, error: m.installError ?? m.status.error ?? 'The update failed.', url: a.url, notes: a.notes };
+    return { kind: 'error', version: a.version, error: m.installError ?? m.status.error ?? t('The update failed.'), url: a.url, notes: a.notes };
   }
   if (s !== 'available') return null;
   if (dismissed === a.version) return null;
@@ -158,20 +159,20 @@ export function aboutLine(m: UpdateModel): string {
   const s = m.status;
   if (!s) return '';
   if (m.actionError) return m.actionError;
-  if (m.phase === 'updated' && m.target) return `Updated to ${m.target}.`;
+  if (m.phase === 'updated' && m.target) return t('Updated to {version}.', { version: m.target });
   switch (s.state) {
     case 'checking':
-      return 'Checking for updates…';
+      return t('Checking for updates…');
     case 'available':
-      return s.available ? `kwant bots ${s.available.version} is ready.` : 'You’re up to date.';
+      return s.available ? t('kwant bots {version} is ready.', { version: s.available.version }) : t('You’re up to date.');
     case 'downloading':
-      return s.progress == null ? 'Downloading the update…' : `Downloading the update… ${Math.round(s.progress * 100)}%`;
+      return s.progress == null ? t('Downloading the update…') : t('Downloading the update… {pct}%', { pct: Math.round(s.progress * 100) });
     case 'ready':
-      return 'Restarting the app…';
+      return t('Restarting the app…');
     case 'error':
-      return s.error ?? 'The last check failed.';
+      return s.error ?? t('The last check failed.');
     default:
-      return m.checkedAt != null ? 'You’re up to date.' : '';
+      return m.checkedAt != null ? t('You’re up to date.') : '';
   }
 }
 
@@ -185,7 +186,7 @@ async function errorText(res: Response): Promise<string | null> {
 }
 
 function refusal(res: Response, fallback: string): Promise<string> | string {
-  if (res.status === 401 || res.status === 403) return 'Only you can update the app, from the Mac it runs on.';
+  if (res.status === 401 || res.status === 403) return t('Only you can update the app, from the Mac it runs on.');
   return errorText(res).then((e) => e ?? fallback);
 }
 
@@ -300,7 +301,7 @@ export function createUpdateController(env: ControllerEnv): UpdateController {
       }
       set({ actionError: await refusal(res, fallback) });
     } catch {
-      set({ actionError: 'The app didn’t answer. Try again in a moment.' });
+      set({ actionError: t('The app didn’t answer. Try again in a moment.') });
     }
     return false;
   }
@@ -324,7 +325,7 @@ export function createUpdateController(env: ControllerEnv): UpdateController {
     async check() {
       if (model.unsupported) return;
       set({ actionError: null, installError: null, phase: model.phase === 'updated' ? 'idle' : model.phase });
-      await post('/api/app/update/check', 'Couldn’t check for updates.');
+      await post('/api/app/update/check', t('Couldn’t check for updates.'));
       schedule();
     },
     async install() {
@@ -332,7 +333,7 @@ export function createUpdateController(env: ControllerEnv): UpdateController {
       if (model.unsupported || !version) return;
       write(UPDATE_PENDING_KEY, version, env.store);
       set({ phase: 'installing', target: version, actionError: null, installError: null });
-      const ok = await post('/api/app/update/install', 'Couldn’t start the update.');
+      const ok = await post('/api/app/update/install', t('Couldn’t start the update.'));
       if (!ok) {
         write(UPDATE_PENDING_KEY, null, env.store);
         set({ phase: 'idle', target: null, installError: model.actionError });

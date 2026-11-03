@@ -2,6 +2,7 @@ import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { ChartBlock, ChartPoint, ChartSeries, inRange, isCell, isNum, isObj, isText, optText, parseCommon, repeatsReply, uniqueIds } from '../../smartResults';
 import type { RendererProps } from './registry';
 import { ReplyText } from './ReplyText';
+import { t } from '../../i18n';
 
 const MAX_VALUE = 1e15;
 
@@ -69,6 +70,10 @@ const MARKERS: React.FC<{ cx: number; cy: number; size: number }>[] = [
 ];
 const DASHES = [undefined, '6 3', '2 3', '8 2 2 2'];
 const SERIES_COLORS = ['#8270f5', '#38bdf8', '#34d399', '#fb923c'];
+// The view toggle's labels; the buttons capitalise them in English.
+const VIEW_LABEL = { chart: t('chart'), table: t('table') };
+/** A point's spoken value: "Signups at Jul 2026: 1,240". */
+const pointLabel = (series: string, x: string, value: string) => t('{series} at {x}: {value}', { series, x, value });
 
 function niceTicks(min: number, max: number, count: number): number[] {
   if (min === max) {
@@ -185,7 +190,7 @@ export const Chart: React.FC<RendererProps<ChartBlock>> = ({ block }) => {
             </span>
           ))}
         </div>
-        <div role="group" aria-label="Chart view" className="flex shrink-0 rounded-lg border border-zinc-800 text-[11px]">
+        <div role="group" aria-label={t('Chart view')} className="flex shrink-0 rounded-lg border border-zinc-800 text-[11px]">
           {(['chart', 'table'] as const).map((v, i) => (
             <button
               key={v}
@@ -196,7 +201,7 @@ export const Chart: React.FC<RendererProps<ChartBlock>> = ({ block }) => {
                 i === 0 ? 'rounded-l-lg' : 'rounded-r-lg'
               } ${view === v ? 'bg-sky-500/15 text-sky-300' : 'text-zinc-400 hover:text-zinc-200'}`}
             >
-              {v}
+              {VIEW_LABEL[v]}
             </button>
           ))}
         </div>
@@ -213,7 +218,7 @@ export const Chart: React.FC<RendererProps<ChartBlock>> = ({ block }) => {
             className="w-full"
             style={{ maxHeight: 280 }}
           >
-            <title id={`${uid}-title`}>{block.title ?? `${block.chart_kind === 'line' ? 'Line' : 'Bar'} chart`}</title>
+            <title id={`${uid}-title`}>{block.title ?? t(block.chart_kind === 'line' ? 'Line chart' : 'Bar chart')}</title>
             <desc id={`${uid}-desc`}>{block.summary ?? headers.join(', ')}</desc>
             <defs>
               {block.series.map((s, i) => (
@@ -222,11 +227,11 @@ export const Chart: React.FC<RendererProps<ChartBlock>> = ({ block }) => {
             </defs>
 
             {/* Gridlines: scale, not data claims. */}
-            {ticks.map((t) => (
-              <g key={t}>
-                <line x1={PAD.left} x2={WIDTH - PAD.right} y1={yScale(t)} y2={yScale(t)} stroke="#27272a" strokeWidth={1} />
-                <text x={PAD.left - 8} y={yScale(t)} textAnchor="end" dominantBaseline="middle" fontSize={11} fill="#71717a">
-                  {fmtTick(t)}
+            {ticks.map((tick) => (
+              <g key={tick}>
+                <line x1={PAD.left} x2={WIDTH - PAD.right} y1={yScale(tick)} y2={yScale(tick)} stroke="#27272a" strokeWidth={1} />
+                <text x={PAD.left - 8} y={yScale(tick)} textAnchor="end" dominantBaseline="middle" fontSize={11} fill="#71717a">
+                  {fmtTick(tick)}
                 </text>
               </g>
             ))}
@@ -295,7 +300,7 @@ export const Chart: React.FC<RendererProps<ChartBlock>> = ({ block }) => {
                             key={p.id}
                             tabIndex={0}
                             role="button"
-                            aria-label={`${s.label} at ${p.x}: ${p.cells[si] || fmtTick(v)}${s.unit ? ` ${s.unit}` : ''}`}
+                            aria-label={pointLabel(s.label, p.x, `${p.cells[si] || fmtTick(v)}${s.unit ? ` ${s.unit}` : ''}`)}
                             className="cursor-pointer outline-none focus-visible:[&>*]:stroke-zinc-50"
                             fill={color}
                             stroke={color}
@@ -326,7 +331,7 @@ export const Chart: React.FC<RendererProps<ChartBlock>> = ({ block }) => {
                           key={s.key}
                           tabIndex={0}
                           role="button"
-                          aria-label={`${s.label} at ${p.x}: ${p.cells[si] || fmtTick(v)}${s.unit ? ` ${s.unit}` : ''}`}
+                          aria-label={pointLabel(s.label, p.x, `${p.cells[si] || fmtTick(v)}${s.unit ? ` ${s.unit}` : ''}`)}
                           x={x}
                           y={y}
                           width={Math.max(2, barWidth - 2)}
@@ -348,10 +353,12 @@ export const Chart: React.FC<RendererProps<ChartBlock>> = ({ block }) => {
           </div>
           <div aria-live="polite" className="mt-1 h-4 text-[11px] text-zinc-400">
             {active && activeSeries
-              ? `${activeSeries.label} at ${activePoint?.x}: ${activeCell || (activeValue !== null && activeValue !== undefined ? fmtTick(activeValue) : '—')}${
-                  activeSeries.unit ? ` ${activeSeries.unit}` : ''
-                }`
-              : 'Tab through the chart for each value.'}
+              ? pointLabel(
+                  activeSeries.label,
+                  activePoint?.x ?? '',
+                  `${activeCell || (activeValue !== null && activeValue !== undefined ? fmtTick(activeValue) : '—')}${activeSeries.unit ? ` ${activeSeries.unit}` : ''}`,
+                )
+              : t('Tab through the chart for each value.')}
           </div>
         </>
       ) : (

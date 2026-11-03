@@ -14,6 +14,7 @@ import {
   spacesApi,
 } from '../spaces';
 import { useEscapeLayer } from '../escape';
+import { t } from '../i18n';
 
 const badge = (n: number) => (n > 99 ? '99+' : String(n));
 
@@ -44,7 +45,7 @@ interface RailProps {
 }
 
 export const SpaceRail: React.FC<RailProps> = ({ spaces, currentId, onSwitch, onCreate, onOpenAppSettings }) => (
-  <nav aria-label="Spaces" className="hidden md:flex w-[68px] shrink-0 flex-col items-center gap-2 py-3 border-r border-zinc-800/80 bg-zinc-950 select-none">
+  <nav aria-label={t('Spaces')} className="hidden md:flex w-[68px] shrink-0 flex-col items-center gap-2 py-3 border-r border-zinc-800/80 bg-zinc-950 select-none">
     <ul className="flex flex-col items-center gap-2 flex-1 overflow-y-auto overflow-x-hidden w-full">
       {spaces.map((s, i) => {
         const active = s.id === currentId;
@@ -57,7 +58,7 @@ export const SpaceRail: React.FC<RailProps> = ({ spaces, currentId, onSwitch, on
               onClick={() => onSwitch(s.id)}
               data-rail-space={s.id}
               aria-current={active ? 'true' : undefined}
-              aria-label={`${s.name}${unread ? `, ${unread} unread` : ''}`}
+              aria-label={unread ? t('{name}, {n} unread', { name: s.name, n: unread }) : s.name}
               title={`${s.name}${i < 9 ? ` (Ctrl/⌘ ${i + 1})` : ''}`}
               className={`relative rounded-xl transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400 ${
                 active ? 'ring-2 ring-offset-2 ring-offset-zinc-950' : 'opacity-75 hover:opacity-100'
@@ -78,8 +79,8 @@ export const SpaceRail: React.FC<RailProps> = ({ spaces, currentId, onSwitch, on
         <button
           type="button"
           onClick={onCreate}
-          aria-label="New space"
-          title="New space"
+          aria-label={t('New space')}
+          title={t('New space')}
           className="w-10 h-10 rounded-xl border border-dashed border-zinc-700 text-zinc-400 hover:text-zinc-100 hover:border-zinc-500 flex items-center justify-center transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400"
         >
           <Plus size={18} />
@@ -90,8 +91,8 @@ export const SpaceRail: React.FC<RailProps> = ({ spaces, currentId, onSwitch, on
       type="button"
       onClick={onOpenAppSettings}
       data-settings-opener
-      aria-label="Settings (all spaces)"
-      title="Settings (all spaces)"
+      aria-label={t('Settings (all spaces)')}
+      title={t('Settings (all spaces)')}
       className="w-10 h-10 rounded-xl text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 flex items-center justify-center transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400"
     >
       <Settings size={18} />
@@ -136,7 +137,7 @@ export const SpaceSwitcher: React.FC<SwitcherProps> = ({ spaces, currentId, onSw
 
   const item = 'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-xs transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400';
   const list = (
-    <div ref={ref} role="menu" aria-label="Switch space" className="space-y-0.5">
+    <div ref={ref} role="menu" aria-label={t('Switch space')} className="space-y-0.5">
       {spaces.map((s) => {
         const active = s.id === currentId;
         return (
@@ -165,15 +166,15 @@ export const SpaceSwitcher: React.FC<SwitcherProps> = ({ spaces, currentId, onSw
       })}
       <div className="my-1 border-t border-zinc-800" />
       <button type="button" role="menuitem" onClick={() => { onClose(); onCreate(); }} className={`${item} text-sky-300 hover:bg-sky-500/10`}>
-        <Plus size={15} aria-hidden="true" /> New space
+        <Plus size={15} aria-hidden="true" /> {t('New space')}
       </button>
       {current && (
         <button type="button" role="menuitem" onClick={() => { onClose(); onOpenSpaceSettings(); }} className={`${item} text-zinc-300 hover:bg-zinc-800/60`}>
-          <Settings size={15} aria-hidden="true" /> {current.name} settings
+          <Settings size={15} aria-hidden="true" /> {t('{space} settings', { space: current.name })}
         </button>
       )}
       <button type="button" role="menuitem" onClick={() => { onClose(); onOpenArchived(); }} className={`${item} text-zinc-300 hover:bg-zinc-800/60`}>
-        <Archive size={15} aria-hidden="true" /> Archived spaces
+        <Archive size={15} aria-hidden="true" /> {t('Archived spaces')}
       </button>
     </div>
   );
@@ -183,7 +184,7 @@ export const SpaceSwitcher: React.FC<SwitcherProps> = ({ spaces, currentId, onSw
       <div className="fixed inset-0 z-50 bg-black/60 flex items-end" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
         <div className="kw-sheet w-full max-h-[80vh] overflow-y-auto rounded-t-2xl bg-zinc-900 border-t border-zinc-800 p-3 pb-6 shadow-2xl">
           <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-zinc-700" aria-hidden="true" />
-          <p className="px-2.5 pb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Spaces</p>
+          <p className="px-2.5 pb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">{t('Spaces')}</p>
           {list}
         </div>
       </div>
@@ -222,7 +223,7 @@ const Dialog: React.FC<{
             <h2 id={labelId} className="text-sm font-semibold text-zinc-100">{title}</h2>
             {subtitle && <p className="mt-0.5 text-xs text-zinc-400">{subtitle}</p>}
           </div>
-          <button type="button" onClick={onClose} aria-label="Close" className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors">
+          <button type="button" onClick={onClose} aria-label={t('Close')} className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors">
             <X size={18} />
           </button>
         </div>
@@ -268,19 +269,22 @@ export const NewSpaceModal: React.FC<NewSpaceProps> = ({ spaces, onClose, onCrea
       playSfx('coin');
       onCreated(space, addAccounts);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Couldn’t create the space.');
+      setError(err instanceof Error ? err.message : t('Couldn’t create the space.'));
       setSaving(false);
     }
   };
 
   const preview = { id: 'preview', icon, color };
   return (
-    <Dialog title="New space" subtitle="Its own bots, teams, accounts and chats. Nothing is shared with your other spaces." labelId="new-space-title" onClose={onClose} unsaved={!!name.trim()}>
+    <Dialog
+      title={t('New space')}
+      subtitle={t('Its own bots, teams, accounts and chats. Nothing is shared with your other spaces.')}
+      labelId="new-space-title" onClose={onClose} unsaved={!!name.trim()}>
       <form onSubmit={submit} className="space-y-4" noValidate>
         <div className="flex items-center gap-3">
           <SpaceTile space={preview} size={48} />
           <div className="flex-1 min-w-0">
-            <label htmlFor="space-name" className="block text-xs font-medium text-zinc-300 mb-1">Name</label>
+            <label htmlFor="space-name" className="block text-xs font-medium text-zinc-300 mb-1">{t('Name')}</label>
             <input
               id="space-name"
               ref={nameRef}
@@ -300,14 +304,14 @@ export const NewSpaceModal: React.FC<NewSpaceProps> = ({ spaces, onClose, onCrea
         <p id="space-name-error" className="-mt-2 text-[11px] text-rose-300 min-h-[1em]">{touched ? nameErr : ''}</p>
 
         <fieldset>
-          <legend className="text-xs font-medium text-zinc-300 mb-1.5">Icon</legend>
+          <legend className="text-xs font-medium text-zinc-300 mb-1.5">{t('Icon')}</legend>
           <div className="flex flex-wrap gap-1.5">
             {SPACE_ICONS.map((i) => (
               <button
                 key={i}
                 type="button"
                 aria-pressed={icon === i}
-                aria-label={`Icon ${i}`}
+                aria-label={t('Icon {icon}', { icon: i })}
                 onClick={() => setIcon(i)}
                 className={`w-11 h-11 sm:w-9 sm:h-9 rounded-lg text-lg flex items-center justify-center border transition-colors ${
                   icon === i ? 'border-sky-400 bg-sky-500/10' : 'border-zinc-800 hover:border-zinc-600'
@@ -320,14 +324,14 @@ export const NewSpaceModal: React.FC<NewSpaceProps> = ({ spaces, onClose, onCrea
         </fieldset>
 
         <fieldset>
-          <legend className="text-xs font-medium text-zinc-300 mb-1.5">Colour</legend>
+          <legend className="text-xs font-medium text-zinc-300 mb-1.5">{t('Colour')}</legend>
           <div className="flex flex-wrap gap-2">
             {SPACE_COLORS.map((c) => (
               <button
                 key={c}
                 type="button"
                 aria-pressed={color === c}
-                aria-label={`Colour ${c}`}
+                aria-label={t('Colour {color}', { color: c })}
                 onClick={() => setColor(c)}
                 className={`w-7 h-7 rounded-full transition-transform ${color === c ? 'ring-2 ring-white ring-offset-2 ring-offset-zinc-900 scale-110' : 'hover:scale-110'}`}
                 style={{ background: c }}
@@ -338,9 +342,9 @@ export const NewSpaceModal: React.FC<NewSpaceProps> = ({ spaces, onClose, onCrea
 
         <div className="flex items-start gap-3 bg-zinc-950/60 p-3 rounded-xl border border-zinc-800">
           <div className="flex-1">
-            <p id="space-this-machine" className="text-xs font-medium text-zinc-200">Use This machine</p>
+            <p id="space-this-machine" className="text-xs font-medium text-zinc-200">{t('Use This machine')}</p>
             <p className="text-[11px] text-zinc-500">
-              Bots here can use the CLIs signed in on this computer. Turn it off to keep this space on its own accounts only; bots never fall back to it.
+              {t('Bots here can use the CLIs signed in on this computer. Turn it off to keep this space on its own accounts only; bots never fall back to it.')}
             </p>
           </div>
           <button
@@ -359,24 +363,24 @@ export const NewSpaceModal: React.FC<NewSpaceProps> = ({ spaces, onClose, onCrea
           <input type="checkbox" checked={addAccounts} onChange={(e) => setAddAccounts(e.target.checked)} className="mt-0.5 accent-sky-500" aria-describedby="space-add-accounts-detail" />
           <span className="flex-1">
             <span className="flex items-center gap-1.5 text-xs font-medium text-zinc-200">
-              <KeyRound size={12} className="text-sky-400" aria-hidden="true" /> Add accounts next
+              <KeyRound size={12} className="text-sky-400" aria-hidden="true" /> {t('Add accounts next')}
             </span>
             <span id="space-add-accounts-detail" className="block text-[11px] text-zinc-500">
-              Sign in to more Claude, Codex or Grok accounts, or add an Anthropic, OpenAI or xAI API key. They stay in this space.
+              {t('Sign in to more Claude, Codex or Grok accounts, or add an Anthropic, OpenAI or xAI API key. They stay in this space.')}
             </span>
           </span>
         </label>
 
         <fieldset className="space-y-1.5">
-          <legend className="text-xs font-medium text-zinc-300 mb-1.5">Start with</legend>
+          <legend className="text-xs font-medium text-zinc-300 mb-1.5">{t('Start with')}</legend>
           <label className="flex items-center gap-2.5 p-2.5 rounded-lg border border-sky-500/40 bg-sky-500/5 text-xs text-zinc-200">
             <input type="radio" name="space-start" checked readOnly className="accent-sky-500" />
-            An empty space
+            {t('An empty space')}
           </label>
           <label className="flex items-center gap-2.5 p-2.5 rounded-lg border border-zinc-800 text-xs text-zinc-500 cursor-not-allowed">
             <input type="radio" name="space-start" disabled className="accent-sky-500" />
-            <span className="flex-1">Copy bots from another space</span>
-            <span className="px-1.5 py-px rounded bg-zinc-800 text-[10px] text-zinc-400">Coming soon</span>
+            <span className="flex-1">{t('Copy bots from another space')}</span>
+            <span className="px-1.5 py-px rounded bg-zinc-800 text-[10px] text-zinc-400">{t('Coming soon')}</span>
           </label>
         </fieldset>
 
@@ -388,7 +392,7 @@ export const NewSpaceModal: React.FC<NewSpaceProps> = ({ spaces, onClose, onCrea
 
         <div className="flex justify-end gap-2 pt-1">
           <button type="button" onClick={onClose} className="px-3.5 py-2 rounded-lg text-xs font-medium text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800">
-            Cancel
+            {t('Cancel')}
           </button>
           <button
             type="submit"
@@ -396,7 +400,7 @@ export const NewSpaceModal: React.FC<NewSpaceProps> = ({ spaces, onClose, onCrea
             className="px-4 py-2 rounded-lg text-xs font-medium text-white bg-sky-600 hover:bg-sky-500 disabled:opacity-50 flex items-center gap-1.5"
           >
             {saving && <Loader2 size={13} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />}
-            {saving ? 'Creating…' : 'Create space'}
+            {saving ? t('Creating…') : t('Create space')}
           </button>
         </div>
       </form>
@@ -412,7 +416,7 @@ export const ArchivedSpacesModal: React.FC<{ onClose: () => void; onRestored: (s
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   useEffect(() => {
-    spacesApi.archived().then(setList, (e) => setError(e instanceof Error ? e.message : 'Couldn’t load archived spaces.'));
+    spacesApi.archived().then(setList, (e) => setError(e instanceof Error ? e.message : t('Couldn’t load archived spaces.')));
   }, []);
 
   const restore = async (s: Space) => {
@@ -424,19 +428,24 @@ export const ArchivedSpacesModal: React.FC<{ onClose: () => void; onRestored: (s
       playSfx('coin');
       onRestored(restored);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Couldn’t restore the space.');
+      setError(e instanceof Error ? e.message : t('Couldn’t restore the space.'));
     } finally {
       setBusy(null);
     }
   };
 
   return (
-    <Dialog title={`Archived spaces${list ? ` (${list.length})` : ''}`} subtitle="Their routines are paused and nothing new runs until you restore them." labelId="archived-title" onClose={onClose}>
+    <Dialog
+      title={list ? t('Archived spaces ({n})', { n: list.length }) : t('Archived spaces')}
+      subtitle={t('Their routines are paused and nothing new runs until you restore them.')}
+      labelId="archived-title"
+      onClose={onClose}
+    >
       {error && <p role="alert" className="text-xs text-rose-300">{error}</p>}
       {!list && !error && (
-        <p className="flex items-center gap-2 text-xs text-zinc-400"><Loader2 size={13} className="animate-spin motion-reduce:animate-none" /> Loading…</p>
+        <p className="flex items-center gap-2 text-xs text-zinc-400"><Loader2 size={13} className="animate-spin motion-reduce:animate-none" /> {t('Loading…')}</p>
       )}
-      {list?.length === 0 && <p className="text-xs text-zinc-500">No archived spaces.</p>}
+      {list?.length === 0 && <p className="text-xs text-zinc-500">{t('No archived spaces.')}</p>}
       <ul className="space-y-1.5">
         {list?.map((s) => (
           <li key={s.id} className="flex items-center gap-3 p-2.5 rounded-xl border border-zinc-800 bg-zinc-950/50">
@@ -446,7 +455,7 @@ export const ArchivedSpacesModal: React.FC<{ onClose: () => void; onRestored: (s
               <p className="text-[11px] text-zinc-500">{spaceSummary(s.counts)}</p>
               {s.paused_routines ? (
                 <p className="text-[11px] text-amber-300/80">
-                  {s.paused_routines} {s.paused_routines === 1 ? 'routine' : 'routines'} paused
+                  {t(s.paused_routines === 1 ? '{n} routine paused' : '{n} routines paused', { n: s.paused_routines })}
                 </p>
               ) : null}
             </div>
@@ -457,7 +466,7 @@ export const ArchivedSpacesModal: React.FC<{ onClose: () => void; onRestored: (s
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-sky-300 border border-sky-500/30 bg-sky-500/10 hover:bg-sky-500/20 disabled:opacity-50"
             >
               {busy === s.id ? <Loader2 size={12} className="animate-spin motion-reduce:animate-none" /> : <RotateCcw size={12} />}
-              Restore
+              {t('Restore')}
             </button>
           </li>
         ))}

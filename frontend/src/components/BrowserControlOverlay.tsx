@@ -18,6 +18,7 @@ import {
 } from '../browserGestures';
 import { domainOf } from '../humanSteps';
 import { haptic } from '../haptics';
+import { t } from '../i18n';
 
 /** Sends one gesture to the page: presses, releases, taps and text wait for an ack, moves don't. */
 export function sendPageInput(send: (payload: Record<string, unknown>, input?: boolean) => void, input: PageInput) {
@@ -98,8 +99,8 @@ function ZoomStage({
         },
         now: () => performance.now(),
         later: (fn, ms) => {
-          const t = window.setTimeout(fn, ms);
-          return () => window.clearTimeout(t);
+          const timer = window.setTimeout(fn, ms);
+          return () => window.clearTimeout(timer);
         },
       }),
     []
@@ -130,7 +131,7 @@ function ZoomStage({
       {image && view.scale > 0 ? (
         <img
           src={image}
-          alt="The bot's browser"
+          alt={t("The bot's browser")}
           draggable={false}
           onLoad={onFrameDone}
           onError={onFrameDone}
@@ -140,7 +141,7 @@ function ZoomStage({
       ) : (
         <div className="absolute inset-0 flex items-center justify-center text-zinc-500">
           <Loader2 size={20} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
-          <span className="sr-only">Waiting for the browser</span>
+          <span className="sr-only">{t('Waiting for the browser')}</span>
         </div>
       )}
 
@@ -152,7 +153,7 @@ function ZoomStage({
             onClick={() => setMode('box')}
             className="inline-flex items-center gap-1.5 min-h-[40px] px-3 rounded-full bg-zinc-900/90 border border-zinc-700 text-sm text-zinc-100"
           >
-            <Puzzle size={14} aria-hidden="true" /> Puzzle
+            <Puzzle size={14} aria-hidden="true" /> {t('Puzzle')}
           </button>
         )}
         {mode !== 'fit' && (
@@ -162,7 +163,7 @@ function ZoomStage({
             onClick={() => setMode('fit')}
             className="inline-flex items-center gap-1.5 min-h-[40px] px-3 rounded-full bg-zinc-900/90 border border-zinc-700 text-sm text-zinc-100"
           >
-            <Maximize size={14} aria-hidden="true" /> Whole page
+            <Maximize size={14} aria-hidden="true" /> {t('Whole page')}
           </button>
         )}
       </div>
@@ -254,14 +255,14 @@ export const BrowserControlOverlay: React.FC<BrowserControlOverlayProps> = ({
     };
   }, []);
 
-  const domain = domainOf(pageUrl) || pageUrl || 'Browser';
+  const domain = domainOf(pageUrl) || pageUrl || t('Browser');
   const pageInput = useCallback((input: PageInput) => sendPageInput(send, input), [send]);
 
   return createPortal(
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={`${botName}'s browser`}
+      aria-label={t("{bot}'s browser", { bot: botName })}
       data-browser-fullscreen
       className="fixed inset-0 z-[70] flex flex-col bg-black text-zinc-100"
       style={{ paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }}
@@ -276,7 +277,7 @@ export const BrowserControlOverlay: React.FC<BrowserControlOverlayProps> = ({
             type="button"
             onClick={openKeyboard}
             aria-pressed={keyboard}
-            aria-label="Keyboard"
+            aria-label={t('Keyboard')}
             className="shrink-0 inline-flex items-center justify-center w-11 h-10 rounded-lg text-zinc-300 hover:bg-zinc-800"
           >
             <Keyboard size={18} aria-hidden="true" />
@@ -289,7 +290,7 @@ export const BrowserControlOverlay: React.FC<BrowserControlOverlayProps> = ({
             }}
             className="shrink-0 inline-flex items-center gap-1.5 h-10 px-3 rounded-lg bg-cyan-500 text-zinc-950 text-sm font-semibold"
           >
-            <Hand size={15} aria-hidden="true" /> Hand back
+            <Hand size={15} aria-hidden="true" /> {t('Hand back')}
           </button>
         </div>
         {(solved || captcha || error) && (
@@ -300,12 +301,12 @@ export const BrowserControlOverlay: React.FC<BrowserControlOverlayProps> = ({
           >
             {solved ? (
               <span className="inline-flex items-center gap-1.5">
-                <CheckCircle2 size={13} aria-hidden="true" /> Solved, {botName} continues
+                <CheckCircle2 size={13} aria-hidden="true" /> {t('Solved, {bot} continues', { bot: botName })}
               </span>
             ) : error ? (
               error
             ) : (
-              <>Solve the puzzle, {botName} continues by itself</>
+              t('Solve the puzzle, {bot} continues by itself', { bot: botName })
             )}
           </p>
         )}
@@ -316,7 +317,7 @@ export const BrowserControlOverlay: React.FC<BrowserControlOverlayProps> = ({
         onFrameDone={onFrameDone}
         send={pageInput}
         target={captcha?.target ?? null}
-        label={`${botName}'s page. Tap to click, drag with one finger, pinch to zoom.`}
+        label={t("{bot}'s page. Tap to click, drag with one finger, pinch to zoom.", { bot: botName })}
       />
 
       <div className="shrink-0" style={{ height: 'env(safe-area-inset-bottom)' }} />
@@ -324,7 +325,7 @@ export const BrowserControlOverlay: React.FC<BrowserControlOverlayProps> = ({
       <input
         ref={keys}
         type="text"
-        aria-label="Type into the page"
+        aria-label={t('Type into the page')}
         autoCapitalize="off"
         autoCorrect="off"
         autoComplete="off"

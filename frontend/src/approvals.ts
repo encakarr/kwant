@@ -4,6 +4,7 @@
 
 import type { PendingApproval } from './components/ModernApprovalCard';
 import type { AwayItem, AwayLink } from './away';
+import { t } from './i18n';
 
 /** A card plus where it belongs: the asking bot and, when the server knows it, the conversation. */
 export interface ChatApproval extends PendingApproval {
@@ -44,9 +45,9 @@ export function approvalFromAway(item: AwayItem): ChatApproval {
 export function lateAnswerText(reply: unknown, bot: string | null): string | null {
   if (!reply || typeof reply !== 'object') return null;
   const r = reply as { resumed?: unknown; reason?: unknown };
-  const who = bot ?? 'The bot';
-  if (r.resumed === 'new_turn') return `Allowed. ${who} is picking the work back up.`;
-  if (typeof r.reason === 'string' && r.reason) return `Allowed, but ${who} couldn't continue: ${r.reason}.`;
+  const who = bot ?? t('The bot');
+  if (r.resumed === 'new_turn') return t('Allowed. {name} is picking the work back up.', { name: who });
+  if (typeof r.reason === 'string' && r.reason) return t('Allowed, but {name} couldn\'t continue: {reason}.', { name: who, reason: r.reason });
   return null;
 }
 

@@ -5,6 +5,7 @@
 import { PersonCancelledError, personFetch } from './auth';
 import type { Routine, RoutineInput, Schedule } from './continuity';
 import { type Check, type CheckKind, checkKindLabel, checkTarget } from './missions';
+import { t } from './i18n';
 
 export type DiscoveryBlock = 'off' | 'board_off' | 'no_timezone';
 export type SuggestionStatus = 'offered' | 'accepted' | 'dismissed' | 'expired' | 'superseded';
@@ -178,28 +179,28 @@ const sentence = (s: string) => {
 export function discoveryErrorFrom(status: number, answer: unknown): DiscoveryError {
   const a = answer && typeof answer === 'object' ? (answer as Record<string, unknown>) : {};
   const err = typeof a.error === 'string' && a.error.trim() ? sentence(a.error) : null;
-  if (status === 403) return new DiscoveryError('Only you can act on suggested routines.', 403);
+  if (status === 403) return new DiscoveryError(t('Only you can act on suggested routines.'), 403);
   if (status === 409) {
     const current = { status: typeof a.status === 'string' ? a.status : '', routine_id: typeof a.routine_id === 'string' ? a.routine_id : null };
     return new DiscoveryError(alreadyHandledText(current.status), 409, current);
   }
-  if (status === 404) return new DiscoveryError(err && !/not found/i.test(err) ? err : 'That suggestion no longer exists.', 404);
-  return new DiscoveryError(err ?? `Something went wrong (HTTP ${status}).`, status);
+  if (status === 404) return new DiscoveryError(err && !/not found/i.test(err) ? err : t('That suggestion no longer exists.'), 404);
+  return new DiscoveryError(err ?? t('Something went wrong (HTTP {status}).', { status }), status);
 }
 
 /** The 409 in the person's words: someone (often another tab) already decided it. */
 export function alreadyHandledText(status: string): string {
   switch (status) {
     case 'accepted':
-      return 'Already added. It’s in your routines below.';
+      return t('Already added. It’s in your routines below.');
     case 'dismissed':
-      return 'Already dismissed.';
+      return t('Already dismissed.');
     case 'expired':
-      return 'This suggestion has expired: the habit no longer fits a schedule.';
+      return t('This suggestion has expired: the habit no longer fits a schedule.');
     case 'superseded':
-      return 'This suggestion was updated. The list now shows the new one.';
+      return t('This suggestion was updated. The list now shows the new one.');
     default:
-      return 'This suggestion was already handled.';
+      return t('This suggestion was already handled.');
   }
 }
 
@@ -215,7 +216,7 @@ async function call<T>(url: string, method = 'GET', body?: unknown, extra?: Reco
     });
   } catch (e) {
     if (e instanceof PersonCancelledError) throw new DiscoveryError(e.message, 401);
-    throw new DiscoveryError('Couldn’t reach the server. Check your connection and try again.', 0);
+    throw new DiscoveryError(t('Couldn’t reach the server. Check your connection and try again.'), 0);
   }
   const answer = await res.json().catch(() => null);
   if (res.ok) return answer as T;
@@ -279,91 +280,106 @@ export class AcceptIntent {
 
 export const BLOCK_TEXT: Record<DiscoveryBlock, { title: string; fix: string }> = {
   off: {
-    title: 'Suggestions are off.',
-    fix: 'Turn on “Suggest routines from repeated tasks” in Settings › All spaces, under Mission board.',
+    title: t('Suggestions are off.'),
+    fix: t('Turn on “Suggest routines from repeated tasks” in Settings › All spaces, under Mission board.'),
   },
   board_off: {
-    title: 'Suggestions learn from tasks on the Mission board, and the board is off.',
-    fix: 'Turn on “Show the Mission board” in Settings.',
+    title: t('Suggestions learn from tasks on the Mission board, and the board is off.'),
+    fix: t('Turn on “Show the Mission board” in Settings.'),
   },
   no_timezone: {
-    title: 'Your time zone isn’t set, so there’s no telling what time you usually ask.',
-    fix: 'Set your time zone in Settings › All spaces, under Where you are.',
+    title: t('Your time zone isn’t set, so there’s no telling what time you usually ask.'),
+    fix: t('Set your time zone in Settings › All spaces, under Where you are.'),
   },
 };
 
-export const blockText = (b: string) => BLOCK_TEXT[b as DiscoveryBlock] ?? { title: 'Suggestions can’t run right now.', fix: 'Check Settings.' };
+export const blockText = (b: string) => BLOCK_TEXT[b as DiscoveryBlock] ?? { title: t('Suggestions can’t run right now.'), fix: t('Check Settings.') };
 
 const SKIP_TEXT: Record<string, string> = {
-  too_short: 'Not enough asks yet to see a rhythm',
-  not_regular: 'No regular rhythm',
-  stopped: 'You stopped asking for it',
-  not_verified: 'Too few of these tasks passed their checks',
-  mixed_owners: 'Different bots did it, so there’s no one bot to suggest',
-  bot_unavailable: 'The bot that did it isn’t in this space any more',
-  covered: 'A routine already does this',
-  cooling_off: 'You dismissed it, or deleted its routine, in the last 30 days',
-  already_offered: 'Already suggested',
-  in_chain: 'It’s a follow-up step of another suggestion',
-  capped: 'Waiting: today’s limit of new suggestions is reached',
+  too_short: t('Not enough asks yet to see a rhythm'),
+  not_regular: t('No regular rhythm'),
+  stopped: t('You stopped asking for it'),
+  not_verified: t('Too few of these tasks passed their checks'),
+  mixed_owners: t('Different bots did it, so there’s no one bot to suggest'),
+  bot_unavailable: t('The bot that did it isn’t in this space any more'),
+  covered: t('A routine already does this'),
+  cooling_off: t('You dismissed it, or deleted its routine, in the last 30 days'),
+  already_offered: t('Already suggested'),
+  in_chain: t('It’s a follow-up step of another suggestion'),
+  capped: t('Waiting: today’s limit of new suggestions is reached'),
 };
 
 export const skipText = (reason: string) => SKIP_TEXT[reason] ?? reason.replace(/_/g, ' ');
 
 const PATTERN_TEXT: Record<DiscoveryPattern, string> = {
-  monthly: 'once a month',
-  weekly: 'every week',
-  weekdays: 'on weekdays',
-  daily: 'every day',
+  monthly: t('once a month'),
+  weekly: t('every week'),
+  weekdays: t('on weekdays'),
+  daily: t('every day'),
 };
 
 /** "You asked for this 5 times, every week, usually around 09:10." */
 export function habitLine(e: DiscoveryEvidence | undefined | null): string {
   if (!e) return '';
-  const times = e.matched === 1 ? 'once' : `${e.matched} times`;
-  const rhythm = PATTERN_TEXT[e.pattern] ? `, ${PATTERN_TEXT[e.pattern]}` : '';
-  const when = e.time_spread ? (e.time_spread.includes('–') ? `, usually between ${e.time_spread.replace('–', ' and ')}` : `, usually around ${e.time_spread}`) : '';
-  return `You asked for this ${times}${rhythm}${when}${e.time_varies ? ' (the time varies)' : ''}.`;
+  const times = e.matched === 1 ? t('once') : t('{n} times', { n: e.matched });
+  const rhythm = PATTERN_TEXT[e.pattern] ? t(', {rhythm}', { rhythm: PATTERN_TEXT[e.pattern] }) : '';
+  const dash = e.time_spread ? e.time_spread.indexOf('–') : -1;
+  const when = !e.time_spread
+    ? ''
+    : dash >= 0
+      ? t(', usually between {from} and {to}', { from: e.time_spread.slice(0, dash), to: e.time_spread.slice(dash + 1) })
+      : t(', usually around {time}', { time: e.time_spread });
+  const varies = e.time_varies ? t(' (the time varies)') : '';
+  return t('You asked for this {times}{rhythm}{when}{varies}.', { times, rhythm, when, varies });
 }
 
 const APPROVAL_TEXT: Record<string, string> = {
-  ask: 'Asks you before actions that need approval',
-  smart: 'Asks you only when an action is risky',
-  off: 'Doesn’t ask before actions (approvals are off for this bot)',
+  ask: t('Asks you before actions that need approval'),
+  smart: t('Asks you only when an action is risky'),
+  off: t('Doesn’t ask before actions (approvals are off for this bot)'),
 };
 export const approvalText = (m: string) => APPROVAL_TEXT[m] ?? APPROVAL_TEXT.ask;
-
-const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
 /** "In past runs: 2 outside actions, 1 workspace change; needed your OK twice." */
 export function pastText(p: DiscoveryPermissions['past'] | undefined): string {
   if (!p) return '';
-  const did = [p.external ? plural(p.external, 'outside action') : '', p.workspace ? plural(p.workspace, 'workspace change') : ''].filter(Boolean);
-  const ok = p.needed_ok ? `needed your OK ${p.needed_ok === 1 ? 'once' : p.needed_ok === 2 ? 'twice' : `${p.needed_ok} times`}` : 'never needed your OK';
-  return did.length ? `In past runs: ${did.join(', ')}; ${ok}.` : `In past runs it changed nothing outside its chat, and ${ok}.`;
+  const did = [
+    p.external ? t(p.external === 1 ? '{n} outside action' : '{n} outside actions', { n: p.external }) : '',
+    p.workspace ? t(p.workspace === 1 ? '{n} workspace change' : '{n} workspace changes', { n: p.workspace }) : '',
+  ].filter(Boolean);
+  const ok = !p.needed_ok
+    ? t('never needed your OK')
+    : p.needed_ok === 1
+      ? t('needed your OK once')
+      : p.needed_ok === 2
+        ? t('needed your OK twice')
+        : t('needed your OK {n} times', { n: p.needed_ok });
+  if (!did.length) return t('In past runs it changed nothing outside its chat, and {ok}.', { ok });
+  const list = did.length === 2 ? t('{a}, {b}', { a: did[0], b: did[1] }) : did[0];
+  return t('In past runs: {did}; {ok}.', { did: list, ok });
 }
 
 /** A kept or left-out check on one line, from its masked spec: shown only, never editable. */
 export function checkLine(c: { kind: string; spec: unknown }): string {
   const spec = c.spec && typeof c.spec === 'object' && !Array.isArray(c.spec) ? (c.spec as Record<string, unknown>) : {};
   const target = checkTarget({ kind: c.kind as CheckKind, spec } as Pick<Check, 'kind' | 'spec'>);
-  return target ? `${checkKindLabel(c.kind)}: ${target}` : checkKindLabel(c.kind);
+  return target ? t('{name}: {detail}', { name: checkKindLabel(c.kind), detail: target }) : checkKindLabel(c.kind);
 }
 
 const LEFT_OUT_TEXT: Record<string, string> = {
-  'needs a person or a reviewer': 'Needs you or a teammate to look, so it can’t run on a schedule',
-  'changes every time': 'It was different every time',
-  'passed only once': 'It passed only once',
-  'more than 10 checks': 'A routine keeps at most 10 checks',
+  'needs a person or a reviewer': t('Needs you or a teammate to look, so it can’t run on a schedule'),
+  'changes every time': t('It was different every time'),
+  'passed only once': t('It passed only once'),
+  'more than 10 checks': t('A routine keeps at most 10 checks'),
 };
 export const leftOutText = (reason: string) => LEFT_OUT_TEXT[reason] ?? sentence(reason).replace(/\.$/, '');
 
 /** "Last 30 days: 3 suggested, 1 added, 1 dismissed. Still on after 14 days: 1 of 2." */
 export function statsLine(s: DiscoveryStats | undefined | null): string {
   if (!s) return '';
-  const parts = `Last 30 days: ${s.offered_30d} suggested, ${s.accepted_30d} added, ${s.dismissed_30d} dismissed.`;
+  const parts = t('Last 30 days: {offered} suggested, {accepted} added, {dismissed} dismissed.', { offered: s.offered_30d, accepted: s.accepted_30d, dismissed: s.dismissed_30d });
   const judged = s.retained + s.dropped;
-  return judged ? `${parts} Still on 14 days after adding: ${s.retained} of ${judged}.` : parts;
+  return judged ? t('{parts} Still on 14 days after adding: {retained} of {judged}.', { parts, retained: s.retained, judged }) : parts;
 }
 
 /** A source ask's day: "Mon 12 Oct". Local dates come as YYYY-MM-DD in the person's zone. */

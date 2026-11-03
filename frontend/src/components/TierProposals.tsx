@@ -20,6 +20,7 @@ import {
   scorecardStatus,
   upsertProposal,
 } from '../flightSchool';
+import { t } from '../i18n';
 import { MissionError, ago, capabilitiesApi, newIdempotencyKey, onMission } from '../missions';
 
 export interface ProposalsApi {
@@ -38,7 +39,7 @@ export const ScorecardView: React.FC<{ card: Partial<Scorecard>; compact?: boole
   return (
     <div className="space-y-1.5" data-scorecard={card.task_class ?? ''}>
       {rows.length === 0 ? (
-        <p className="text-[11px] text-zinc-500">No settled work in this kind yet.</p>
+        <p className="text-[11px] text-zinc-500">{t('No settled work in this kind yet.')}</p>
       ) : (
         <dl className={`grid gap-x-3 gap-y-0.5 text-[11px] ${compact ? 'grid-cols-[auto_1fr]' : 'grid-cols-[auto_1fr] sm:grid-cols-[auto_1fr_auto_1fr]'}`}>
           {rows.map((r) => (
@@ -54,7 +55,7 @@ export const ScorecardView: React.FC<{ card: Partial<Scorecard>; compact?: boole
           {status.text}
         </p>
       )}
-      {card.window_days ? <p className="text-[10px] text-zinc-600">From the board’s own records of the last {card.window_days} days.</p> : null}
+      {card.window_days ? <p className="text-[10px] text-zinc-600">{t('From the board’s own records of the last {n} days.', { n: card.window_days })}</p> : null}
     </div>
   );
 };
@@ -108,21 +109,21 @@ export const ProposalCard: React.FC<{
             {proposalTitle(p, bot)}
           </p>
           <p className="text-[11px] text-zinc-400">
-            {proposalChange(p)} <span className="text-zinc-600">· asked {ago(p.created_at, now)}</span>
+            {proposalChange(p)} <span className="text-zinc-600">· {t('asked {when}', { when: ago(p.created_at, now) })}</span>
           </p>
         </div>
       </div>
 
       {p.reason && (
         <blockquote className="border-l-2 border-zinc-700 pl-2 text-[11px] text-zinc-300 break-words">
-          <span className="sr-only">{bot} says: </span>
+          <span className="sr-only">{t('{bot} says: ', { bot })}</span>
           {p.reason}
         </blockquote>
       )}
 
       {p.scorecard && (
         <details className="text-[11px]">
-          <summary className={`cursor-pointer text-zinc-400 hover:text-zinc-200 rounded ${focusRing}`}>Its scorecard when it asked</summary>
+          <summary className={`cursor-pointer text-zinc-400 hover:text-zinc-200 rounded ${focusRing}`}>{t('Its scorecard when it asked')}</summary>
           <div className="mt-1.5">
             <ScorecardView card={{ ...p.scorecard, task_class: p.task_class }} />
           </div>
@@ -140,9 +141,9 @@ export const ProposalCard: React.FC<{
           {proposalOutcome(p, bot)}
         </p>
       ) : declining ? (
-        <div role="group" aria-label={`Decline: ${proposalTitle(p, bot)}`} className="flex flex-wrap items-center gap-2" data-decline-form>
+        <div role="group" aria-label={t('Decline: {title}', { title: proposalTitle(p, bot) })} className="flex flex-wrap items-center gap-2" data-decline-form>
           <label htmlFor={`${id}-n`} className="sr-only">
-            Why not? Optional, {bot} sees it
+            {t('Why not? Optional, {bot} sees it', { bot })}
           </label>
           <input
             ref={noteRef}
@@ -151,26 +152,26 @@ export const ProposalCard: React.FC<{
             maxLength={500}
             onChange={(e) => setNote(e.target.value)}
             onKeyDown={onNoteKey}
-            placeholder="Why not? (optional)"
+            placeholder={t('Why not? (optional)')}
             className="flex-1 min-w-[10rem] bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 min-h-[40px] sm:min-h-[32px] text-xs text-zinc-100 placeholder-zinc-600 focus:border-sky-500 focus:outline-none"
           />
           <button type="button" disabled={busy} onClick={submitDecline} className={`${btn} border border-rose-500/40 text-rose-200 hover:bg-rose-500/10`} data-confirm-decline>
-            {busy ? <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : null} Decline
+            {busy ? <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : null} {t('Decline')}
           </button>
           <button type="button" disabled={busy} onClick={() => setDeclining(false)} className={`${btn} text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800`}>
-            Cancel
+            {t('Cancel')}
           </button>
         </div>
       ) : (
-        <div className="flex flex-wrap items-center gap-2" role="group" aria-label={`Decide: ${proposalTitle(p, bot)}`}>
+        <div className="flex flex-wrap items-center gap-2" role="group" aria-label={t('Decide: {title}', { title: proposalTitle(p, bot) })}>
           <button type="button" disabled={busy} onClick={() => onGrant(p)} className={`${btn} bg-emerald-600/90 text-white hover:bg-emerald-500`} data-grant>
             {busy ? <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Check size={12} aria-hidden="true" />}
-            Grant {p.to_tier === 'act' ? 'Act' : p.to_tier === 'sandbox' ? 'Sandbox' : 'Observe'}
+            {t('Grant {tier}', { tier: p.to_tier === 'act' ? t('Act') : p.to_tier === 'sandbox' ? t('Sandbox') : t('Observe') })}
           </button>
           <button type="button" disabled={busy} onClick={() => setDeclining(true)} className={`${btn} border border-zinc-700 bg-zinc-800/80 text-zinc-100 hover:bg-zinc-700`} data-decline>
-            <X size={12} aria-hidden="true" /> Decline…
+            <X size={12} aria-hidden="true" /> {t('Decline…')}
           </button>
-          <span className="text-[10px] text-zinc-500">Payments always ask you, whatever the tier.</span>
+          <span className="text-[10px] text-zinc-500">{t('Payments always ask you, whatever the tier.')}</span>
         </div>
       )}
     </li>
@@ -200,7 +201,7 @@ export function useProposalDecisions(api: ProposalsApi, onDecided: (p: TierPropo
           onDecided(p, null);
         } else {
           // Another press is a new try with the same key: a lost answer replays, not repeats.
-          setErrors((x) => ({ ...x, [p.id]: e instanceof Error ? e.message : 'Couldn’t save that. Try again.' }));
+          setErrors((x) => ({ ...x, [p.id]: e instanceof Error ? e.message : t('Couldn’t save that. Try again.') }));
         }
       } finally {
         setBusyId(null);
@@ -284,11 +285,16 @@ export const TierRequests: React.FC<{
 
   const open = openProposals(list);
   if (!open.length && !decided.length) return null;
-  const bot = (p: TierProposal) => names[p.kwant_id] ?? 'A bot';
+  const bot = (p: TierProposal) => names[p.kwant_id] ?? t('A bot');
   return (
     <section aria-labelledby={headId} className="space-y-2" data-tier-requests={open.length}>
       <h3 id={headId} className="flex items-center gap-1.5 text-xs font-medium text-amber-200">
-        <GraduationCap size={14} aria-hidden="true" /> Needs you: {open.length === 1 ? 'a bot asks' : open.length > 1 ? `${open.length} bots ask` : 'tier requests'} for more freedom
+        <GraduationCap size={14} aria-hidden="true" />{' '}
+        {open.length === 1
+          ? t('Needs you: a bot asks for more freedom')
+          : open.length > 1
+            ? t('Needs you: {n} bots ask for more freedom', { n: open.length })
+            : t('Needs you: tier requests for more freedom')}
       </h3>
       <ul className="grid gap-2 md:grid-cols-2">
         {[...open, ...decided].map((p) => (
@@ -297,9 +303,9 @@ export const TierRequests: React.FC<{
       </ul>
       {open.length === 0 && (
         <p className="text-[11px] text-zinc-500" data-requests-done>
-          Nothing else is waiting.{' '}
+          {t('Nothing else is waiting.')}{' '}
           <button type="button" onClick={() => setDecided([])} className={`underline hover:text-zinc-300 rounded ${focusRing}`}>
-            Hide
+            {t('Hide')}
           </button>
         </p>
       )}
@@ -319,7 +325,7 @@ export function useScorecard(kwantId: string, taskClass: string, shown: boolean,
     api
       .scorecard(kwantId, taskClass)
       .then((c) => live && setCard(c))
-      .catch((e) => live && setError(e instanceof Error ? e.message : 'Couldn’t load the scorecard.'))
+      .catch((e) => live && setError(e instanceof Error ? e.message : t('Couldn’t load the scorecard.')))
       .finally(() => live && setLoading(false));
     return () => {
       live = false;
@@ -358,20 +364,20 @@ export const ScorecardDisclosure: React.FC<{
         className={`text-[11px] text-sky-300 hover:text-sky-200 rounded ${focusRing}`}
         data-scorecard-toggle={taskClass}
       >
-        {shown ? 'Hide scorecard' : 'Scorecard'}
-        <span className="sr-only"> for {classLabel(taskClass)}</span>
+        {shown ? t('Hide scorecard') : t('Scorecard')}
+        <span className="sr-only">{t(' for {work}', { work: classLabel(taskClass) })}</span>
       </button>
       {shown && (
         <div id={`${id}-c`} className="mt-1.5 rounded-lg bg-zinc-950/60 px-2.5 py-2">
           {loading && !c ? (
             <p className="flex items-center gap-1.5 text-[11px] text-zinc-400">
-              <Loader2 size={11} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> Loading the scorecard…
+              <Loader2 size={11} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> {t('Loading the scorecard…')}
             </p>
           ) : error && !c ? (
             <p role="alert" className="flex flex-wrap items-center gap-2 text-[11px] text-rose-300">
               <AlertTriangle size={12} aria-hidden="true" /> {error}
               <button type="button" onClick={reload} className={`underline hover:text-rose-200 rounded ${focusRing}`}>
-                Try again
+                {t('Try again')}
               </button>
             </p>
           ) : c ? (

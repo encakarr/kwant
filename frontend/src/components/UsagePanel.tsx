@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Loader2, RefreshCw } from 'lucide-react';
 import { formatWhen } from '../continuity';
 import { ModelUsage, UsageSums, cacheShare, compactTokens, formatCost, modelUsageApi, purposeLabel } from '../modelUsage';
+import { t } from '../i18n';
 
 const quietBtn =
   'inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium border transition-colors disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500 border-zinc-700/70 bg-zinc-800/70 text-zinc-200 hover:bg-zinc-700';
@@ -9,17 +10,20 @@ const quietBtn =
 type TokenKey = 'fresh_input_tokens' | 'cache_read_tokens' | 'cache_write_tokens' | 'output_tokens';
 
 const KINDS: Array<{ key: TokenKey; label: string; hint: string }> = [
-  { key: 'fresh_input_tokens', label: 'Fresh input', hint: 'Input tokens read at full price' },
-  { key: 'cache_read_tokens', label: 'Cache read', hint: 'Input tokens served from the cache' },
-  { key: 'cache_write_tokens', label: 'Cache write', hint: 'Input tokens written to the cache' },
-  { key: 'output_tokens', label: 'Output', hint: 'Tokens the model wrote' },
+  { key: 'fresh_input_tokens', label: t('Fresh input'), hint: t('Input tokens read at full price') },
+  { key: 'cache_read_tokens', label: t('Cache read'), hint: t('Input tokens served from the cache') },
+  { key: 'cache_write_tokens', label: t('Cache write'), hint: t('Input tokens written to the cache') },
+  { key: 'output_tokens', label: t('Output'), hint: t('Tokens the model wrote') },
 ];
 
 /** Calls and tokens line, e.g. "fresh 40 · cache read 1.5k · cache write 0 · out 12". */
 const tokenLine = (s: Pick<UsageSums, 'fresh_input_tokens' | 'cache_read_tokens' | 'cache_write_tokens' | 'output_tokens'>) =>
-  `fresh ${compactTokens(s.fresh_input_tokens)} · cache read ${compactTokens(s.cache_read_tokens)} · cache write ${compactTokens(
-    s.cache_write_tokens,
-  )} · out ${compactTokens(s.output_tokens)}`;
+  t('fresh {fresh} · cache read {read} · cache write {write} · out {out}', {
+    fresh: compactTokens(s.fresh_input_tokens),
+    read: compactTokens(s.cache_read_tokens),
+    write: compactTokens(s.cache_write_tokens),
+    out: compactTokens(s.output_tokens),
+  });
 
 /** What the Usage tab shows; `usage` null while loading. */
 export const UsageView: React.FC<{
@@ -33,35 +37,37 @@ export const UsageView: React.FC<{
       <div className="flex items-center justify-between gap-2 bg-rose-500/10 border border-rose-500/20 text-rose-300 px-3 py-2 rounded-lg text-xs" role="alert">
         <span>{error}</span>
         <button type="button" onClick={onReload} className={quietBtn}>
-          <RefreshCw size={12} /> Retry
+          <RefreshCw size={12} /> {t('Retry')}
         </button>
       </div>
     );
   if (!usage)
     return (
       <p className="flex items-center gap-2 text-xs text-zinc-400" role="status">
-        <Loader2 size={14} className="animate-spin motion-reduce:animate-none" /> Loading usage…
+        <Loader2 size={14} className="animate-spin motion-reduce:animate-none" /> {t('Loading usage…')}
       </p>
     );
-  const t = usage.totals;
-  if (t.calls === 0)
+  const tot = usage.totals;
+  if (tot.calls === 0)
     return (
       <p className="text-xs text-zinc-500 border border-dashed border-zinc-800 rounded-lg p-4 text-center" data-usage-empty>
-        No model calls recorded for {kwantName} yet. Calls are counted here for bots on an API key, a custom API or a Claude sign-in;
-        Codex and Grok sign-ins report their usage to their own accounts.
+        {t(
+          'No model calls recorded for {name} yet. Calls are counted here for bots on an API key, a custom API or a Claude sign-in; Codex and Grok sign-ins report their usage to their own accounts.',
+          { name: kwantName },
+        )}
       </p>
     );
-  const share = cacheShare(t);
+  const share = cacheShare(tot);
   return (
     <div className="space-y-4" data-usage>
       <div className="flex items-center justify-between gap-2">
         <p className="text-xs text-zinc-400">
-          {t.calls} {t.calls === 1 ? 'call' : 'calls'}
-          {share !== null && `, ${share}% of input from the cache`}
-          {formatCost(t.cost_usd) && `, ${formatCost(t.cost_usd)}`}
+          {t(tot.calls === 1 ? '{n} call' : '{n} calls', { n: tot.calls })}
+          {share !== null && t(', {pct}% of input from the cache', { pct: share })}
+          {formatCost(tot.cost_usd) && `, ${formatCost(tot.cost_usd)}`}
         </p>
-        <button type="button" onClick={onReload} className={quietBtn} aria-label="Refresh usage">
-          <RefreshCw size={12} /> Refresh
+        <button type="button" onClick={onReload} className={quietBtn} aria-label={t('Refresh usage')}>
+          <RefreshCw size={12} /> {t('Refresh')}
         </button>
       </div>
       <dl className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -69,7 +75,7 @@ export const UsageView: React.FC<{
           <div key={key} className="bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2" title={hint}>
             <dt className="text-[10px] uppercase tracking-wide text-zinc-500">{label}</dt>
             <dd className="text-base font-semibold text-zinc-100 tabular-nums" data-kind={key}>
-              {compactTokens(t[key])}
+              {compactTokens(tot[key])}
             </dd>
           </div>
         ))}
@@ -78,7 +84,7 @@ export const UsageView: React.FC<{
       {usage.by_purpose.length > 0 && (
         <section aria-labelledby="usage-by-purpose">
           <h3 id="usage-by-purpose" className="text-[11px] font-medium text-zinc-400 mb-1.5">
-            By purpose
+            {t('By purpose')}
           </h3>
           <ul className="space-y-1">
             {usage.by_purpose.map((p) => (
@@ -96,7 +102,7 @@ export const UsageView: React.FC<{
       {usage.recent.length > 0 && (
         <section aria-labelledby="usage-recent">
           <h3 id="usage-recent" className="text-[11px] font-medium text-zinc-400 mb-1.5">
-            Recent calls
+            {t('Recent calls')}
           </h3>
           <ul className="divide-y divide-zinc-800/70 border border-zinc-800 rounded-lg">
             {usage.recent.map((c) => (
@@ -106,7 +112,7 @@ export const UsageView: React.FC<{
                   <span className="text-zinc-500 break-all">{c.model}</span>
                   <span className="ml-auto text-[10px] text-zinc-500">{formatWhen(c.created_at)}</span>
                 </div>
-                <div className="text-zinc-500 tabular-nums">{c.reported ? tokenLine(c) + (formatCost(c.cost_usd) ? ` · ${formatCost(c.cost_usd)}` : '') : 'The provider sent no token counts for this call.'}</div>
+                <div className="text-zinc-500 tabular-nums">{c.reported ? tokenLine(c) + (formatCost(c.cost_usd) ? ` · ${formatCost(c.cost_usd)}` : '') : t('The provider sent no token counts for this call.')}</div>
               </li>
             ))}
           </ul>
@@ -126,7 +132,7 @@ export const UsagePanel: React.FC<{ kwantId: string; kwantName: string }> = ({ k
     modelUsageApi
       .get(kwantId)
       .then(setUsage)
-      .catch(() => setError("Couldn't load usage."));
+      .catch(() => setError(t("Couldn't load usage.")));
   }, [kwantId]);
   useEffect(load, [load]);
   return <UsageView kwantName={kwantName} usage={usage} error={error} onReload={load} />;

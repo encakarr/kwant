@@ -3,6 +3,7 @@ import { AlertTriangle, ArrowRight, Check, ChevronDown, Info, KeyRound, Loader2,
 import { PERSON_SIGNED_IN_EVENT, requestPersonToken } from '../auth';
 import { playSfx } from '../audio/chiptune';
 import { approvalModeApi } from '../approvalMode';
+import { t } from '../i18n';
 import {
   BITWARDEN_CLOUDS,
   DEFAULT_BITWARDEN_SERVER,
@@ -136,12 +137,12 @@ export const BitwardenLoginForm: React.FC<{
         if ('error' in checked) return setFormError(checked.error);
         serverUrl = checked.url;
       } else serverUrl = server;
-      if (!email.includes('@')) return setFormError('Enter the email of your Bitwarden account.');
-      if (apiKey && !clientId.trim()) return setFormError('Enter the API key’s client_id.');
+      if (!email.includes('@')) return setFormError(t('Enter the email of your Bitwarden account.'));
+      if (apiKey && !clientId.trim()) return setFormError(t('Enter the API key’s client_id.'));
     }
-    if (!masterRef.current?.value) return setFormError('Enter your master password.');
-    if (apiKey && !secretRef.current?.value) return setFormError('Enter the API key’s client_secret.');
-    if (step && !code.trim()) return setFormError(step.kind === 'two-factor' ? 'Enter the two-step login code.' : 'Enter the code from the email.');
+    if (!masterRef.current?.value) return setFormError(t('Enter your master password.'));
+    if (apiKey && !secretRef.current?.value) return setFormError(t('Enter the API key’s client_secret.'));
+    if (step && !code.trim()) return setFormError(step.kind === 'two-factor' ? t('Enter the two-step login code.') : t('Enter the code from the email.'));
     setBusy(true);
     setProblem(null);
     try {
@@ -160,7 +161,7 @@ export const BitwardenLoginForm: React.FC<{
       playSfx('coin');
       onDone(s);
     } catch (err) {
-      const p = err instanceof StoreError ? err.problem : ({ kind: 'error', message: 'Couldn’t reach the server.' } as UnlockProblem);
+      const p = err instanceof StoreError ? err.problem : ({ kind: 'error', message: t('Couldn’t reach the server.') } as UnlockProblem);
       setProblem(p);
       if (p.kind === 'two-factor') {
         setStep(p);
@@ -197,42 +198,42 @@ export const BitwardenLoginForm: React.FC<{
     <form onSubmit={submit} className="space-y-2 text-xs" aria-labelledby={`${id}-t`} data-bitwarden-form={mode} noValidate>
       <p id={`${id}-t`} className="text-[11px] font-semibold text-sky-400 flex items-center gap-1.5">
         {mode === 'connect' ? <KeyRound size={12} aria-hidden="true" /> : <LockOpen size={12} aria-hidden="true" />}
-        {mode === 'connect' ? 'Connect Bitwarden' : 'Unlock Bitwarden'}
+        {mode === 'connect' ? t('Connect Bitwarden') : t('Unlock Bitwarden')}
       </p>
       {mode === 'unlock' && bw && (
         <p className="text-[11px] text-zinc-400 break-all">
-          {bw.email} on {serverLabel(bw.server_url)}
+          {t('{email} on {server}', { email: bw.email, server: serverLabel(bw.server_url) })}
         </p>
       )}
 
       {mode === 'connect' && (
         <>
           {label(
-            'Server',
+            t('Server'),
             <select value={server} onChange={(e) => setServer(e.target.value)} className={field} disabled={!!step}>
               {BITWARDEN_CLOUDS.map((c) => (
                 <option key={c.value} value={c.value}>
                   {c.label}
                 </option>
               ))}
-              <option value="self">Self-hosted (Vaultwarden too)</option>
+              <option value="self">{t('Self-hosted (Vaultwarden too)')}</option>
             </select>,
           )}
           {server === 'self' &&
             label(
-              'Server address',
+              t('Server address'),
               <input type="url" value={selfHosted} onChange={(e) => setSelfHosted(e.target.value)} placeholder="https://vault.example.com" className={`${field} font-mono`} autoComplete="off" spellCheck={false} disabled={!!step} />,
             )}
           {label(
-            'Account email',
+            t('Account email'),
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className={field} autoComplete="off" spellCheck={false} disabled={!!step} />,
           )}
           <fieldset className="space-y-1">
-            <legend className="text-[10px] text-zinc-400 mb-0.5">Sign in with</legend>
+            <legend className="text-[10px] text-zinc-400 mb-0.5">{t('Sign in with')}</legend>
             <div className="flex flex-wrap gap-x-3 gap-y-1">
               {[
-                { v: false, l: 'Master password' },
-                { v: true, l: 'API key + master password' },
+                { v: false, l: t('Master password') },
+                { v: true, l: t('API key + master password') },
               ].map((o) => (
                 <label key={String(o.v)} className="flex items-center gap-1.5 text-[11px] text-zinc-300 cursor-pointer">
                   <input type="radio" name={`${id}-method`} checked={apiKey === o.v} onChange={() => setApiKey(o.v)} disabled={!!step} className="accent-sky-500" />
@@ -240,7 +241,7 @@ export const BitwardenLoginForm: React.FC<{
                 </label>
               ))}
             </div>
-            {apiKey && <p className="text-[10px] text-zinc-500 leading-snug">For accounts whose two-step login can’t be typed here. Find it in Bitwarden under Account settings → Security → Keys.</p>}
+            {apiKey && <p className="text-[10px] text-zinc-500 leading-snug">{t('For accounts whose two-step login can’t be typed here. Find it in Bitwarden under Account settings → Security → Keys.')}</p>}
           </fieldset>
           {apiKey &&
             label('client_id', <input type="text" value={clientId} onChange={(e) => setClientId(e.target.value)} placeholder="user.…" className={`${field} font-mono`} autoComplete="off" spellCheck={false} />)}
@@ -250,19 +251,19 @@ export const BitwardenLoginForm: React.FC<{
         label(
           'client_secret',
           <input ref={secretRef} type="password" className={`${field} font-mono`} autoComplete="off" spellCheck={false} />,
-          mode === 'unlock' ? 'Asked for at every unlock, and never kept.' : undefined,
+          mode === 'unlock' ? t('Asked for at every unlock, and never kept.') : undefined,
         )}
       {label(
-        'Master password',
+        t('Master password'),
         <input ref={masterRef} type="password" className={field} autoComplete="off" autoFocus={mode === 'unlock'} />,
-        'Used to unlock, then forgotten. It’s never saved.',
+        t('Used to unlock, then forgotten. It’s never saved.'),
       )}
 
       {step?.kind === 'two-factor' && !noUsableTwoFactor && (
         <div className="p-2 rounded-lg border border-sky-500/30 bg-sky-500/5 space-y-1.5" data-step="two-factor">
           {step.providers.filter((p) => p.usable).length > 1 &&
             label(
-              'Method',
+              t('Method'),
               <select value={provider ?? ''} onChange={(e) => setProvider(Number(e.target.value))} className={field}>
                 {step.providers
                   .filter((p) => p.usable)
@@ -274,7 +275,8 @@ export const BitwardenLoginForm: React.FC<{
               </select>,
             )}
           {label(
-            step.providers.find((p) => p.id === provider)?.name === 'Email' ? 'Code from the email' : 'Two-step login code',
+            // 1 is Bitwarden's email method (its name is translated, so compare the id)
+            step.providers.some((p) => p.id === provider && p.id === 1) ? t('Code from the email') : t('Two-step login code'),
             <input ref={codeRef} type="text" inputMode="numeric" value={code} onChange={(e) => setCode(e.target.value)} className={`${field} font-mono tracking-widest`} autoComplete="one-time-code" />,
           )}
         </div>
@@ -282,7 +284,7 @@ export const BitwardenLoginForm: React.FC<{
       {step?.kind === 'new-device-code' && (
         <div className="p-2 rounded-lg border border-sky-500/30 bg-sky-500/5" data-step="new-device-code">
           {label(
-            'Code from Bitwarden’s email',
+            t('Code from Bitwarden’s email'),
             <input ref={codeRef} type="text" inputMode="numeric" value={code} onChange={(e) => setCode(e.target.value)} className={`${field} font-mono tracking-widest`} autoComplete="one-time-code" />,
           )}
         </div>
@@ -294,18 +296,18 @@ export const BitwardenLoginForm: React.FC<{
         <p role="alert" className="flex items-center gap-2 text-[11px] text-zinc-300">
           {unlockProblemText(problem)}
           <button type="button" onClick={requestPersonToken} className="text-sky-400 underline underline-offset-2">
-            Enter access token
+            {t('Enter access token')}
           </button>
         </p>
       )}
 
       <div className="flex justify-end gap-1.5 pt-1">
         <button type="button" onClick={onCancel} className={btnQuiet}>
-          Cancel
+          {t('Cancel')}
         </button>
         <button type="submit" disabled={busy || noUsableTwoFactor} className={btnMain}>
           {busy && <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />}
-          {busy ? (mode === 'connect' ? 'Connecting…' : 'Unlocking…') : step ? 'Continue' : mode === 'connect' ? 'Connect' : 'Unlock'}
+          {busy ? (mode === 'connect' ? t('Connecting…') : t('Unlocking…')) : step ? t('Continue') : mode === 'connect' ? t('Connect') : t('Unlock')}
         </button>
       </div>
     </form>
@@ -321,9 +323,9 @@ export const UnlockDialog: React.FC<{ status: StoreStatus | null; onClose: () =>
     <div className="kw-dialog kw-dialog-bottom fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div ref={rootRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={`${id}-h`} className="kw-dialog-panel outline-none relative w-full max-w-sm rounded-2xl border border-zinc-800 bg-zinc-900 p-4 shadow-2xl" data-unlock-dialog>
         <h2 id={`${id}-h`} className="sr-only">
-          Unlock Bitwarden
+          {t('Unlock Bitwarden')}
         </h2>
-        <button type="button" onClick={onClose} aria-label="Close" className="absolute right-2 top-2 p-1.5 rounded text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800">
+        <button type="button" onClick={onClose} aria-label={t('Close')} className="absolute right-2 top-2 p-1.5 rounded text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800">
           <X size={14} />
         </button>
         <BitwardenLoginForm
@@ -354,7 +356,7 @@ export const MigrateButton: React.FC<{ count: number; onDone: () => void; initia
       playSfx(r.failed ? 'click' : 'coin');
       onDone();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Couldn’t move the passwords.');
+      setError(e instanceof Error ? e.message : t('Couldn’t move the passwords.'));
     } finally {
       setBusy(false);
     }
@@ -365,9 +367,9 @@ export const MigrateButton: React.FC<{ count: number; onDone: () => void; initia
         <>
           <button type="button" onClick={run} disabled={busy} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium bg-sky-500/10 text-sky-300 border border-sky-500/30 hover:bg-sky-500/20 disabled:opacity-50">
             {busy ? <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <ArrowRight size={12} aria-hidden="true" />}
-            {busy ? 'Moving…' : `Move ${count} saved ${count === 1 ? 'password' : 'passwords'} to Bitwarden`}
+            {busy ? t('Moving…') : t(count === 1 ? 'Move {n} saved password to Bitwarden' : 'Move {n} saved passwords to Bitwarden', { n: count })}
           </button>
-          <p className="text-[10px] text-zinc-500 leading-snug">Each one is deleted here only after Bitwarden has it.</p>
+          <p className="text-[10px] text-zinc-500 leading-snug">{t('Each one is deleted here only after Bitwarden has it.')}</p>
         </>
       )}
       {result && (
@@ -388,7 +390,7 @@ const DisconnectConfirm: React.FC<{ onCancel: () => void; onDone: (s: StoreStatu
   useEffect(() => () => void takeSecret(ref, true), []);
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!ref.current?.value) return setError('Enter your master password.');
+    if (!ref.current?.value) return setError(t('Enter your master password.'));
     setBusy(true);
     setError(null);
     try {
@@ -397,26 +399,26 @@ const DisconnectConfirm: React.FC<{ onCancel: () => void; onDone: (s: StoreStatu
       playSfx('click');
       onDone(s);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Couldn’t disconnect.');
+      setError(err instanceof Error ? err.message : t('Couldn’t disconnect.'));
       if (err instanceof StoreError && err.problem.kind === 'wrong-password') takeSecret(ref, true);
     } finally {
       setBusy(false);
     }
   };
   return (
-    <form onSubmit={submit} role="alertdialog" aria-label="Disconnect Bitwarden?" className="p-2 rounded-lg border border-rose-500/30 bg-rose-500/5 space-y-1.5" data-disconnect noValidate>
-      <p className="text-[11px] text-zinc-200 leading-snug">Disconnect Bitwarden? New logins are saved on this server again. Your items stay in Bitwarden.</p>
+    <form onSubmit={submit} role="alertdialog" aria-label={t('Disconnect Bitwarden?')} className="p-2 rounded-lg border border-rose-500/30 bg-rose-500/5 space-y-1.5" data-disconnect noValidate>
+      <p className="text-[11px] text-zinc-200 leading-snug">{t('Disconnect Bitwarden? New logins are saved on this server again. Your items stay in Bitwarden.')}</p>
       <label className="block">
-        <span className="text-[10px] text-zinc-400 block mb-0.5">Master password</span>
+        <span className="text-[10px] text-zinc-400 block mb-0.5">{t('Master password')}</span>
         <input ref={ref} type="password" className={field} autoComplete="off" autoFocus />
       </label>
       {error && <ProblemLine text={error} />}
       <div className="flex justify-end gap-1.5">
         <button type="button" onClick={onCancel} className={btnQuiet}>
-          Keep Bitwarden
+          {t('Keep Bitwarden')}
         </button>
         <button type="submit" disabled={busy} className="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-rose-500 hover:bg-rose-400 text-zinc-950 disabled:opacity-50">
-          {busy ? 'Disconnecting…' : 'Disconnect'}
+          {busy ? t('Disconnecting…') : t('Disconnect')}
         </button>
       </div>
     </form>
@@ -470,13 +472,13 @@ export const PasswordStoreBar: React.FC<{
         <span className="text-zinc-500"> · {bw!.email}</span>
       </span>
       <span className={`px-1.5 rounded text-[9px] font-mono border flex-shrink-0 ${s.locked ? 'bg-amber-500/10 text-amber-200 border-amber-500/30' : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'}`}>
-        {s.locked ? 'Locked' : 'Unlocked'}
+        {s.locked ? t('Locked') : t('Unlocked')}
       </span>
     </>
   ) : (
     <>
       <Server size={13} className="text-zinc-400 flex-shrink-0" aria-hidden="true" />
-      <span className="min-w-0 truncate text-zinc-200 font-medium">Saved on this server</span>
+      <span className="min-w-0 truncate text-zinc-200 font-medium">{t('Saved on this server')}</span>
     </>
   );
 
@@ -490,18 +492,18 @@ export const PasswordStoreBar: React.FC<{
           onClick={() => setOpen((o) => !o)}
           className="flex-1 min-w-0 flex items-center gap-1.5 text-left text-[11px] rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500"
         >
-          <span className="sr-only">Where passwords are kept: </span>
+          <span className="sr-only">{t('Where passwords are kept: ')}</span>
           {summary}
           <ChevronDown size={12} className={`ml-auto flex-shrink-0 text-zinc-500 transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
         </button>
         {onBitwarden && s.locked && (
           <button type="button" onClick={onUnlock} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold bg-amber-400 hover:bg-amber-300 text-zinc-950 flex-shrink-0">
-            <LockOpen size={11} aria-hidden="true" /> Unlock
+            <LockOpen size={11} aria-hidden="true" /> {t('Unlock')}
           </button>
         )}
         {onBitwarden && !s.locked && (
           <button type="button" onClick={lock} disabled={locking} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] text-zinc-300 bg-zinc-800 hover:bg-zinc-700 flex-shrink-0 disabled:opacity-50">
-            <Lock size={11} aria-hidden="true" /> Lock
+            <Lock size={11} aria-hidden="true" /> {t('Lock')}
           </button>
         )}
       </div>
@@ -509,7 +511,7 @@ export const PasswordStoreBar: React.FC<{
       {open && (
         <div id={`${id}-p`} className="px-2.5 pb-2.5 pt-1 space-y-2 border-t border-zinc-800/80">
           <fieldset className="space-y-1.5">
-            <legend className="text-[10px] text-zinc-400 mb-1">Where passwords are kept, for every bot</legend>
+            <legend className="text-[10px] text-zinc-400 mb-1">{t('Where passwords are kept, for every bot')}</legend>
             <label className={`flex items-start gap-2 p-2 rounded-lg border cursor-pointer ${!onBitwarden && !connecting ? 'border-sky-500/60 bg-sky-500/10' : 'border-zinc-800 hover:border-zinc-700'}`}>
               <input
                 type="radio"
@@ -522,8 +524,10 @@ export const PasswordStoreBar: React.FC<{
                 className="mt-0.5 accent-sky-500"
               />
               <span>
-                <span className="block text-[11px] text-zinc-200 font-medium">Saved on this server</span>
-                <span className="block text-[10px] text-zinc-500 leading-snug">Encrypted here. Works only while every space and bot is on “Ask before running commands”; otherwise use Bitwarden.</span>
+                <span className="block text-[11px] text-zinc-200 font-medium">{t('Saved on this server')}</span>
+                <span className="block text-[10px] text-zinc-500 leading-snug">
+                  {t('Encrypted here. Works only while every space and bot is on “Ask before running commands”; otherwise use Bitwarden.')}
+                </span>
               </span>
             </label>
             <label className={`flex items-start gap-2 p-2 rounded-lg border cursor-pointer ${onBitwarden || connecting ? 'border-sky-500/60 bg-sky-500/10' : 'border-zinc-800 hover:border-zinc-700'}`}>
@@ -539,7 +543,9 @@ export const PasswordStoreBar: React.FC<{
               />
               <span>
                 <span className="block text-[11px] text-zinc-200 font-medium">Bitwarden</span>
-                <span className="block text-[10px] text-zinc-500 leading-snug">In your own Bitwarden account, in a folder of their own. Locked after every restart until you unlock it.</span>
+                <span className="block text-[10px] text-zinc-500 leading-snug">
+                  {t('In your own Bitwarden account, in a folder of their own. Locked after every restart until you unlock it.')}
+                </span>
               </span>
             </label>
           </fieldset>
@@ -561,21 +567,22 @@ export const PasswordStoreBar: React.FC<{
           {onBitwarden && (
             <div className="space-y-2" data-bitwarden-account>
               <dl className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5 text-[10px]">
-                <dt className="text-zinc-500">Account</dt>
+                <dt className="text-zinc-500">{t('Account')}</dt>
                 <dd className="text-zinc-300 break-all">{bw!.email}</dd>
-                <dt className="text-zinc-500">Server</dt>
+                <dt className="text-zinc-500">{t('Server')}</dt>
                 <dd className="text-zinc-300 break-all">{serverLabel(bw!.server_url)}</dd>
-                <dt className="text-zinc-500">Sign-in</dt>
-                <dd className="text-zinc-300">{bw!.login === 'api_key' ? 'API key + master password' : 'Master password'}</dd>
+                <dt className="text-zinc-500">{t('Sign-in')}</dt>
+                <dd className="text-zinc-300">{bw!.login === 'api_key' ? t('API key + master password') : t('Master password')}</dd>
                 {!s.locked && bw!.item_count !== null && (
                   <>
-                    <dt className="text-zinc-500">Logins</dt>
+                    <dt className="text-zinc-500">{t('Logins')}</dt>
                     <dd className="text-zinc-300">{bw!.item_count}</dd>
                   </>
                 )}
               </dl>
               {s.locked ? (
-                s.local_count > 0 && <p className="text-[10px] text-zinc-500">{s.local_count} {s.local_count === 1 ? 'password is' : 'passwords are'} still saved on this server. Unlock to move them.</p>
+                s.local_count > 0 && <p className="text-[10px] text-zinc-500">{t(s.local_count === 1 ? '{n} password is still saved on this server. Unlock to move them.' : '{n} passwords are still saved on this server. Unlock to move them.', { n: s.local_count })}
+                  </p>
               ) : (
                 (s.local_count > 0 || migrated) && (
                   <MigrateButton
@@ -590,7 +597,7 @@ export const PasswordStoreBar: React.FC<{
               )}
               {disconnecting ? (
                 s.locked ? (
-                  <p className="text-[10px] text-zinc-400">Unlock Bitwarden first, then you can disconnect it.</p>
+                  <p className="text-[10px] text-zinc-400">{t('Unlock Bitwarden first, then you can disconnect it.')}</p>
                 ) : (
                   <DisconnectConfirm
                     onCancel={() => setDisconnecting(false)}
@@ -602,7 +609,7 @@ export const PasswordStoreBar: React.FC<{
                 )
               ) : (
                 <button type="button" onClick={() => setDisconnecting(true)} className="text-[10px] text-zinc-500 hover:text-rose-300 underline underline-offset-2">
-                  Disconnect Bitwarden
+                  {t('Disconnect Bitwarden')}
                 </button>
               )}
             </div>
@@ -621,7 +628,7 @@ export const AutofillGapNote: React.FC<{ status?: StoreStatus | null }> = ({ sta
       <Info size={12} className="text-zinc-500 flex-shrink-0 mt-px" aria-hidden="true" />
       <span>
         {/* The local sentence already names the modes. */}
-        {kind === 'bitwarden' && <span className="text-zinc-300">Some bots run commands without asking. </span>}
+        {kind === 'bitwarden' && <span className="text-zinc-300">{t('Some bots run commands without asking. ')}</span>}
         {autofillGapNote(status)}
       </span>
     </p>
@@ -660,7 +667,7 @@ export const MoveToBitwardenFirst: React.FC<{
       store.reload();
       onMoved?.(text);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Couldn’t move the passwords.');
+      setError(e instanceof Error ? e.message : t('Couldn’t move the passwords.'));
     } finally {
       setBusy(false);
     }
@@ -676,13 +683,13 @@ export const MoveToBitwardenFirst: React.FC<{
       {s.local_count > 0 && !step && (
         <button type="button" onClick={press} disabled={busy} className={btnMain}>
           {busy ? <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <ArrowRight size={12} aria-hidden="true" />}
-          {busy ? 'Moving…' : label}
+          {busy ? t('Moving…') : label}
         </button>
       )}
       {step && (
         <div className="p-2.5 rounded-xl border border-sky-500/30 bg-zinc-900/90 space-y-1.5" data-move-step={step}>
           <p className="text-[10px] text-zinc-400 leading-snug">
-            {step === 'connect' ? 'Connect your Bitwarden account; the passwords move as soon as it’s connected.' : 'Unlock Bitwarden; the passwords move as soon as it’s unlocked.'}
+            {step === 'connect' ? t('Connect your Bitwarden account; the passwords move as soon as it’s connected.') : t('Unlock Bitwarden; the passwords move as soon as it’s unlocked.')}
           </p>
           <BitwardenLoginForm
             mode={step}
@@ -735,10 +742,18 @@ export const ExposedBanner: React.FC<{
       playSfx('click');
       store.reload();
       onApprovalsOn?.();
-      if (r.failed) setError(`${r.failed} ${r.failed === 1 ? 'setting' : 'settings'} couldn’t be changed. An archived space keeps its approvals until you restore it.`);
-      else setDone('Approvals are back on. Bots ask before running commands again.');
+      if (r.failed)
+        setError(
+          t(
+            r.failed === 1
+              ? '{n} setting couldn’t be changed. An archived space keeps its approvals until you restore it.'
+              : '{n} settings couldn’t be changed. An archived space keeps its approvals until you restore it.',
+            { n: r.failed },
+          ),
+        );
+      else setDone(t('Approvals are back on. Bots ask before running commands again.'));
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Couldn’t turn approvals back on.');
+      setError(e instanceof Error ? e.message : t('Couldn’t turn approvals back on.'));
     } finally {
       setBusy(false);
     }
@@ -751,10 +766,10 @@ export const ExposedBanner: React.FC<{
         <span>{exposedText(s.local_count)}</span>
       </p>
       <div className="flex flex-wrap items-start gap-1.5">
-        <MoveToBitwardenFirst store={store} label="Move to Bitwarden" onMoved={setDone} />
+        <MoveToBitwardenFirst store={store} label={t('Move to Bitwarden')} onMoved={setDone} />
         <button type="button" onClick={turnOn} disabled={busy} className={`${btnQuiet} flex items-center gap-1.5`}>
           {busy ? <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <ShieldCheck size={12} aria-hidden="true" />}
-          {busy ? 'Turning on…' : 'Turn approvals back on'}
+          {busy ? t('Turning on…') : t('Turn approvals back on')}
         </button>
       </div>
       {error && <ProblemLine text={error} />}

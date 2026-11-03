@@ -4,6 +4,7 @@ import { ModernAvatar } from './ModernAvatar';
 import { Kwant, Team } from './Sidebar';
 import { FolderBrowserModal } from './FolderBrowserModal';
 import { playSfx } from '../audio/chiptune';
+import { t } from '../i18n';
 
 export interface NewTeamModalProps {
   isOpen: boolean;
@@ -118,15 +119,15 @@ export const NewTeamModal: React.FC<NewTeamModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!cleanSlug) {
-      setError('Please provide a valid team name.');
+      setError(t('Please provide a valid team name.'));
       return;
     }
     if (!leadKwantId) {
-      setError('Please select a team lead.');
+      setError(t('Please select a team lead.'));
       return;
     }
     if (selectedMembers.length === 0) {
-      setError('Pick at least one bot for this team.');
+      setError(t('Pick at least one bot for this team.'));
       return;
     }
 
@@ -160,7 +161,7 @@ export const NewTeamModal: React.FC<NewTeamModalProps> = ({
 
         if (!res.ok) {
           const errText = await res.text();
-          throw new Error(errText || 'Failed to create team');
+          throw new Error(errText || t('Failed to create team'));
         }
 
         const createdRaw = await res.json();
@@ -176,7 +177,7 @@ export const NewTeamModal: React.FC<NewTeamModalProps> = ({
       }
     } catch (err: unknown) {
       console.error('Failed creating team:', err);
-      setError(err instanceof Error ? err.message : 'Failed to create team');
+      setError(err instanceof Error ? err.message : t('Failed to create team'));
     } finally {
       setSubmitting(false);
     }
@@ -191,7 +192,7 @@ export const NewTeamModal: React.FC<NewTeamModalProps> = ({
             <div className="w-7 h-7 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400">
               <Users size={15} />
             </div>
-            <h3 className="text-sm font-semibold text-zinc-100">Create New Team</h3>
+            <h3 className="text-sm font-semibold text-zinc-100">{t('Create New Team')}</h3>
           </div>
           <button
             onClick={() => {
@@ -215,18 +216,18 @@ export const NewTeamModal: React.FC<NewTeamModalProps> = ({
           {/* Team Name */}
           <div>
             <label className="block text-xs font-medium text-zinc-400 mb-1">
-              Team Name
+              {t('Team Name')}
             </label>
             <input
               type="text"
               required
               value={name}
               onChange={handleNameChange}
-              placeholder="e.g. core-engineering, qa-squad"
+              placeholder={t('e.g. core-engineering, qa-squad')}
               className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-100 placeholder-zinc-600 focus:border-sky-500 focus:outline-none transition-colors"
             />
             <p className="text-[11px] text-zinc-500 mt-1 flex items-center gap-1.5">
-              <span>Mention handle:</span>
+              <span>{t('Mention handle:')}</span>
               <span className="font-mono text-sky-400 bg-sky-500/10 px-1.5 py-0.5 rounded border border-sky-500/20">
                 @{cleanSlug || 'team-name'}
               </span>
@@ -236,13 +237,13 @@ export const NewTeamModal: React.FC<NewTeamModalProps> = ({
           {/* Description */}
           <div>
             <label className="block text-xs font-medium text-zinc-400 mb-1">
-              Description <span className="text-zinc-600 font-normal">(Optional)</span>
+              {t('Description')} <span className="text-zinc-600 font-normal">{t('(Optional)')}</span>
             </label>
             <input
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="e.g. Core architectural and platform systems"
+              placeholder={t('e.g. Core architectural and platform systems')}
               className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-100 placeholder-zinc-600 focus:border-sky-500 focus:outline-none transition-colors"
             />
           </div>
@@ -250,7 +251,7 @@ export const NewTeamModal: React.FC<NewTeamModalProps> = ({
           {/* Team Workspace */}
           <div>
             <label className="block text-xs font-medium text-zinc-400 mb-1.5">
-              Team Workspace
+              {t('Team Workspace')}
             </label>
             <div className="grid grid-cols-3 gap-1.5 p-1 bg-zinc-950 rounded-lg border border-zinc-800 text-xs mb-2">
               <button
@@ -266,7 +267,7 @@ export const NewTeamModal: React.FC<NewTeamModalProps> = ({
                 }`}
               >
                 <Folder size={13} />
-                <span>Local Folder</span>
+                <span>{t('Local Folder')}</span>
               </button>
               <button
                 type="button"
@@ -281,7 +282,7 @@ export const NewTeamModal: React.FC<NewTeamModalProps> = ({
                 }`}
               >
                 <GitBranch size={13} />
-                <span>Git Repo</span>
+                <span>{t('Git Repo')}</span>
               </button>
               <button
                 type="button"
@@ -295,7 +296,7 @@ export const NewTeamModal: React.FC<NewTeamModalProps> = ({
                     : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900'
                 }`}
               >
-                <span>Default</span>
+                <span>{t('Default')}</span>
               </button>
             </div>
 
@@ -306,7 +307,7 @@ export const NewTeamModal: React.FC<NewTeamModalProps> = ({
                     type="text"
                     value={workspacePath}
                     onChange={(e) => setWorkspacePath(e.target.value)}
-                    placeholder="e.g. ~/projects/my-app or /path/to/folder"
+                    placeholder={t('e.g. ~/projects/my-app or /path/to/folder')}
                     className="flex-1 min-w-0 basis-full sm:basis-auto bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-100 placeholder-zinc-600 focus:border-sky-500 focus:outline-none transition-colors font-mono"
                   />
                   <button
@@ -314,10 +315,10 @@ export const NewTeamModal: React.FC<NewTeamModalProps> = ({
                     onClick={handleBrowseFolder}
                     disabled={isBrowsing}
                     className="flex items-center gap-1.5 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 text-zinc-200 border border-zinc-700 rounded-lg text-xs font-medium transition-colors shadow-sm cursor-pointer whitespace-nowrap disabled:opacity-50"
-                    title="Open native folder chooser"
+                    title={t('Open native folder chooser')}
                   >
                     <Folder size={14} className="text-amber-400" />
-                    <span>{isBrowsing ? 'Selecting...' : 'Browse...'}</span>
+                    <span>{isBrowsing ? t('Selecting...') : t('Browse...')}</span>
                   </button>
                   <button
                     type="button"
@@ -326,7 +327,7 @@ export const NewTeamModal: React.FC<NewTeamModalProps> = ({
                       setIsFolderBrowserOpen(true);
                     }}
                     className="p-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 rounded-lg transition-colors cursor-pointer"
-                    title="Explore local directories in-app"
+                    title={t('Explore local directories in-app')}
                   >
                     <FolderSearch size={14} className="text-sky-400" />
                   </button>
@@ -334,7 +335,7 @@ export const NewTeamModal: React.FC<NewTeamModalProps> = ({
 
                 {/* Quick Directory Chips */}
                 <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-                  <span className="text-zinc-500">Quick:</span>
+                  <span className="text-zinc-500">{t('Quick:')}</span>
                   <button
                     type="button"
                     onClick={() => {
@@ -368,7 +369,7 @@ export const NewTeamModal: React.FC<NewTeamModalProps> = ({
                 </div>
 
                 <p className="text-[11px] text-zinc-500">
-                  Team members will execute commands and tools directly in this directory.
+                  {t('Team members will execute commands and tools directly in this directory.')}
                 </p>
               </div>
             )}
@@ -383,14 +384,14 @@ export const NewTeamModal: React.FC<NewTeamModalProps> = ({
                   className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-100 placeholder-zinc-600 focus:border-sky-500 focus:outline-none transition-colors font-mono"
                 />
                 <p className="text-[11px] text-zinc-500 mt-1">
-                  Repository will be cloned and managed in team workspace directory on first run.
+                  {t('Repository will be cloned and managed in team workspace directory on first run.')}
                 </p>
               </div>
             )}
 
             {workspaceType === 'default' && (
               <p className="text-[11px] text-zinc-500">
-                Uses the default shared workspace directory.
+                {t('Uses the default shared workspace directory.')}
               </p>
             )}
           </div>
@@ -398,7 +399,7 @@ export const NewTeamModal: React.FC<NewTeamModalProps> = ({
           {/* Lead agent */}
           <div>
             <label className="block text-xs font-medium text-zinc-400 mb-1">
-              Team lead
+              {t('Team lead')}
             </label>
             <select
               value={leadKwantId}
@@ -417,10 +418,10 @@ export const NewTeamModal: React.FC<NewTeamModalProps> = ({
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-xs font-medium text-zinc-400">
-                Team Members
+                {t('Team Members')}
               </label>
               <span className="text-[11px] font-mono text-zinc-500">
-                {selectedMembers.length} selected
+                {t('{n} selected', { n: selectedMembers.length })}
               </span>
             </div>
 
@@ -457,7 +458,7 @@ export const NewTeamModal: React.FC<NewTeamModalProps> = ({
                     </div>
                     {isLead && (
                       <span className="text-[10px] font-mono font-medium text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded border border-amber-400/20">
-                        Lead
+                        {t('Lead')}
                       </span>
                     )}
                   </div>
@@ -465,7 +466,7 @@ export const NewTeamModal: React.FC<NewTeamModalProps> = ({
               })}
               {kwants.length === 0 && (
                 <div className="p-3 text-center text-xs text-zinc-500">
-                  No bots to add yet.
+                  {t('No bots to add yet.')}
                 </div>
               )}
             </div>
@@ -481,7 +482,7 @@ export const NewTeamModal: React.FC<NewTeamModalProps> = ({
               }}
               className="px-3.5 py-2 rounded-lg text-xs font-medium text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
             >
-              Cancel
+              {t('Cancel')}
             </button>
             <button
               type="submit"
@@ -489,7 +490,7 @@ export const NewTeamModal: React.FC<NewTeamModalProps> = ({
               className="px-4 py-2 rounded-lg text-xs font-medium text-white bg-sky-600 hover:bg-sky-500 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
             >
               <Users size={14} />
-              <span>{submitting ? 'Creating...' : 'Create Team'}</span>
+              <span>{submitting ? t('Creating...') : t('Create Team')}</span>
             </button>
           </div>
         </form>

@@ -4,6 +4,7 @@
 // one request and never kept in React state, storage or logs. Every route is person-only.
 
 import { isPersonOnlyBody, requestPersonToken } from './auth';
+import { t } from './i18n';
 
 export interface BitwardenInfo {
   server_url: string;
@@ -83,30 +84,30 @@ export function serverLabel(serverUrl: string): string {
 /** What the person typed as a self-hosted server → an address the server accepts, or why not. */
 export function checkServerUrl(input: string): { url: string } | { error: string } {
   const v = input.trim().replace(/\/+$/, '');
-  if (!v) return { error: 'Enter your Bitwarden server’s address.' };
+  if (!v) return { error: t('Enter your Bitwarden server’s address.') };
   const withScheme = v.includes('://') ? v : `https://${v}`;
   let u: URL;
   try {
     u = new URL(withScheme);
   } catch {
-    return { error: 'That isn’t a web address.' };
+    return { error: t('That isn’t a web address.') };
   }
   const host = u.hostname.replace(/^\[|\]$/g, '');
   const loopback = host === 'localhost' || /^127\./.test(host) || host === '::1';
-  if (u.protocol !== 'https:' && !(u.protocol === 'http:' && loopback)) return { error: 'The address must start with https:// (http works only on this computer).' };
-  if (u.search || u.hash || u.username || u.password) return { error: 'Leave out anything after the address, and any name or password in it.' };
+  if (u.protocol !== 'https:' && !(u.protocol === 'http:' && loopback)) return { error: t('The address must start with https:// (http works only on this computer).') };
+  if (u.search || u.hash || u.username || u.password) return { error: t('Leave out anything after the address, and any name or password in it.') };
   return { url: `${u.origin}${u.pathname.replace(/\/+$/, '')}` };
 }
 
 /** Bitwarden's two-step login methods. Only the ones with a code to type can be done here. */
 export const TWO_FACTOR_NAMES: Record<number, string> = {
-  0: 'Authenticator app',
-  1: 'Email',
+  0: t('Authenticator app'),
+  1: t('Email'),
   2: 'Duo',
   3: 'YubiKey',
   4: 'FIDO U2F',
-  6: 'Duo (organisation)',
-  7: 'Passkey or security key',
+  6: t('Duo (organisation)'),
+  7: t('Passkey or security key'),
 };
 const TYPED_CODE = new Set([0, 1, 3]);
 
@@ -117,7 +118,7 @@ export function twoFactorChoices(providers: unknown): Array<{ id: number; name: 
     .filter((n) => Number.isInteger(n) && n !== 5);
   const unique = [...new Set(ids)];
   return unique
-    .map((id) => ({ id, name: TWO_FACTOR_NAMES[id] ?? `Method ${id}`, usable: TYPED_CODE.has(id) }))
+    .map((id) => ({ id, name: TWO_FACTOR_NAMES[id] ?? t('Method {id}', { id }), usable: TYPED_CODE.has(id) }))
     .sort((a, b) => Number(b.usable) - Number(a.usable));
 }
 
@@ -145,31 +146,31 @@ export function unlockProblemFor(status: number, body: unknown): UnlockProblem {
   if (status === 502) return { kind: 'unreachable' };
   if (status === 423 || o.locked === true) return { kind: 'locked' };
   if (status === 401) return { kind: 'invalid', message };
-  return { kind: 'error', message: message || `The server answered ${status}.` };
+  return { kind: 'error', message: message || t('The server answered {status}.', { status }) };
 }
 
 export function unlockProblemText(p: UnlockProblem): string {
   switch (p.kind) {
     case 'needs-token':
-      return 'This needs your access token first.';
+      return t('This needs your access token first.');
     case 'wrong-password':
-      return 'That master password isn’t right. After five wrong tries in a row Bitwarden stays locked.';
+      return t('That master password isn’t right. After five wrong tries in a row Bitwarden stays locked.');
     case 'two-factor':
       return p.providers.some((x) => x.usable)
-        ? 'Your account uses two-step login. Enter the code to continue.'
-        : `Your account’s two-step login (${p.providers.map((x) => x.name).join(', ') || 'unknown'}) can’t be done here. Use an API key instead.`;
+        ? t('Your account uses two-step login. Enter the code to continue.')
+        : t('Your account’s two-step login ({methods}) can’t be done here. Use an API key instead.', { methods: p.providers.map((x) => x.name).join(', ') || t('unknown') });
     case 'new-device-code':
-      return 'Bitwarden emailed you a code to confirm this new device. Enter it to continue.';
+      return t('Bitwarden emailed you a code to confirm this new device. Enter it to continue.');
     case 'other-account':
-      return 'Another Bitwarden account is connected. Disconnect it first.';
+      return t('Another Bitwarden account is connected. Disconnect it first.');
     case 'invalid':
-      return p.message ? capitalise(p.message) + '.' : 'Something in the form isn’t right.';
+      return p.message ? capitalise(p.message) + '.' : t('Something in the form isn’t right.');
     case 'unreachable':
-      return 'Bitwarden couldn’t be reached, or it refused. Check the server address and try again.';
+      return t('Bitwarden couldn’t be reached, or it refused. Check the server address and try again.');
     case 'locked':
-      return 'Bitwarden is locked. Unlock it first.';
+      return t('Bitwarden is locked. Unlock it first.');
     case 'error':
-      return p.message || 'Something went wrong.';
+      return p.message || t('Something went wrong.');
   }
 }
 
@@ -231,8 +232,10 @@ export interface MigrateResult {
 }
 
 export function migrateText(r: MigrateResult): string {
-  const moved = `Moved ${r.moved} ${r.moved === 1 ? 'password' : 'passwords'} to Bitwarden.`;
-  return r.failed ? `${moved} ${r.failed} couldn’t be moved and ${r.failed === 1 ? 'stays' : 'stay'} on this server; try again.` : moved;
+  const moved = t(r.moved === 1 ? 'Moved {n} password to Bitwarden.' : 'Moved {n} passwords to Bitwarden.', { n: r.moved });
+  if (!r.failed) return moved;
+  const failed = t(r.failed === 1 ? '{n} couldn’t be moved and stays on this server; try again.' : '{n} couldn’t be moved and stay on this server; try again.', { n: r.failed });
+  return `${moved} ${failed}`;
 }
 
 export const storeApi = {
@@ -253,24 +256,34 @@ export const storeApi = {
  * Bitwarden: the accepted gap (2026-10-20). This server: either mode can't sit next to passwords
  * here (audit F-10), so it's blocked. */
 export const AUTOFILL_GAP_NOTE = {
-  bitwarden: 'While a password is being filled into a page, a bot that can run commands can read it.',
-  local: 'Unless every space and bot is on “Ask before running commands”, any bot that can run commands could read passwords saved on this server, so they can’t be saved here: use Bitwarden.',
+  bitwarden: t('While a password is being filled into a page, a bot that can run commands can read it.'),
+  local: t(
+    'Unless every space and bot is on “Ask before running commands”, any bot that can run commands could read passwords saved on this server, so they can’t be saved here: use Bitwarden.',
+  ),
 } as const;
 
 /** The note for a store; unknown counts as this server, the stricter one. */
 export const autofillGapNote = (store: StoreStatus | null | undefined): string =>
   store?.store === 'bitwarden' && store.local_count === 0 ? AUTOFILL_GAP_NOTE.bitwarden : AUTOFILL_GAP_NOTE.local;
 
-const passwords = (n: number) => `${n} saved ${n === 1 ? 'password' : 'passwords'}`;
-
 /** Approvals can't go off while this server holds passwords: what the confirm says instead. */
 export const moveFirstText = (n: number) =>
-  `${capitalise(passwords(n))} ${n === 1 ? 'is' : 'are'} kept on this server. Under “Ask only when risky” or “Don’t ask”, any bot that can run commands could read ${n === 1 ? 'it' : 'them'}, so move ${n === 1 ? 'it' : 'them'} to Bitwarden first.`;
-export const moveFirstLabel = (n: number) => `Move ${passwords(n)} to Bitwarden first`;
+  t(
+    n === 1
+      ? '{n} saved password is kept on this server. Under “Ask only when risky” or “Don’t ask”, any bot that can run commands could read it, so move it to Bitwarden first.'
+      : '{n} saved passwords are kept on this server. Under “Ask only when risky” or “Don’t ask”, any bot that can run commands could read them, so move them to Bitwarden first.',
+    { n },
+  );
+export const moveFirstLabel = (n: number) => t(n === 1 ? 'Move {n} saved password to Bitwarden first' : 'Move {n} saved passwords to Bitwarden first', { n });
 
 /** An install already in that state (a space or bot stopped asking before the block). */
 export const exposedText = (n: number) =>
-  `A space or bot is on “Ask only when risky” or “Don’t ask” and ${passwords(n)} ${n === 1 ? 'is' : 'are'} still on this server, so any bot that can run commands can read ${n === 1 ? 'it' : 'them'}.`;
+  t(
+    n === 1
+      ? 'A space or bot is on “Ask only when risky” or “Don’t ask” and {n} saved password is still on this server, so any bot that can run commands can read it.'
+      : 'A space or bot is on “Ask only when risky” or “Don’t ask” and {n} saved passwords are still on this server, so any bot that can run commands can read them.',
+    { n },
+  );
 
 /** A 409 that says the server wants Bitwarden first: its sentence, and how many passwords are here. */
 export function needsBitwardenFrom(status: number, body: unknown): { message: string; local_count: number | null } | null {
@@ -278,7 +291,7 @@ export function needsBitwardenFrom(status: number, body: unknown): { message: st
   if (status !== 409 || o.needs_bitwarden !== true) return null;
   const msg = str(o.error)?.trim();
   return {
-    message: msg ? capitalise(msg.endsWith('.') ? msg : `${msg}.`) : 'Move the passwords on this server to Bitwarden first.',
+    message: msg ? capitalise(msg.endsWith('.') ? msg : `${msg}.`) : t('Move the passwords on this server to Bitwarden first.'),
     local_count: num(o.local_count),
   };
 }

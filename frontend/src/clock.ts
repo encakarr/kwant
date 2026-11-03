@@ -1,5 +1,6 @@
 // Times as people read them, in this device's time zone: "8:15 PM" today, "Nov 3, 8:15 PM" on
 // another day this year, with the year when it isn't this year.
+import { t } from './i18n';
 
 const sameDay = (a: Date, b: Date) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 
@@ -16,11 +17,11 @@ export function localClock(at: string | Date | null | undefined, now: number = D
     day: 'numeric',
     ...(d.getFullYear() === today.getFullYear() ? {} : { year: 'numeric' }),
   });
-  return `${date}, ${time}`;
+  return t('{date}, {time}', { date, time });
 }
 
 /** A Connections line: "Out of quota until 8:15 PM", or the server's words when there's no time. */
 export function quotaLine(statusDetail: string | null, limitedUntil: string | null | undefined, now: number = Date.now(), locale?: string): string | null {
   const until = limitedUntil && new Date(limitedUntil).getTime() > now ? localClock(limitedUntil, now, locale) : null;
-  return until ? `Out of quota until ${until}` : statusDetail;
+  return until ? t('Out of quota until {time}', { time: until }) : statusDetail;
 }

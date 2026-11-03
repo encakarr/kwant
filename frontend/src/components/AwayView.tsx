@@ -21,6 +21,7 @@ import {
   windowLabel,
   withoutItem,
 } from '../away';
+import { t } from '../i18n';
 
 const TONES: Record<Tone, string> = {
   amber: 'border-amber-500/30 bg-amber-500/10 text-amber-200',
@@ -68,7 +69,7 @@ export const AwayView: React.FC<AwayViewProps> = ({ data, loading, error, notice
           type="button"
           onClick={() => onOpen(item)}
           className="w-full flex items-start gap-3 p-3 text-left rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500"
-          aria-label={`${item.title}, ${label}, from ${item.kwant_name}, ${when}. Open the chat.`}
+          aria-label={t('{title}, {label}, from {bot}, {when}. Open the chat.', { title: item.title, label, bot: item.kwant_name, when })}
         >
           <ModernAvatar role={item.kwant_name} name={item.kwant_name} size={30} kwantId={item.kwant_id} />
           <div className="flex-1 min-w-0">
@@ -86,7 +87,7 @@ export const AwayView: React.FC<AwayViewProps> = ({ data, loading, error, notice
         </button>
 
         {item.kind === 'question' && (item.choices?.length ?? 0) > 0 && (
-          <div role="group" aria-label={`Answer: ${item.title}`} className="px-3 pb-3 sm:pl-[54px] flex flex-wrap gap-2">
+          <div role="group" aria-label={t('Answer: {title}', { title: item.title })} className="px-3 pb-3 sm:pl-[54px] flex flex-wrap gap-2">
             {item.choices!.map((c, i) => (
               <button
                 key={i}
@@ -109,7 +110,7 @@ export const AwayView: React.FC<AwayViewProps> = ({ data, loading, error, notice
 
         {busy === item.id && (
           <p className="px-3 pb-3 sm:pl-[54px] inline-flex items-center gap-1.5 text-[11px] text-zinc-400">
-            <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> Sending…
+            <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> {t('Sending…')}
           </p>
         )}
       </li>
@@ -125,16 +126,16 @@ export const AwayView: React.FC<AwayViewProps> = ({ data, loading, error, notice
           <button
             type="button"
             onClick={onBack}
-            aria-label="Back to chats"
+            aria-label={t('Back to chats')}
             className="shrink-0 p-2 -ml-0.5 -mr-2 rounded-lg text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500"
           >
             <ChevronLeft size={18} />
           </button>
         )}
         <div className="min-w-0 flex-1">
-          <h2 className="text-sm font-semibold text-zinc-100 truncate">Inbox</h2>
+          <h2 className="text-sm font-semibold text-zinc-100 truncate">{t('Inbox')}</h2>
           <p className="text-[11px] text-zinc-400 truncate mt-0.5">
-            {data ? windowLabel(data.since, now) : 'What your bots need, finished and failed'}
+            {data ? windowLabel(data.since, now) : t('What your bots need, finished and failed')}
           </p>
         </div>
         <button
@@ -144,7 +145,7 @@ export const AwayView: React.FC<AwayViewProps> = ({ data, loading, error, notice
           className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs text-zinc-300 border border-zinc-700/60 hover:bg-zinc-800 disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500"
         >
           <RefreshCw size={12} className={loading ? 'animate-spin motion-reduce:animate-none' : ''} aria-hidden="true" />
-          Refresh
+          {t('Refresh')}
         </button>
       </div>
 
@@ -152,13 +153,13 @@ export const AwayView: React.FC<AwayViewProps> = ({ data, loading, error, notice
         <div className="max-w-3xl mx-auto space-y-6">
           {error && (
             <div role="alert" className="px-3 py-2 rounded-lg border border-rose-500/20 bg-rose-500/5 flex items-center gap-2 text-xs text-rose-300">
-              <span>Couldn't load what happened: {error}</span>
+              <span>{t("Couldn't load what happened: {error}", { error })}</span>
               <button
                 type="button"
                 onClick={onRefresh}
                 className="ml-auto px-2 py-0.5 rounded border border-rose-500/30 hover:bg-rose-500/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-rose-500"
               >
-                Retry
+                {t('Retry')}
               </button>
             </div>
           )}
@@ -181,15 +182,15 @@ export const AwayView: React.FC<AwayViewProps> = ({ data, loading, error, notice
 
           {!data && loading && (
             <p className="flex items-center gap-2 text-xs text-zinc-400">
-              <Loader2 size={14} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> Loading…
+              <Loader2 size={14} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> {t('Loading…')}
             </p>
           )}
 
           {data && empty && (
             <div className="py-16 flex flex-col items-center text-center gap-2">
               <CheckCircle2 size={28} className="text-emerald-400" aria-hidden="true" />
-              <p className="text-sm font-medium text-zinc-200">You're all caught up</p>
-              <p className="text-xs text-zinc-500 max-w-xs">Nothing new since you last looked. Questions, approvals and finished work will show up here.</p>
+              <p className="text-sm font-medium text-zinc-200">{t("You're all caught up")}</p>
+              <p className="text-xs text-zinc-500 max-w-xs">{t('Nothing new since you last looked. Questions, approvals and finished work will show up here.')}</p>
             </div>
           )}
 
@@ -251,7 +252,7 @@ export const AwayPage: React.FC<AwayPageProps> = ({ since = null, onSince, onOpe
       setError(null);
       return next;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong.');
+      setError(err instanceof Error ? err.message : t('Something went wrong.'));
       return null;
     } finally {
       setLoading(false);
@@ -283,11 +284,11 @@ export const AwayPage: React.FC<AwayPageProps> = ({ since = null, onSince, onOpe
       const reply = await run();
       setData((d) => (d ? withoutItem(d, 'waiting', item.id) : d));
       const late = item.kind === 'approval' && !denied ? lateAnswerText(reply, item.kwant_name) : null;
-      const done = denied ? 'Denied, nothing ran:' : late ?? `Sent to ${item.kwant_name}:`;
-      setNotice({ text: `${done} “${item.title}”`, error: false });
+      const done = denied ? t('Denied, nothing ran:') : late ?? t('Sent to {bot}:', { bot: item.kwant_name });
+      setNotice({ text: t('{done} “{title}”', { done, title: item.title }), error: false });
     } catch (err) {
       const status = err instanceof AwayError ? err.status : 0;
-      setNotice(actionFailureNotice(status, err instanceof Error ? err.message : 'Something went wrong.', item.title));
+      setNotice(actionFailureNotice(status, err instanceof Error ? err.message : t('Something went wrong.'), item.title));
     } finally {
       setBusy(null);
     }

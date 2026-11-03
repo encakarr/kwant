@@ -4,6 +4,7 @@ import { UndoNotice } from './UndoNotice';
 import { AlertTriangle, ChevronLeft, ExternalLink, Loader2, Pencil, Play, Plus, RefreshCw, Split, Trash2 } from 'lucide-react';
 import { PERSON_SIGNED_IN_EVENT, requestPersonToken } from '../auth';
 import { playSfx } from '../audio/chiptune';
+import { t } from '../i18n';
 import {
   FormErrors,
   INTERRUPTED_TEXT,
@@ -87,20 +88,20 @@ export const ScenarioList: React.FC<{
   scenarios.length === 0 ? (
     <div className="py-12 flex flex-col items-center text-center gap-2" data-empty>
       <Split size={28} className="text-sky-400" aria-hidden="true" />
-      <p className="text-sm font-medium text-zinc-200">No scenarios yet</p>
+      <p className="text-sm font-medium text-zinc-200">{t('No scenarios yet')}</p>
       <p className="text-xs text-zinc-500 max-w-xs">
-        A scenario is one question, like “VPS or serverless?”, with up to {MAX_OPTIONS} ways to run your app. Each one is tried here and compared.
+        {t('A scenario is one question, like “VPS or serverless?”, with up to {n} ways to run your app. Each one is tried here and compared.', { n: MAX_OPTIONS })}
       </p>
       <button type="button" onClick={onNew} className={`${mainBtn} mt-2`}>
-        <Plus size={13} aria-hidden="true" /> New scenario
+        <Plus size={13} aria-hidden="true" /> {t('New scenario')}
       </button>
     </div>
   ) : (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold text-zinc-300">Scenarios</h3>
+        <h3 className="text-xs font-semibold text-zinc-300">{t('Scenarios')}</h3>
         <button type="button" onClick={onNew} className={quietBtn}>
-          <Plus size={13} aria-hidden="true" /> New scenario
+          <Plus size={13} aria-hidden="true" /> {t('New scenario')}
         </button>
       </div>
       <ul className="space-y-2">
@@ -114,7 +115,7 @@ export const ScenarioList: React.FC<{
               <span className="block text-sm font-medium text-zinc-100 break-words">{s.title}</span>
               {s.question && <span className="block mt-0.5 text-xs text-zinc-400 break-words line-clamp-2">{s.question}</span>}
               <span className="block mt-1.5 text-[11px] text-zinc-500 break-words">
-                {s.options.length} option{s.options.length === 1 ? '' : 's'}: {s.options.map((o) => o.label).join(' · ')}
+                {t(s.options.length === 1 ? '{n} option: {list}' : '{n} options: {list}', { n: s.options.length, list: s.options.map((o) => o.label).join(' · ') })}
               </span>
             </button>
           </li>
@@ -179,7 +180,12 @@ const TextInput: React.FC<{
   </Field>
 );
 
-const LIMIT_UNITS: Record<LimitKey, string> = { cpus: 'CPUs', memory_mb: 'Memory (MB)', pids: 'Processes', timeout_secs: 'Time limit (s)' };
+const LIMIT_UNITS: Record<LimitKey, string> = {
+  cpus: t('CPUs'),
+  memory_mb: t('Memory (MB)'),
+  pids: t('Processes'),
+  timeout_secs: t('Time limit (s)'),
+};
 
 const OptionFields: React.FC<{
   o: OptionDraft;
@@ -195,20 +201,20 @@ const OptionFields: React.FC<{
   const planId = useId();
   return (
     <fieldset className={`${card} space-y-3`}>
-      <legend className="sr-only">Option {i + 1}</legend>
+      <legend className="sr-only">{t('Option {n}', { n: i + 1 })}</legend>
       <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-semibold text-zinc-300">Option {i + 1}</span>
+        <span className="text-xs font-semibold text-zinc-300">{t('Option {n}', { n: i + 1 })}</span>
         {canRemove && (
-          <button type="button" onClick={onRemove} className={`${quietBtn} !min-h-[32px]`} aria-label={`Remove option ${i + 1}`}>
-            <Trash2 size={12} aria-hidden="true" /> Remove
+          <button type="button" onClick={onRemove} className={`${quietBtn} !min-h-[32px]`} aria-label={t('Remove option {n}', { n: i + 1 })}>
+            <Trash2 size={12} aria-hidden="true" /> {t('Remove')}
           </button>
         )}
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <TextInput label="Name" value={o.label} onChange={(v) => set({ label: v })} error={e('label')} placeholder="DigitalOcean droplet" />
+        <TextInput label={t('Name')} value={o.label} onChange={(v) => set({ label: v })} error={e('label')} placeholder="DigitalOcean droplet" />
         <div>
           <label htmlFor={planId} className="block text-[11px] font-medium text-zinc-400 mb-1">
-            Price plan
+            {t('Price plan')}
           </label>
           <select
             id={planId}
@@ -217,10 +223,10 @@ const OptionFields: React.FC<{
             aria-invalid={e('plan') ? true : undefined}
             onChange={(ev) => set({ plan: ev.target.value })}
           >
-            <option value="">None — cost will be a guess</option>
+            <option value="">{t('None — cost will be a guess')}</option>
             {(prices ?? []).map((p) => (
               <option key={p.id} value={p.id}>
-                {p.provider} · {p.plan} ({p.monthly > 0 ? `${p.monthly.toFixed(2)} ${p.currency}/mo` : `pay per use, ${p.currency}`})
+                {p.provider} · {p.plan} ({p.monthly > 0 ? t('{amount} {currency}/mo', { amount: p.monthly.toFixed(2), currency: p.currency }) : t('pay per use, {currency}', { currency: p.currency })})
               </option>
             ))}
             {o.plan && prices && !prices.some((p) => p.id === o.plan) && <option value={o.plan}>{o.plan}</option>}
@@ -229,11 +235,11 @@ const OptionFields: React.FC<{
         </div>
       </div>
 
-      <div role="radiogroup" aria-label={`Option ${i + 1}: where the app comes from`} className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-300">
+      <div role="radiogroup" aria-label={t('Option {n}: where the app comes from', { n: i + 1 })} className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-300">
         {(
           [
-            ['image', 'An image on this server'],
-            ['context', 'Build from a folder'],
+            ['image', t('An image on this server')],
+            ['context', t('Build from a folder')],
           ] as const
         ).map(([v, l]) => (
           <label key={v} className="inline-flex items-center gap-1.5 min-h-[32px] cursor-pointer">
@@ -244,16 +250,16 @@ const OptionFields: React.FC<{
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {o.source === 'image' ? (
-          <TextInput label="Docker image" value={o.image} onChange={(v) => set({ image: v })} error={e('image')} placeholder="myapp:latest" />
+          <TextInput label={t('Docker image')} value={o.image} onChange={(v) => set({ image: v })} error={e('image')} placeholder="myapp:latest" />
         ) : (
           <>
-            <TextInput label="Folder" value={o.context} onChange={(v) => set({ context: v })} error={e('context')} placeholder="/home/me/myapp" />
-            <TextInput label="Dockerfile (optional)" value={o.dockerfile} onChange={(v) => set({ dockerfile: v })} error={e('dockerfile')} placeholder="Dockerfile" />
+            <TextInput label={t('Folder')} value={o.context} onChange={(v) => set({ context: v })} error={e('context')} placeholder="/home/me/myapp" />
+            <TextInput label={t('Dockerfile (optional)')} value={o.dockerfile} onChange={(v) => set({ dockerfile: v })} error={e('dockerfile')} placeholder="Dockerfile" />
           </>
         )}
         <div className="grid grid-cols-2 gap-3">
-          <TextInput label="Port" value={o.port} onChange={(v) => set({ port: v })} error={e('port')} inputMode="numeric" />
-          <TextInput label="Health path" value={o.health_path} onChange={(v) => set({ health_path: v })} error={e('health_path')} />
+          <TextInput label={t('Port')} value={o.port} onChange={(v) => set({ port: v })} error={e('port')} inputMode="numeric" />
+          <TextInput label={t('Health path')} value={o.health_path} onChange={(v) => set({ health_path: v })} error={e('health_path')} />
         </div>
       </div>
 
@@ -272,12 +278,12 @@ const OptionFields: React.FC<{
       </div>
 
       <details className="group">
-        <summary className="cursor-pointer text-[11px] text-zinc-400 hover:text-zinc-200 min-h-[32px] flex items-center">Your notes on running and rolling back (optional)</summary>
+        <summary className="cursor-pointer text-[11px] text-zinc-400 hover:text-zinc-200 min-h-[32px] flex items-center">{t('Your notes on running and rolling back (optional)')}</summary>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
           {(
             [
-              ['ops_notes', 'Running it'],
-              ['rollback_notes', 'Rolling back'],
+              ['ops_notes', t('Running it')],
+              ['rollback_notes', t('Rolling back')],
             ] as const
           ).map(([k, l]) => (
             <Field key={k} label={l} error={k === 'ops_notes' ? e('ops_notes') : undefined}>
@@ -285,7 +291,7 @@ const OptionFields: React.FC<{
             </Field>
           ))}
         </div>
-        <p className="mt-1 text-[11px] text-zinc-500">These show in the comparison labelled as a guess. Without them you get a general note for the plan.</p>
+        <p className="mt-1 text-[11px] text-zinc-500">{t('These show in the comparison labelled as a guess. Without them you get a general note for the plan.')}</p>
       </details>
     </fieldset>
   );
@@ -318,14 +324,14 @@ export const ScenarioForm: React.FC<{
   };
 
   return (
-    <form onSubmit={submit} noValidate className="space-y-4" aria-label={editing ? 'Edit scenario' : 'New scenario'}>
+    <form onSubmit={submit} noValidate className="space-y-4" aria-label={editing ? t('Edit scenario') : t('New scenario')}>
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-zinc-100">{editing ? 'Edit scenario' : 'New scenario'}</h3>
+        <h3 className="text-sm font-semibold text-zinc-100">{editing ? t('Edit scenario') : t('New scenario')}</h3>
       </div>
 
       <div className={`${card} space-y-3`}>
-        <TextInput label="Name" value={d.title} onChange={(v) => set({ title: v })} error={shown.title} placeholder="Move my blog off managed hosting?" />
-        <Field label="The question (optional)" error={shown.question}>
+        <TextInput label={t('Name')} value={d.title} onChange={(v) => set({ title: v })} error={shown.title} placeholder={t('Move my blog off managed hosting?')} />
+        <Field label={t('The question (optional)')} error={shown.question}>
           {(id, desc) => (
             <textarea
               id={id}
@@ -333,7 +339,7 @@ export const ScenarioForm: React.FC<{
               rows={2}
               className={`${field} resize-y`}
               value={d.question}
-              placeholder="Stay where we are, move to a VPS or go serverless?"
+              placeholder={t('Stay where we are, move to a VPS or go serverless?')}
               onChange={(e) => set({ question: e.target.value })}
             />
           )}
@@ -341,29 +347,29 @@ export const ScenarioForm: React.FC<{
       </div>
 
       <fieldset className={`${card} space-y-3`}>
-        <legend className="sr-only">Traffic and load test</legend>
-        <p className="text-xs font-semibold text-zinc-300">Traffic, for the cost estimate</p>
+        <legend className="sr-only">{t('Traffic and load test')}</legend>
+        <p className="text-xs font-semibold text-zinc-300">{t('Traffic, for the cost estimate')}</p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <TextInput label="Requests a month" value={d.monthly_requests} onChange={(v) => set({ monthly_requests: v })} error={shown.monthly_requests} inputMode="numeric" />
-          <TextInput label="Busiest req/s" value={d.peak_rps} onChange={(v) => set({ peak_rps: v })} error={shown.peak_rps} inputMode="decimal" />
-          <TextInput label="Response size (KB)" value={d.avg_response_kb} onChange={(v) => set({ avg_response_kb: v })} error={shown.avg_response_kb} inputMode="decimal" />
-          <TextInput label="Work per request (ms)" value={d.avg_duration_ms} onChange={(v) => set({ avg_duration_ms: v })} error={shown.avg_duration_ms} inputMode="decimal" />
+          <TextInput label={t('Requests a month')} value={d.monthly_requests} onChange={(v) => set({ monthly_requests: v })} error={shown.monthly_requests} inputMode="numeric" />
+          <TextInput label={t('Busiest req/s')} value={d.peak_rps} onChange={(v) => set({ peak_rps: v })} error={shown.peak_rps} inputMode="decimal" />
+          <TextInput label={t('Response size (KB)')} value={d.avg_response_kb} onChange={(v) => set({ avg_response_kb: v })} error={shown.avg_response_kb} inputMode="decimal" />
+          <TextInput label={t('Work per request (ms)')} value={d.avg_duration_ms} onChange={(v) => set({ avg_duration_ms: v })} error={shown.avg_duration_ms} inputMode="decimal" />
         </div>
-        <p className="text-xs font-semibold text-zinc-300 pt-1">Load test, run here</p>
+        <p className="text-xs font-semibold text-zinc-300 pt-1">{t('Load test, run here')}</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <TextInput label="Requests" value={d.load_requests} onChange={(v) => set({ load_requests: v })} error={shown.load_requests} inputMode="numeric" />
-          <TextInput label="At once" value={d.load_concurrency} onChange={(v) => set({ load_concurrency: v })} error={shown.load_concurrency} inputMode="numeric" />
-          <TextInput label="Path" value={d.load_path} onChange={(v) => set({ load_path: v })} error={shown.load_path} className="col-span-2 sm:col-span-1" />
+          <TextInput label={t('Requests')} value={d.load_requests} onChange={(v) => set({ load_requests: v })} error={shown.load_requests} inputMode="numeric" />
+          <TextInput label={t('At once')} value={d.load_concurrency} onChange={(v) => set({ load_concurrency: v })} error={shown.load_concurrency} inputMode="numeric" />
+          <TextInput label={t('Path')} value={d.load_path} onChange={(v) => set({ load_path: v })} error={shown.load_path} className="col-span-2 sm:col-span-1" />
         </div>
       </fieldset>
 
       <div className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-xs font-semibold text-zinc-300">
-            Options <span className="font-normal text-zinc-500">({d.options.length} of {MAX_OPTIONS})</span>
+            {t('Options')} <span className="font-normal text-zinc-500">{t('({n} of {max})', { n: d.options.length, max: MAX_OPTIONS })}</span>
           </p>
           <p className={`text-[11px] ${total > MAX_TOTAL_MEMORY_MB ? 'text-rose-300' : 'text-zinc-500'}`} data-memory-total>
-            Memory reserved: {total} of {MAX_TOTAL_MEMORY_MB} MB
+            {t('Memory reserved: {total} of {max} MB', { total, max: MAX_TOTAL_MEMORY_MB })}
           </p>
         </div>
         {shown.memory_total && (
@@ -386,35 +392,35 @@ export const ScenarioForm: React.FC<{
         ))}
         {d.options.length < MAX_OPTIONS ? (
           <button type="button" onClick={() => set({ options: [...d.options, emptyOption()] })} className={quietBtn}>
-            <Plus size={13} aria-hidden="true" /> Add an option
+            <Plus size={13} aria-hidden="true" /> {t('Add an option')}
           </button>
         ) : (
-          <p className="text-[11px] text-zinc-500">That’s the most options a scenario can have.</p>
+          <p className="text-[11px] text-zinc-500">{t('That’s the most options a scenario can have.')}</p>
         )}
       </div>
 
       <div className={`${card} space-y-1`}>
         <label className="flex items-start gap-2 text-xs text-zinc-200 cursor-pointer min-h-[32px]">
           <input type="checkbox" checked={d.build_network} onChange={(e) => set({ build_network: e.target.checked })} className="mt-0.5 accent-sky-500" />
-          <span>Let the build step use the internet</span>
+          <span>{t('Let the build step use the internet')}</span>
         </label>
         <p className={`text-[11px] pl-6 ${d.build_network ? 'text-amber-200' : 'text-zinc-500'}`}>
-          Only while building, for apps that download packages. The app itself is always tested offline, and results will say the build had internet.
+          {t('Only while building, for apps that download packages. The app itself is always tested offline, and results will say the build had internet.')}
         </p>
       </div>
 
       <div role="status" aria-live="polite">
-        {serverError && <Notice text={`Couldn’t save: ${serverError}`} error />}
-        {showErrors && errorCount > 0 && <Notice text={`Fix ${errorCount === 1 ? 'the highlighted field' : `the ${errorCount} highlighted fields`} to save.`} error />}
+        {serverError && <Notice text={t('Couldn’t save: {error}', { error: serverError })} error />}
+        {showErrors && errorCount > 0 && <Notice text={t(errorCount === 1 ? 'Fix the highlighted field to save.' : 'Fix the {n} highlighted fields to save.', { n: errorCount })} error />}
       </div>
 
       <div className="flex flex-wrap gap-2">
         <button type="submit" disabled={saving} className={mainBtn}>
           {saving && <Loader2 size={13} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />}
-          {editing ? 'Save changes' : 'Save scenario'}
+          {editing ? t('Save changes') : t('Save scenario')}
         </button>
         <button type="button" onClick={onCancel} className={quietBtn}>
-          Cancel
+          {t('Cancel')}
         </button>
       </div>
     </form>
@@ -434,7 +440,7 @@ export const RunProgress: React.FC<{ run: Run }> = ({ run }) => {
         {run.status === 'running' && <Loader2 size={13} className="text-sky-400 animate-spin motion-reduce:animate-none" aria-hidden="true" />}
       </div>
       {run.status === 'running' && (
-        <div className="h-1.5 rounded-full bg-zinc-800 overflow-hidden" role="progressbar" aria-label="Run progress" aria-valuemin={0} aria-valuemax={p.total} aria-valuenow={p.done}>
+        <div className="h-1.5 rounded-full bg-zinc-800 overflow-hidden" role="progressbar" aria-label={t('Run progress')} aria-valuemin={0} aria-valuemax={p.total} aria-valuenow={p.done}>
           <div className="h-full bg-sky-500 transition-all" style={{ width: `${p.total ? (p.done / p.total) * 100 : 0}%` }} />
         </div>
       )}
@@ -456,7 +462,7 @@ export const RunProgress: React.FC<{ run: Run }> = ({ run }) => {
           );
         })}
       </ul>
-      {run.cleanup_errors.length > 0 && <p className="text-[11px] text-amber-200 break-words">Cleanup: {run.cleanup_errors.join('; ')}</p>}
+      {run.cleanup_errors.length > 0 && <p className="text-[11px] text-amber-200 break-words">{t('Cleanup: {errors}', { errors: run.cleanup_errors.join('; ') })}</p>}
     </div>
   );
 };
@@ -470,7 +476,7 @@ const FigureRow: React.FC<{ f: OptionReport['measured'][number] }> = ({ f }) => 
     </div>
     {f.tag === 'verified' && (
       <details className="mt-1">
-        <summary className="cursor-pointer text-[11px] text-zinc-500 hover:text-zinc-300">How it was measured</summary>
+        <summary className="cursor-pointer text-[11px] text-zinc-500 hover:text-zinc-300">{t('How it was measured')}</summary>
         <code className="block mt-1 p-2 rounded bg-zinc-950 border border-zinc-800 text-[10px] text-zinc-300 whitespace-pre-wrap break-all">{f.command}</code>
       </details>
     )}
@@ -481,22 +487,22 @@ const CostRow: React.FC<{ f: OptionReport['cost'] }> = ({ f }) => (
   <div className="pt-2 space-y-1">
     <div className="flex items-center gap-2 text-xs">
       <span className="text-zinc-400 flex-1 min-w-0">{metricLabel(f.metric)}</span>
-      {f.tag === 'speculation' ? <span className="text-zinc-400 italic">unknown</span> : <span className="font-mono text-zinc-100 tabular-nums">about {formatValue(f.value, f.unit)}</span>}
+      {f.tag === 'speculation' ? <span className="text-zinc-400 italic">{t('unknown')}</span> : <span className="font-mono text-zinc-100 tabular-nums">{t('about {value}', { value: formatValue(f.value, f.unit) })}</span>}
       <KindBadge tag={f.tag} />
     </div>
     {f.tag === 'estimate' && (
       <p className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] text-zinc-500">
-        <span>Prices as of {f.as_of} from</span>
+        <span>{t('Prices as of {date} from', { date: f.as_of })}</span>
         {safeHttps(f.source_url) ? (
           <a href={f.source_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 text-sky-300 hover:text-sky-200 underline underline-offset-2">
             {sourceHost(f.source_url)}
             <ExternalLink size={10} aria-hidden="true" />
-            <span className="sr-only">(opens in a new tab)</span>
+            <span className="sr-only">{t('(opens in a new tab)')}</span>
           </a>
         ) : (
           <span className="break-all">{f.source_url}</span>
         )}
-        {f.stale && <Badge tone="rose">Price may be out of date</Badge>}
+        {f.stale && <Badge tone="rose">{t('Price may be out of date')}</Badge>}
       </p>
     )}
     {f.tag === 'speculation' && <p className="text-[11px] text-zinc-500">{f.note.charAt(0).toUpperCase() + f.note.slice(1)}.</p>}
@@ -516,12 +522,12 @@ export const OptionCard: React.FC<{ o: OptionReport; leaders: string[] }> = ({ o
           </Badge>
         ))}
       </div>
-      {o.status === 'failed' && <p className="text-xs text-rose-300 break-words">{o.error || o.error_code || 'This option failed.'}</p>}
-      {o.build_network_used && <p className="text-[11px] text-amber-200">The build step had internet.</p>}
+      {o.status === 'failed' && <p className="text-xs text-rose-300 break-words">{o.error || o.error_code || t('This option failed.')}</p>}
+      {o.build_network_used && <p className="text-[11px] text-amber-200">{t('The build step had internet.')}</p>}
       {o.measured.length > 0 ? (
         <ul>{o.measured.map((f) => <FigureRow key={f.metric} f={f} />)}</ul>
       ) : (
-        <p className="text-xs text-zinc-500">Nothing measured{o.status === 'failed' ? ' — the test didn’t finish.' : '.'}</p>
+        <p className="text-xs text-zinc-500">{t(o.status === 'failed' ? 'Nothing measured — the test didn’t finish.' : 'Nothing measured.')}</p>
       )}
       <CostRow f={o.cost} />
       {o.notes.length > 0 && (
@@ -546,15 +552,15 @@ export const ComparisonReport: React.FC<{ report: Report }> = ({ report }) => {
   const byOption = (key: string) => report.leaders.filter((l) => l.option === key).map((l) => leaderLabel(l.criterion));
   const label = (key: string) => report.options.find((o) => o.key === key)?.label ?? key;
   return (
-    <section aria-label="Comparison" className="space-y-3">
-      <h3 className="text-xs font-semibold text-zinc-300">Comparison</h3>
+    <section aria-label={t('Comparison')} className="space-y-3">
+      <h3 className="text-xs font-semibold text-zinc-300">{t('Comparison')}</h3>
       {report.leaders.length > 0 && (
-        <ul className="flex flex-col sm:flex-row sm:flex-wrap gap-2" aria-label="Leaders">
+        <ul className="flex flex-col sm:flex-row sm:flex-wrap gap-2" aria-label={t('Leaders')}>
           {report.leaders.map((l) => (
             <li key={l.criterion} className="flex flex-wrap items-center gap-2 px-3 py-2 rounded-lg border border-zinc-800 bg-zinc-900/60 text-xs">
               <span className="text-zinc-400">{leaderLabel(l.criterion)}:</span>
               <span className="text-zinc-100 font-medium break-words">{label(l.option)}</span>
-              <span className="font-mono text-zinc-300">{l.criterion === 'cost' ? 'about ' : ''}{formatValue(l.value, l.unit)}</span>
+              <span className="font-mono text-zinc-300">{l.criterion === 'cost' ? t('about {value}', { value: formatValue(l.value, l.unit) }) : formatValue(l.value, l.unit)}</span>
               <KindBadge tag={l.basis} />
             </li>
           ))}
@@ -567,7 +573,7 @@ export const ComparisonReport: React.FC<{ report: Report }> = ({ report }) => {
       </ul>
       {report.caveats.length > 0 && (
         <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
-          <p className="text-xs font-medium text-amber-200 mb-1">Keep in mind</p>
+          <p className="text-xs font-medium text-amber-200 mb-1">{t('Keep in mind')}</p>
           <ul className="list-disc pl-4 space-y-0.5 text-[11px] text-amber-100/80">
             {report.caveats.map((c, i) => (
               <li key={i} className="break-words">
@@ -603,32 +609,32 @@ export const ScenarioDetail: React.FC<{
         {scenario.question && <p className="text-xs text-zinc-400 break-words">{scenario.question}</p>}
         <p className="text-[11px] text-zinc-500 break-words">
           {scenario.options.map((o) => o.label).join(' · ')}
-          {scenario.build_network && ' · build has internet'}
+          {scenario.build_network && ` · ${t('build has internet')}`}
         </p>
       </div>
       <div className="flex flex-wrap gap-2">
         <button type="button" onClick={onStart} disabled={starting || live || busy} className={mainBtn}>
           {starting ? <Loader2 size={13} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Play size={13} aria-hidden="true" />}
-          {live ? 'Running…' : 'Start a run'}
+          {live ? t('Running…') : t('Start a run')}
         </button>
         <button type="button" onClick={onEdit} disabled={live} className={quietBtn}>
-          <Pencil size={12} aria-hidden="true" /> Edit
+          <Pencil size={12} aria-hidden="true" /> {t('Edit')}
         </button>
         <button type="button" onClick={onDelete} disabled={live} className={quietBtn}>
-          <Trash2 size={12} aria-hidden="true" /> Delete
+          <Trash2 size={12} aria-hidden="true" /> {t('Delete')}
         </button>
       </div>
-      <p className="text-[11px] text-zinc-500">Each option runs in a sealed-off container on this server, one after another. No cloud account is used and nothing is spent.</p>
+      <p className="text-[11px] text-zinc-500">{t('Each option runs in a sealed-off container on this server, one after another. No cloud account is used and nothing is spent.')}</p>
 
       <div role="status" aria-live="polite">
-        {busy && !live && <Notice text="Another run is going right now. You can start this one when it finishes." error />}
+        {busy && !live && <Notice text={t('Another run is going right now. You can start this one when it finishes.')} error />}
         {notice && <Notice text={notice.text} error={notice.error} />}
       </div>
 
       {runs && runs.length > 1 && (
         <div className="flex flex-wrap items-center gap-2">
           <label htmlFor={runPick} className="text-[11px] text-zinc-400">
-            Run
+            {t('Run')}
           </label>
           <select id={runPick} className={`${field} !w-auto max-w-full`} value={current?.run.id ?? ''} onChange={(e) => onPickRun(e.target.value)}>
             {runs.map((r) => (
@@ -640,7 +646,7 @@ export const ScenarioDetail: React.FC<{
         </div>
       )}
 
-      {runs && runs.length === 0 && !current && <p className="text-xs text-zinc-500">No runs yet. Start one to measure each option.</p>}
+      {runs && runs.length === 0 && !current && <p className="text-xs text-zinc-500">{t('No runs yet. Start one to measure each option.')}</p>}
 
       {current && (
         <>
@@ -676,25 +682,25 @@ export const ParallelView: React.FC<ParallelViewProps> = ({ screen, scenarios, l
         <button
           type="button"
           onClick={onBack}
-          aria-label="Back to chats"
+          aria-label={t('Back to chats')}
           className="shrink-0 p-2 -ml-0.5 -mr-2 rounded-lg text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500"
         >
           <ChevronLeft size={18} />
         </button>
       )}
       <div className="min-w-0 flex-1">
-        <h2 className="text-sm font-semibold text-zinc-100 truncate">Parallel Universe</h2>
-        <p className="text-[11px] text-zinc-400 truncate mt-0.5">Try ways to run your app side by side</p>
+        <h2 className="text-sm font-semibold text-zinc-100 truncate">{t('Parallel Universe')}</h2>
+        <p className="text-[11px] text-zinc-400 truncate mt-0.5">{t('Try ways to run your app side by side')}</p>
       </div>
       <button
         type="button"
         onClick={onRefresh}
         disabled={loading || needsToken}
-        aria-label="Refresh"
+        aria-label={t('Refresh')}
         className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs text-zinc-300 border border-zinc-700/60 hover:bg-zinc-800 disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500"
       >
         <RefreshCw size={12} className={loading ? 'animate-spin motion-reduce:animate-none' : ''} aria-hidden="true" />
-        <span className="hidden sm:inline">Refresh</span>
+        <span className="hidden sm:inline">{t('Refresh')}</span>
       </button>
     </div>
 
@@ -702,15 +708,15 @@ export const ParallelView: React.FC<ParallelViewProps> = ({ screen, scenarios, l
       <div className="max-w-3xl mx-auto space-y-5">
         {screen.kind !== 'list' && (
           <button type="button" onClick={onList} className="inline-flex items-center gap-1 -ml-1 min-h-[32px] px-1 rounded text-xs text-zinc-400 hover:text-zinc-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500">
-            <ChevronLeft size={14} aria-hidden="true" /> All scenarios
+            <ChevronLeft size={14} aria-hidden="true" /> {t('All scenarios')}
           </button>
         )}
 
         {needsToken && (
           <div role="alert" className="px-3 py-2 rounded-lg border border-amber-500/30 bg-amber-500/10 flex flex-wrap items-center gap-2 text-xs text-amber-100">
-            <span>Only you can use Parallel Universe. Confirm it’s you to open it.</span>
+            <span>{t('Only you can use Parallel Universe. Confirm it’s you to open it.')}</span>
             <button type="button" onClick={requestPersonToken} className="ml-auto px-2 py-0.5 rounded border border-amber-500/40 hover:bg-amber-500/10">
-              Confirm it’s you
+              {t('Confirm it’s you')}
             </button>
           </div>
         )}
@@ -719,14 +725,14 @@ export const ParallelView: React.FC<ParallelViewProps> = ({ screen, scenarios, l
           <div role="alert" className="px-3 py-2 rounded-lg border border-rose-500/20 bg-rose-500/5 flex items-center gap-2 text-xs text-rose-300">
             <span>{error}</span>
             <button type="button" onClick={onRefresh} className="ml-auto shrink-0 px-2 py-0.5 rounded border border-rose-500/30 hover:bg-rose-500/10">
-              Retry
+              {t('Retry')}
             </button>
           </div>
         )}
 
         {!scenarios && loading && (
           <p className="flex items-center gap-2 text-xs text-zinc-400">
-            <Loader2 size={14} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> Loading…
+            <Loader2 size={14} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> {t('Loading…')}
           </p>
         )}
 
@@ -761,7 +767,7 @@ export const ParallelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const fail = (e: unknown) => {
     if (!alive.current) return;
     if (e instanceof ParallelError && e.status === 401) setNeedsToken(true);
-    else setError(e instanceof Error ? e.message : 'Something went wrong.');
+    else setError(e instanceof Error ? e.message : t('Something went wrong.'));
   };
 
   const load = useCallback(async () => {
@@ -796,7 +802,7 @@ export const ParallelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       const r = await parallelApi.run(id);
       if (alive.current) setCurrent(r);
     } catch (e) {
-      if (alive.current) setNotice({ text: `Couldn’t load that run: ${e instanceof Error ? e.message : 'something went wrong.'}`, error: true });
+      if (alive.current) setNotice({ text: t('Couldn’t load that run: {error}', { error: e instanceof Error ? e.message : t('something went wrong.') }), error: true });
     }
   }, []);
 
@@ -809,7 +815,7 @@ export const ParallelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         setBusy(r.running && !r.runs.some((x) => x.status === 'running'));
         if (pick && r.runs[0]) openRun(r.runs[0].id);
       } catch (e) {
-        if (alive.current) setNotice({ text: `Couldn’t load runs: ${e instanceof Error ? e.message : 'something went wrong.'}`, error: true });
+        if (alive.current) setNotice({ text: t('Couldn’t load runs: {error}', { error: e instanceof Error ? e.message : t('something went wrong.') }), error: true });
       }
     },
     [openRun],
@@ -828,20 +834,20 @@ export const ParallelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const runningId = current?.run.status === 'running' ? current.run.id : null;
   useEffect(() => {
     if (!runningId) return;
-    const t = window.setInterval(async () => {
+    const timer = window.setInterval(async () => {
       try {
         const r = await parallelApi.run(runningId);
         if (!alive.current) return;
         setCurrent(r);
         if (r.run.status !== 'running') {
-          setNotice(r.run.status === 'finished' ? { text: 'Run finished.', error: false } : { text: 'The run was interrupted.', error: true });
+          setNotice(r.run.status === 'finished' ? { text: t('Run finished.'), error: false } : { text: t('The run was interrupted.'), error: true });
           if (scenarioId) loadRuns(scenarioId, false);
         }
       } catch {
         // the next tick tries again
       }
     }, POLL_MS);
-    return () => window.clearInterval(t);
+    return () => window.clearInterval(timer);
   }, [runningId, scenarioId, loadRuns]);
 
   const save = async (body: ScenarioBody) => {
@@ -856,7 +862,7 @@ export const ParallelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       setScreen({ kind: 'scenario', id: s.id });
     } catch (e) {
       if (e instanceof ParallelError && e.status === 401) setNeedsToken(true);
-      else if (alive.current) setSaveError(e instanceof Error ? e.message : 'Something went wrong.');
+      else if (alive.current) setSaveError(e instanceof Error ? e.message : t('Something went wrong.'));
     } finally {
       if (alive.current) setSaving(false);
     }
@@ -874,7 +880,7 @@ export const ParallelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     } catch (e) {
       if (!alive.current) return;
       if (e instanceof ParallelError && e.busy) setBusy(true);
-      else setNotice({ text: `Couldn’t start a run: ${e instanceof Error ? e.message : 'something went wrong.'}`, error: true });
+      else setNotice({ text: t('Couldn’t start a run: {error}', { error: e instanceof Error ? e.message : t('something went wrong.') }), error: true });
     } finally {
       if (alive.current) setStarting(false);
     }
@@ -900,8 +906,8 @@ export const ParallelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   if (screen.kind === 'list') {
     body = (
       <>
-        {removal.pending && removing && <UndoNotice text={`Deleted “${removing.title}” and its past runs.`} onUndo={undoRemove} className="mb-3" />}
-        {removal.error && <Notice text={`Couldn’t delete it: ${removal.error}`} error />}
+        {removal.pending && removing && <UndoNotice text={t('Deleted “{title}” and its past runs.', { title: removing.title })} onUndo={undoRemove} className="mb-3" />}
+        {removal.error && <Notice text={t('Couldn’t delete it: {error}', { error: removal.error })} error />}
         <ScenarioList scenarios={listed} onOpen={(s) => setScreen({ kind: 'scenario', id: s.id })} onNew={() => (setSaveError(null), setScreen({ kind: 'edit', scenario: null }))} />
       </>
     );
@@ -936,7 +942,7 @@ export const ParallelPage: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       </>
     );
   } else {
-    body = <p className="text-xs text-zinc-500">That scenario no longer exists.</p>;
+    body = <p className="text-xs text-zinc-500">{t('That scenario no longer exists.')}</p>;
   }
 
   return (

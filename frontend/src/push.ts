@@ -5,6 +5,7 @@
 import { BROWSER_NOTIFY_KEY, NotifyEvent, notificationPermission } from './continuity';
 import { isIos, isStandalone } from './pwa';
 import { spacePath } from './spaces';
+import { t } from './i18n';
 
 /** Same as the server's push tag: `kwnt-<space|none>-<kind>-<channel|bot>`. */
 export function notificationTag(n: Pick<NotifyEvent, 'kind' | 'kwant_id' | 'channel_id'> & { space_id?: string | null }): string {
@@ -91,20 +92,23 @@ export function deviceNotifyHint(s: {
 }): { text: string; warn: boolean } {
   switch (s.support) {
     case 'insecure':
-      return { text: 'Notifications need https://. Open this site through its https address to turn this on.', warn: true };
+      return { text: t('Notifications need https://. Open this site through its https address to turn this on.'), warn: true };
     case 'ios-install':
-      return { text: 'On iPhone and iPad, add kwant bots to your Home Screen first: tap Share, then Add to Home Screen. Then turn this on in that app.', warn: true };
+      return { text: t('On iPhone and iPad, add kwant bots to your Home Screen first: tap Share, then Add to Home Screen. Then turn this on in that app.'), warn: true };
     case 'unsupported':
-      return { text: "This browser can't show notifications.", warn: true };
+      return { text: t("This browser can't show notifications."), warn: true };
   }
   if (s.permission === 'denied') {
     const how = s.android && s.standalone
-      ? 'Long-press the kwant bots icon, tap App info, then Notifications, and allow them.'
-      : "Allow notifications for this site in the browser's site settings (the icon left of the address), then come back.";
-    return { text: `Notifications are blocked for this site. ${how}`, warn: true };
+      ? t('Long-press the kwant bots icon, tap App info, then Notifications, and allow them.')
+      : t("Allow notifications for this site in the browser's site settings (the icon left of the address), then come back.");
+    return { text: t('Notifications are blocked for this site. {how}', { how }), warn: true };
   }
-  if (s.support === 'page') return { text: 'Only while this tab is open in the background. Each notification names its space.', warn: false };
-  return { text: s.on ? 'Comes through even when the app is closed. Tap one to open its chat.' : 'Get a notification when a bot needs you, even with the app closed.', warn: false };
+  if (s.support === 'page') return { text: t('Only while this tab is open in the background. Each notification names its space.'), warn: false };
+  return {
+    text: s.on ? t('Comes through even when the app is closed. Tap one to open its chat.') : t('Get a notification when a bot needs you, even with the app closed.'),
+    warn: false,
+  };
 }
 
 export const isAndroid = (nav: Pick<Navigator, 'userAgent'>): boolean => /Android/.test(nav.userAgent);
@@ -130,9 +134,9 @@ export function sameKey(a: ArrayBuffer | null | undefined, b: Uint8Array): boole
 
 type Fetch = (input: string, init?: RequestInit) => Promise<Response>;
 
-async function errorOf(res: Response, what: string): Promise<Error> {
+async function errorOf(res: Response, fallback: (status: number) => string): Promise<Error> {
   const data = await res.json().catch(() => null);
-  return new Error(data && typeof data.error === 'string' ? data.error : `${what} failed (HTTP ${res.status}).`);
+  return new Error(data && typeof data.error === 'string' ? data.error : fallback(res.status));
 }
 
 /** The service worker's registration, or null where there isn't one (dev server, plain http). */
@@ -145,9 +149,9 @@ export async function swRegistration(nav: Navigator = navigator): Promise<Servic
  * server keeps one entry per endpoint, so this also re-syncs after the server dropped it. */
 export async function subscribePush(reg: ServiceWorkerRegistration, fetchFn: Fetch = fetch): Promise<PushSubscription> {
   const keyRes = await fetchFn('/api/push/key');
-  if (!keyRes.ok) throw await errorOf(keyRes, 'Getting the server key');
+  if (!keyRes.ok) throw await errorOf(keyRes, (status) => t('Getting the server key failed (HTTP {status}).', { status }));
   const { public_key } = (await keyRes.json()) as { public_key?: string };
-  if (!public_key) throw new Error('The server has no push key.');
+  if (!public_key) throw new Error(t('The server has no push key.'));
   const key = base64UrlToBytes(public_key);
   let sub = await reg.pushManager.getSubscription();
   if (sub && !sameKey(sub.options?.applicationServerKey, key)) {
@@ -160,7 +164,7 @@ export async function subscribePush(reg: ServiceWorkerRegistration, fetchFn: Fet
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(sub.toJSON()),
   });
-  if (!res.ok) throw await errorOf(res, 'Saving the subscription');
+  if (!res.ok) throw await errorOf(res, (status) => t('Saving the subscription failed (HTTP {status}).', { status }));
   return sub;
 }
 

@@ -3,6 +3,7 @@
 // person closes them. An audit never marks work passed or failed; only checks do. Pure helpers,
 // shared by the app and the node tests.
 import type { AwayItem, AwayLink } from './away';
+import { t, tc } from './i18n';
 
 export type AuditStatus = 'queued' | 'challenge' | 'rebuttal' | 'done' | 'skipped' | 'failed' | 'interrupted';
 export type RiskStatus = 'open' | 'disputed' | 'resolved' | 'dismissed';
@@ -49,17 +50,19 @@ export interface TaskRisks {
 }
 
 /** Shown wherever audits show: what an audit is and isn't. */
-export const NOT_A_PASS_TEXT = 'An audit never marks work passed or failed. Only checks do that, so “no risks raised” is not a pass.';
+export const NOT_A_PASS_TEXT = t('An audit never marks work passed or failed. Only checks do that, so “no risks raised” is not a pass.');
 export const SETTING_HINT =
-  'On important tasks, or ones nothing outside the bot will check, a second bot challenges the work with evidence and the owner answers once. An audit never marks work passed or failed, and each audit uses tokens.';
+  t(
+    'On important tasks, or ones nothing outside the bot will check, a second bot challenges the work with evidence and the owner answers once. An audit never marks work passed or failed, and each audit uses tokens.',
+  );
 
 export const unresolved = (r: Pick<Risk, 'status'>) => r.status === 'open' || r.status === 'disputed';
 
 export const RISK_STATE: Record<RiskStatus, { label: string; tone: 'amber' | 'rose' | 'emerald' | 'zinc' }> = {
-  open: { label: 'Open', tone: 'amber' },
-  disputed: { label: 'Disputed', tone: 'rose' },
-  resolved: { label: 'Resolved', tone: 'emerald' },
-  dismissed: { label: 'Dismissed', tone: 'zinc' },
+  open: { label: tc('status', 'Open'), tone: 'amber' },
+  disputed: { label: t('Disputed'), tone: 'rose' },
+  resolved: { label: t('Resolved'), tone: 'emerald' },
+  dismissed: { label: t('Dismissed'), tone: 'zinc' },
 };
 export const riskState = (s: string) => RISK_STATE[s as RiskStatus] ?? { label: s, tone: 'zinc' as const };
 
@@ -73,7 +76,7 @@ export function auditTurnBot(a: Pick<Audit, 'status' | 'challenger_kwant_id' | '
   return null;
 }
 
-const name = (id: string, names: Record<string, string>) => names[id] || 'A bot';
+const name = (id: string, names: Record<string, string>) => names[id] || t('A bot');
 
 /** One plain line for an audit's state. */
 export function auditStatusText(a: Audit, names: Record<string, string> = {}): string {
@@ -81,32 +84,32 @@ export function auditStatusText(a: Audit, names: Record<string, string> = {}): s
   const owner = name(a.owner_kwant_id, names);
   switch (a.status) {
     case 'queued':
-      return `${challenger} will challenge it once the audit before it finishes.`;
+      return t('{challenger} will challenge it once the audit before it finishes.', { challenger });
     case 'challenge':
-      return `${challenger} is challenging the work.`;
+      return t('{challenger} is challenging the work.', { challenger });
     case 'rebuttal':
-      return `${owner} is answering the risks.`;
+      return t('{owner} is answering the risks.', { owner });
     case 'done':
-      return a.risks.length === 0 ? `${challenger} raised no risks. That isn’t a pass.` : `${challenger} raised ${plural(a.risks.length, 'risk')}; ${owner} answered.`;
+      return a.risks.length === 0
+        ? t('{challenger} raised no risks. That isn’t a pass.', { challenger })
+        : t(a.risks.length === 1 ? '{challenger} raised {n} risk; {owner} answered.' : '{challenger} raised {n} risks; {owner} answered.', { challenger, owner, n: a.risks.length });
     case 'skipped':
-      return `Skipped${a.reason ? `: ${a.reason}` : ''}.`;
+      return a.reason ? t('Skipped: {reason}.', { reason: a.reason }) : t('Skipped.');
     case 'failed':
-      return `Didn’t finish${a.reason ? `: ${a.reason}` : ''}.`;
+      return a.reason ? t('Didn’t finish: {reason}.', { reason: a.reason }) : t('Didn’t finish.');
     case 'interrupted':
-      return 'Stopped when the app restarted.';
+      return t('Stopped when the app restarted.');
     default:
       return a.status;
   }
 }
 
 export const TRIGGER_LABELS: Record<string, string> = {
-  high_impact: 'high or urgent task',
-  low_confidence: 'nothing outside the bot checks it',
-  manual: 'started by you',
+  high_impact: t('high or urgent task'),
+  low_confidence: t('nothing outside the bot checks it'),
+  manual: t('started by you'),
 };
-export const triggerLabel = (t: string) => TRIGGER_LABELS[t] ?? t.replace(/_/g, ' ');
-
-const plural = (n: number, one: string) => `${n} ${one}${n === 1 ? '' : 's'}`;
+export const triggerLabel = (s: string) => TRIGGER_LABELS[s] ?? s.replace(/_/g, ' ');
 
 export function auditTokens(a: Pick<Audit, 'challenge_tokens' | 'rebuttal_tokens'>): number {
   return Math.max(0, (a.challenge_tokens || 0) + (a.rebuttal_tokens || 0));
@@ -119,7 +122,7 @@ export function openRiskCounts(risks: Array<Pick<Risk, 'task_id' | 'status'>>): 
   return out;
 }
 
-export const riskBadgeText = (n: number) => (n === 1 ? '1 open risk' : `${n} open risks`);
+export const riskBadgeText = (n: number) => t(n === 1 ? '{n} open risk' : '{n} open risks', { n });
 
 /** A live audit's turn waiting on one of the person's approval cards. */
 export interface AuditWaiting {
@@ -171,18 +174,18 @@ export const DAILY_CAPS = [1, 2, 3, 5, 10, 20, 50];
 
 /** The model audit turns run on (`auditor_model`, §18). `fast` is the server default. */
 export const AUDITOR_MODELS: Array<{ value: AuditorModel; label: string }> = [
-  { value: 'fast', label: 'Fast' },
-  { value: 'balanced', label: 'Balanced' },
-  { value: 'deep', label: 'Deep' },
-  { value: 'bot', label: 'Same as the bot' },
+  { value: 'fast', label: t('Fast') },
+  { value: 'balanced', label: t('Balanced') },
+  { value: 'deep', label: t('Deep') },
+  { value: 'bot', label: t('Same as the bot') },
 ];
-export const MODEL_HINT = 'Fast is cheapest; audits never mark work passed or failed.';
+export const MODEL_HINT = t('Fast is cheapest; audits never mark work passed or failed.');
 export const isAuditorModel = (v: unknown): v is AuditorModel => AUDITOR_MODELS.some((o) => o.value === v);
 
 /** A save error that is about the audit model, so it can show next to that control. */
 export const isAuditorModelError = (err: string | null | undefined): boolean => !!err && err.includes('auditor_model');
 /** What the picker says after that 400, instead of the server's field name. */
-export const MODEL_ERROR_TEXT = 'The server didn’t accept that audit model. Pick Fast, Balanced, Deep or Same as the bot.';
+export const MODEL_ERROR_TEXT = t('The server didn’t accept that audit model. Pick Fast, Balanced, Deep or Same as the bot.');
 
 /** `auditor`, `auditor_daily_cap` and `auditor_model` from GET /api/settings; null on a server without the Auditor. */
 export function parseAuditorSettings(data: unknown): AuditorSettings | null {
@@ -200,4 +203,4 @@ export function parseAuditorSettings(data: unknown): AuditorSettings | null {
 export const auditorModelLabel = (m: string): string => AUDITOR_MODELS.find((o) => o.value === m)?.label ?? m;
 
 /** What a resolve press says afterwards. */
-export const riskResolvedText = (r: RiskResolution) => (r === 'resolved' ? 'Marked resolved. The task’s state doesn’t change.' : 'Dismissed. The task’s state doesn’t change.');
+export const riskResolvedText = (r: RiskResolution) => (r === 'resolved' ? t('Marked resolved. The task’s state doesn’t change.') : t('Dismissed. The task’s state doesn’t change.'));

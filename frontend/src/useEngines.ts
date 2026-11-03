@@ -1,6 +1,7 @@
 // Engine status from GET /api/engines, shared by Settings, the kwant form and the sidebar.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { EngineInfo } from './engines';
+import { t } from './i18n';
 
 export interface EnginesApi {
   /** null until the first load; [] from a server that has no engine checks. */
@@ -41,7 +42,7 @@ export function useEngines(active: boolean): EnginesApi {
         setError(null);
       }
     } catch {
-      if (alive.current) setError('Could not load engine status.');
+      if (alive.current) setError(t('Could not load engine status.'));
     }
   }, []);
 
@@ -53,8 +54,8 @@ export function useEngines(active: boolean): EnginesApi {
   const anyChecking = !!engines?.some((e) => e.status === 'checking');
   useEffect(() => {
     if (!active || !anyChecking) return;
-    const t = window.setTimeout(load, 1500);
-    return () => window.clearTimeout(t);
+    const timer = window.setTimeout(load, 1500);
+    return () => window.clearTimeout(timer);
   }, [active, anyChecking, engines, load]);
 
   const recheck = useCallback(async () => {
@@ -66,7 +67,7 @@ export function useEngines(active: boolean): EnginesApi {
       const d = await r.json();
       if (alive.current && Array.isArray(d?.engines)) setEngines(d.engines);
     } catch {
-      if (alive.current) setError('Re-check failed. Is the server running?');
+      if (alive.current) setError(t('Re-check failed. Is the server running?'));
     } finally {
       if (alive.current) setRechecking(false);
     }
@@ -89,7 +90,7 @@ export function useEngines(active: boolean): EnginesApi {
       } catch {
         if (!alive.current) return;
         setEngines((list) => list?.map((e) => (e.id === id ? { ...e, enabled: !enabled } : e)) ?? list);
-        setError(`Couldn't switch ${enabled ? 'on' : 'off'} that engine.`);
+        setError(enabled ? t("Couldn't switch on that engine.") : t("Couldn't switch off that engine."));
       }
     },
     [load],

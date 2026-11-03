@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { CheckCircle2, ChevronDown, ChevronRight, Loader2, Moon, Users } from 'lucide-react';
 import { ModernAvatar } from './ModernAvatar';
 import { MarkdownRenderer } from './MarkdownRenderer';
+import { t } from '../i18n';
 import { Decision, changeOptions, consultedLine, decidingDetail, decisionLabel, workAheadSummary } from '../decideFirst';
 
 export interface DecisionChipsProps {
@@ -35,7 +36,7 @@ export const DecisionChips: React.FC<DecisionChipsProps> = ({ messageId, decisio
   };
 
   return (
-    <div role="group" aria-label="Decided by the team" data-decisions className="mt-2 w-full max-w-2xl space-y-2">
+    <div role="group" aria-label={t('Decided by the team')} data-decisions className="mt-2 w-full max-w-2xl space-y-2">
       {consulted.length > 0 && (
         <p className="flex items-center gap-1.5 text-[11px] text-zinc-500">
           <Users size={12} aria-hidden="true" />
@@ -72,15 +73,15 @@ export const DecisionChips: React.FC<DecisionChipsProps> = ({ messageId, decisio
                   }}
                   className="shrink-0 -my-1 px-2.5 py-1.5 min-h-8 rounded-lg text-[11px] font-medium text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 border border-zinc-700/60 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500"
                 >
-                  {changing ? 'Keep it' : 'Change'}
+                  {changing ? t('Keep it') : t('Change')}
                 </button>
               )}
             </div>
-            {d.why && <p className="mt-1 text-[11px] text-zinc-500 break-words">Why: {d.why}</p>}
+            {d.why && <p className="mt-1 text-[11px] text-zinc-500 break-words">{t('Why: {why}', { why: d.why })}</p>}
             {changing && (
               <div id={panelId} className="mt-2 pt-2 border-t border-zinc-800 space-y-1.5">
-                <p className="text-[11px] text-zinc-400">Pick another one. The bot redoes what depended on it.</p>
-                <div role="group" aria-label={`Other choices for: ${d.question || d.picked}`} className="flex flex-col sm:flex-row sm:flex-wrap gap-1.5">
+                <p className="text-[11px] text-zinc-400">{t('Pick another one. The bot redoes what depended on it.')}</p>
+                <div role="group" aria-label={t('Other choices for: {question}', { question: d.question || d.picked })} className="flex flex-col sm:flex-row sm:flex-wrap gap-1.5">
                   {others.map((o) => (
                     <button
                       key={o}
@@ -90,7 +91,7 @@ export const DecisionChips: React.FC<DecisionChipsProps> = ({ messageId, decisio
                       className="inline-flex items-center justify-center gap-1.5 px-3 py-2 min-h-9 rounded-lg text-xs text-left text-zinc-100 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700/60 disabled:opacity-50 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500"
                     >
                       {busy === o && <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />}
-                      Use {o}
+                      {t('Use {option}', { option: o })}
                     </button>
                   ))}
                 </div>
@@ -120,7 +121,7 @@ export const DecidingLine: React.FC<{
         <span className="text-zinc-200">{botName}</span>
         <span className="inline-flex items-center gap-1 text-violet-300 text-[10px]">
           <span className="w-1.5 h-1.5 rounded-full bg-violet-300 animate-ping motion-reduce:animate-none" aria-hidden="true" />
-          Deciding
+          {t('Deciding')}
         </span>
       </div>
       <div
@@ -130,7 +131,7 @@ export const DecidingLine: React.FC<{
       >
         <p className="flex items-center gap-2 font-medium text-violet-100">
           <Users size={15} className="text-violet-300 shrink-0" aria-hidden="true" />
-          Team is deciding…
+          {t('Team is deciding…')}
         </p>
         <p className="mt-0.5 text-xs text-zinc-400">{decidingDetail(botName, consulted)}</p>
       </div>
@@ -153,11 +154,11 @@ export const WorkAheadBody: React.FC<{ messageId: string; text: string }> = ({ m
       >
         <Moon size={14} className="mt-0.5 shrink-0 text-indigo-300" aria-hidden="true" />
         <span className="flex-1 min-w-0">
-          <span className="block text-[11px] font-medium uppercase tracking-wide text-indigo-300/90">While you were away</span>
+          <span className="block text-[11px] font-medium uppercase tracking-wide text-indigo-300/90">{t('While you were away')}</span>
           {!open && <span className="block text-sm text-zinc-300 break-words">{workAheadSummary(text)}</span>}
         </span>
         <span className="shrink-0 inline-flex items-center gap-0.5 text-[11px] text-zinc-500">
-          {open ? 'Less' : 'More'}
+          {open ? t('Less') : t('More')}
           {open ? <ChevronDown size={13} aria-hidden="true" /> : <ChevronRight size={13} aria-hidden="true" />}
         </span>
       </button>

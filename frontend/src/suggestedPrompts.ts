@@ -1,5 +1,6 @@
 // The "Suggested:" prompts above an empty chat, made from who is in it: a kitchen team gets
 // "@HeadChef plan this week's dinners", not developer prompts. No model call, so they show at once.
+import { t } from './i18n';
 
 export interface PromptBot {
   name: string;
@@ -33,73 +34,73 @@ interface Role {
 // "designer" and "coach" say little on their own ("Product Photographer", "Press Release Writer",
 // "Interior Designer", "Life Coach"), so only the phrases that pin a field down count.
 const ROLES: Role[] = [
-  { match: /\bsous( chef)?\b|\bline cook\b|\bprep cook\b/i, asks: ['write a prep list for tonight', 'suggest a quick weeknight dinner'] },
-  { match: /\bpastry( chef| cook)?\b|\bbak(er|ing)\b|\bdessert/i, asks: ['suggest a dessert for this weekend', 'bake something with what I have'] },
-  { match: /\bnutrition(ist|al)?( coach)?\b|\bdiet(itian)?\b|\bmeal plan(ner|ning)?\b/i, asks: ["check this week's meals are balanced", 'make a high-protein meal plan'] },
-  { match: /\bchef\b|\bcook\b|\bculinary\b|\bkitchen\b|\bmenu\b|\brecipes?\b/i, asks: ["plan this week's dinners", 'turn my fridge into a recipe'] },
-  { match: /\bgrocer(y|ies)?( planner)?\b|\bshopping( planner)?\b|\bpantry\b/i, asks: ["make this week's shopping list", 'keep my groceries under budget'] },
-  { match: /\bsommelier\b|\bwine\b|\bbartender\b|\bmixolog/i, asks: ['pair a drink with dinner', 'suggest a cocktail for Friday'] },
+  { match: /\bsous( chef)?\b|\bline cook\b|\bprep cook\b/i, asks: [t('write a prep list for tonight'), t('suggest a quick weeknight dinner')] },
+  { match: /\bpastry( chef| cook)?\b|\bbak(er|ing)\b|\bdessert/i, asks: [t('suggest a dessert for this weekend'), t('bake something with what I have')] },
+  { match: /\bnutrition(ist|al)?( coach)?\b|\bdiet(itian)?\b|\bmeal plan(ner|ning)?\b/i, asks: [t("check this week's meals are balanced"), t('make a high-protein meal plan')] },
+  { match: /\bchef\b|\bcook\b|\bculinary\b|\bkitchen\b|\bmenu\b|\brecipes?\b/i, asks: [t("plan this week's dinners"), t('turn my fridge into a recipe')] },
+  { match: /\bgrocer(y|ies)?( planner)?\b|\bshopping( planner)?\b|\bpantry\b/i, asks: [t("make this week's shopping list"), t('keep my groceries under budget')] },
+  { match: /\bsommelier\b|\bwine\b|\bbartender\b|\bmixolog/i, asks: [t('pair a drink with dinner'), t('suggest a cocktail for Friday')] },
   {
     match: /\b(running|strength|gym|yoga|pilates|fitness) (coach|trainer|instructor)\b|\bpersonal trainer\b|\bfitness\b|\bworkouts?\b/i,
-    asks: ['plan my workouts for the week', 'make a 20-minute home routine'],
+    asks: [t('plan my workouts for the week'), t('make a 20-minute home routine')],
   },
-  { match: /\b(life|career|executive|mindset) coach\b|\bcoach\b|\bmentor\b/i, asks: ['help me set goals for this month', "talk through a decision I'm stuck on"] },
+  { match: /\b(life|career|executive|mindset) coach\b|\bcoach\b|\bmentor\b/i, asks: [t('help me set goals for this month'), t("talk through a decision I'm stuck on")] },
   {
     match: /\bdevops\b|\bsre\b|\bsite reliability\b|\bpenetration tester\b|\bpentester\b|\bethical hacker\b|\b(cyber)?security (engineer|analyst|lead|specialist)\b|\bcybersecurity\b|\binfosec\b|\binfra(structure)?\b|\bsysadmin\b|\bplatform engineer(ing)?\b/i,
-    asks: ["check my server's security", 'set up backups for my server'],
+    asks: [t("check my server's security"), t('set up backups for my server')],
   },
   {
     match: /\bqa\b|\bsdet\b|\bquality assurance\b|\btest (automation|engineer|lead|manager)\b|\btest(ers?|ing)\b|\brelease (engineer|manager)\b/i,
-    asks: ['write a test plan for the next release', 'find the riskiest part of this change'],
+    asks: [t('write a test plan for the next release'), t('find the riskiest part of this change')],
   },
   {
     match: /\bux\b|\bui\b|\b(product|web|app|interaction|visual) designer\b|\bfrontend\b|\bfront-end\b/i,
-    asks: ['review the sign-up screen', 'make this page work on phones'],
+    asks: [t('review the sign-up screen'), t('make this page work on phones')],
   },
   {
     match: /\b(kitchen|interior|home) designer\b|\binterior\b|\bdecorator\b|\bhome decor\b/i,
-    asks: ['suggest a layout for my living room', 'pick a colour palette for a room'],
+    asks: [t('suggest a layout for my living room'), t('pick a colour palette for a room')],
   },
-  { match: /\bbackend\b|\bback-end\b|\bdatabase\b|\bapi\b|\bdata engineer/i, asks: ['design the API for a new feature', 'speed up a slow database query'] },
-  { match: /\b(software|systems|solutions?) architect\b|\barchitect\b/i, asks: ['sketch the architecture for a new feature', 'weigh two ways to build this'] },
+  { match: /\bbackend\b|\bback-end\b|\bdatabase\b|\bapi\b|\bdata engineer/i, asks: [t('design the API for a new feature'), t('speed up a slow database query')] },
+  { match: /\b(software|systems|solutions?) architect\b|\barchitect\b/i, asks: [t('sketch the architecture for a new feature'), t('weigh two ways to build this')] },
   {
     match: /\bengineer\b|\bdeveloper\b|\bdev\b|\bprogrammer\b|\bcoder\b|\bprototyp/i,
-    asks: ['build a quick prototype', 'review my latest changes'],
+    asks: [t('build a quick prototype'), t('review my latest changes')],
     generic: true,
   },
   {
     match: /\b(sound|audio) (engineer|designer|technician|editor|producer)\b|\baudio\b|\bmusic(ian| producer)?\b|\bcomposer\b|\bdj\b|\bpodcast(er)?\b/i,
-    asks: ['pick background music for a story', 'suggest sound effects for a scene'],
+    asks: [t('pick background music for a story'), t('suggest sound effects for a scene')],
   },
   {
     match: /\blandscape (architect|designer|gardener)\b|\blandscap(er|ing)\b|\bgarden(er|ing)?\b|\bhorticultur/i,
-    asks: ['plan a small vegetable garden', 'suggest plants for a shady corner'],
+    asks: [t('plan a small vegetable garden'), t('suggest plants for a shady corner')],
   },
-  { match: /\bseo\b|\bkeywords?\b/i, asks: ['find keywords I could rank for', 'audit my homepage for SEO'] },
-  { match: /\bmarketing\b|\bmarketer\b|\bgrowth\b|\bcampaigns?\b|\bsocial media\b|\bbrand\b/i, asks: ['draft a launch post', 'plan a two-week campaign'] },
+  { match: /\bseo\b|\bkeywords?\b/i, asks: [t('find keywords I could rank for'), t('audit my homepage for SEO')] },
+  { match: /\bmarketing\b|\bmarketer\b|\bgrowth\b|\bcampaigns?\b|\bsocial media\b|\bbrand\b/i, asks: [t('draft a launch post'), t('plan a two-week campaign')] },
   {
     match: /\bstor(y|ies|yteller|ytelling)\b|\bnovelist\b|\bpoet\b|\bfiction\b/i,
-    asks: ['write a bedtime story', 'outline a short story'],
+    asks: [t('write a bedtime story'), t('outline a short story')],
   },
   {
     match: /\bwriter\b|\bcopy(writer|writing)?\b|\bcontent\b|\beditor\b|\bauthor\b|\bblog/i,
-    asks: ['outline a blog post', 'tighten this paragraph'],
+    asks: [t('outline a blog post'), t('tighten this paragraph')],
   },
-  { match: /\bresearch|\banalyst\b|\bscout\b|\binvestigat/i, asks: ['research my top 3 competitors', 'summarise what people say about this'] },
-  { match: /\bsales\b|\bbusiness development\b|\blead gen/i, asks: ['draft a follow-up email to a lead', 'write a short sales pitch'] },
-  { match: /\b(customer )?support\b|\bcustomer (success|service)\b|\bcommunity\b/i, asks: ['draft a reply to an upset customer', 'write an FAQ answer'] },
+  { match: /\bresearch|\banalyst\b|\bscout\b|\binvestigat/i, asks: [t('research my top 3 competitors'), t('summarise what people say about this')] },
+  { match: /\bsales\b|\bbusiness development\b|\blead gen/i, asks: [t('draft a follow-up email to a lead'), t('write a short sales pitch')] },
+  { match: /\b(customer )?support\b|\bcustomer (success|service)\b|\bcommunity\b/i, asks: [t('draft a reply to an upset customer'), t('write an FAQ answer')] },
   {
     match: /\bfinancial (planner|advisor)\b|\bfinanc(e|ial)\b|\baccount(ant|ing)\b|\bbookkeep|\bbudget\b|\bcfo\b/i,
-    asks: ["summarise this month's spending", 'make a simple budget'],
+    asks: [t("summarise this month's spending"), t('make a simple budget')],
   },
-  { match: /\blegal\b|\blawyer\b|\bcounsel\b|\bcompliance\b/i, asks: ['check this contract for risks', 'explain this clause simply'] },
-  { match: /\brecruit|\bhr\b|\bhiring\b|\bpeople ops\b/i, asks: ['write a job post', 'draft interview questions'] },
-  { match: /\bteacher\b|\btutor\b|\beducat|\binstructor\b/i, asks: ['explain this topic simply', 'quiz me on this'] },
-  { match: /\b(travel|trip)( planner| agent)?\b/i, asks: ['plan a weekend trip', 'make a packing list'] },
-  { match: /\bproduct (manager|owner|lead)\b|\bpm\b/i, asks: ['turn this idea into a short spec', 'prioritise these features'] },
-  { match: /\bassistant\b|\bsecretary\b|\bplanner\b|\bscheduler\b|\borgani[sz]er\b/i, asks: ['plan my week', 'turn these notes into a to-do list'] },
-  { match: /\bvideo( editor)?\b|\bfilm\b|\byoutube\b|\btiktok\b/i, asks: ['script a 30-second video', 'suggest video ideas for this week'] },
-  { match: /\bphotograph|\billustrat|\bartist\b|\bgraphic design(er)?\b|\bcover design(er)?\b/i, asks: ['describe a cover image idea', 'critique this image'] },
+  { match: /\blegal\b|\blawyer\b|\bcounsel\b|\bcompliance\b/i, asks: [t('check this contract for risks'), t('explain this clause simply')] },
+  { match: /\brecruit|\bhr\b|\bhiring\b|\bpeople ops\b/i, asks: [t('write a job post'), t('draft interview questions')] },
+  { match: /\bteacher\b|\btutor\b|\beducat|\binstructor\b/i, asks: [t('explain this topic simply'), t('quiz me on this')] },
+  { match: /\b(travel|trip)( planner| agent)?\b/i, asks: [t('plan a weekend trip'), t('make a packing list')] },
+  { match: /\bproduct (manager|owner|lead)\b|\bpm\b/i, asks: [t('turn this idea into a short spec'), t('prioritise these features')] },
+  { match: /\bassistant\b|\bsecretary\b|\bplanner\b|\bscheduler\b|\borgani[sz]er\b/i, asks: [t('plan my week'), t('turn these notes into a to-do list')] },
+  { match: /\bvideo( editor)?\b|\bfilm\b|\byoutube\b|\btiktok\b/i, asks: [t('script a 30-second video'), t('suggest video ideas for this week')] },
+  { match: /\bphotograph|\billustrat|\bartist\b|\bgraphic design(er)?\b|\bcover design(er)?\b/i, asks: [t('describe a cover image idea'), t('critique this image')] },
 ];
 
 // Catch-all job words that say "software" only on their own ("Engineer", "Senior Developer") or
@@ -195,15 +196,15 @@ function distinctAsks(bots: PromptBot[], limit: number): Array<[PromptBot, strin
 export function suggestedPrompts(ctx: PromptContext): string[] {
   if (ctx.kind === 'bot') {
     const role = ctx.bot ? roleOf(ctx.bot) : null;
-    if (!role) return ['What can you help me with?'];
-    return [capitalize(role.asks[0]), capitalize(role.asks[1]), 'What can you help me with?'];
+    if (!role) return [t('What can you help me with?')];
+    return [capitalize(role.asks[0]), capitalize(role.asks[1]), t('What can you help me with?')];
   }
 
   if (ctx.kind === 'general') {
     const bots = (ctx.bots ?? []).filter(named);
     if (!bots.length) return [];
     const asks = distinctAsks(bots, MAX_PROMPTS - 1).map(([, ask]) => capitalize(ask));
-    return [...asks, 'Who here can help me with what?'];
+    return [...asks, t('Who here can help me with what?')];
   }
 
   const members = (ctx.members ?? []).filter(named);
@@ -216,7 +217,7 @@ export function suggestedPrompts(ctx: PromptContext): string[] {
   const first = ordered.find(mentionable);
   if (!asks.length && first) {
     const role = findRole(ctx.purpose, 'prose');
-    asks.push(`@${first.name} ${role ? role.asks[0] : 'what should we tackle first?'}`);
+    asks.push(`@${first.name} ${role ? role.asks[0] : t('what should we tackle first?')}`);
   }
-  return [...asks, members.length > 1 ? 'What can each of you help me with?' : 'What can you help me with?'];
+  return [...asks, members.length > 1 ? t('What can each of you help me with?') : t('What can you help me with?')];
 }

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AlertCircle, Download, FileText, Loader2, RotateCw, X } from 'lucide-react';
 import { AttachmentRef, PendingUpload, attachmentUrl, fileKind, formatBytes, isInlineImage } from '../attachments';
+import { t } from '../i18n';
 
 /**
  * A file on a message: images as a thumbnail (opens full size), everything else as a tile.
@@ -13,11 +14,11 @@ export const FileTile: React.FC<{ file: AttachmentRef }> = ({ file }) => {
     <a
       href={attachmentUrl(file.id, true)}
       download={file.name}
-      aria-label={`Download ${file.name}`}
+      aria-label={t('Download {name}', { name: file.name })}
       className="inline-flex items-center gap-1 shrink-0 px-2 py-1 rounded-lg text-[11px] font-medium text-sky-300 bg-sky-500/10 border border-sky-500/30 hover:bg-sky-500/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500"
     >
       <Download size={12} aria-hidden="true" />
-      <span className="hidden sm:inline">Download</span>
+      <span className="hidden sm:inline">{t('Download')}</span>
     </a>
   );
   const label = (
@@ -63,7 +64,7 @@ export const FileTile: React.FC<{ file: AttachmentRef }> = ({ file }) => {
 };
 
 export const FileTiles: React.FC<{ files: AttachmentRef[]; align?: 'start' | 'end' }> = ({ files, align = 'start' }) => (
-  <ul className={`mt-2 flex flex-wrap gap-2 w-full ${align === 'end' ? 'justify-end' : ''}`} aria-label={files.length === 1 ? 'Attached file' : `${files.length} attached files`}>
+  <ul className={`mt-2 flex flex-wrap gap-2 w-full ${align === 'end' ? 'justify-end' : ''}`} aria-label={files.length === 1 ? t('Attached file') : t('{n} attached files', { n: files.length })}>
     {files.map((f) => (
       <li key={f.id} className="max-w-full">
         <FileTile file={f} />
@@ -94,14 +95,14 @@ export const UploadChip: React.FC<{ item: PendingUpload; onRemove: () => void; o
           {item.name}
         </span>
         <span className={`block ${failed ? 'text-rose-300 break-words' : 'truncate text-zinc-500'}`} role={failed ? 'alert' : undefined}>
-          {failed ? item.error : item.state === 'uploading' ? `Uploading… ${pct}%` : formatBytes(item.size)}
+          {failed ? item.error : item.state === 'uploading' ? t('Uploading… {pct}%', { pct }) : formatBytes(item.size)}
         </span>
       </span>
       {failed && onRetry && item.retryable !== false && (
         <button
           type="button"
           onClick={onRetry}
-          aria-label={`Retry ${item.name}`}
+          aria-label={t('Retry {name}', { name: item.name })}
           className="p-1 rounded text-zinc-300 hover:text-white hover:bg-zinc-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500"
         >
           <RotateCw size={12} aria-hidden="true" />
@@ -110,7 +111,7 @@ export const UploadChip: React.FC<{ item: PendingUpload; onRemove: () => void; o
       <button
         type="button"
         onClick={onRemove}
-        aria-label={item.state === 'uploading' ? `Cancel uploading ${item.name}` : `Remove ${item.name}`}
+        aria-label={item.state === 'uploading' ? t('Cancel uploading {name}', { name: item.name }) : t('Remove {name}', { name: item.name })}
         className="p-1 rounded text-zinc-400 hover:text-white hover:bg-zinc-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500"
       >
         <X size={12} aria-hidden="true" />
@@ -120,7 +121,7 @@ export const UploadChip: React.FC<{ item: PendingUpload; onRemove: () => void; o
           className="absolute left-0 bottom-0 h-0.5 bg-sky-400 transition-[width] duration-150"
           style={{ width: `${pct}%` }}
           role="progressbar"
-          aria-label={`Uploading ${item.name}`}
+          aria-label={t('Uploading {name}', { name: item.name })}
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={pct}

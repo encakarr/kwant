@@ -15,6 +15,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { playSfx } from '../audio/chiptune';
+import { t } from '../i18n';
 import { mapBrowserPoint } from '../browserViewport';
 import { useBrowserStream } from '../useBrowserStream';
 import { ComputerModeChip, ComputerModeError, LocalBrowserNote, OpenWindowButton, useComputerMode } from './ComputerModeSwitch';
@@ -91,7 +92,7 @@ export const VirtualMachinePane: React.FC<VirtualMachinePaneProps> = ({
   isOpen,
   onClose,
   teamId,
-  teamName = 'Team',
+  teamName = t('Team'),
   activeUrl = '',
   pageTitle = '',
   screenshotBase64,
@@ -188,8 +189,8 @@ export const VirtualMachinePane: React.FC<VirtualMachinePaneProps> = ({
     if (captchaStatus === 'resolved_auto') {
       setSolvedNote(true);
       playSfx('coin');
-      const t = setTimeout(finish, 1500);
-      return () => clearTimeout(t);
+      const timer = setTimeout(finish, 1500);
+      return () => clearTimeout(timer);
     }
     finish();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -236,8 +237,8 @@ export const VirtualMachinePane: React.FC<VirtualMachinePaneProps> = ({
         },
         now: () => performance.now(),
         later: (fn, ms) => {
-          const t = window.setTimeout(fn, ms);
-          return () => window.clearTimeout(t);
+          const timer = window.setTimeout(fn, ms);
+          return () => window.clearTimeout(timer);
         },
       }),
     [pageFromClient]
@@ -313,7 +314,7 @@ export const VirtualMachinePane: React.FC<VirtualMachinePaneProps> = ({
           <div className={`shrink-0 w-2.5 h-2.5 rounded-full ${browserReady ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-500'}`} />
           <div className="min-w-0">
             <div className="text-xs font-semibold text-zinc-100 truncate" title={`@${teamName}`}>@{teamName}</div>
-            <p className="text-[10px] text-zinc-400 truncate">{isLocal ? 'Your Chrome' : 'Live Chromium'}</p>
+            <p className="text-[10px] text-zinc-400 truncate">{isLocal ? t('Your Chrome') : t('Live Chromium')}</p>
           </div>
         </div>
 
@@ -332,7 +333,7 @@ export const VirtualMachinePane: React.FC<VirtualMachinePaneProps> = ({
                 setFullScreen(!isControlMode);
               }}
               disabled={!stream.connected}
-              title={isControlMode ? 'Exit Control Mode' : 'Take Control of Bot Browser'}
+              title={isControlMode ? t('Exit Control Mode') : t('Take Control of Bot Browser')}
               className={`p-1.5 rounded-md transition-colors cursor-pointer flex items-center gap-1 ${
                 isControlMode
                   ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm shadow-cyan-500/20 animate-pulse'
@@ -340,7 +341,7 @@ export const VirtualMachinePane: React.FC<VirtualMachinePaneProps> = ({
               }`}
             >
               <MousePointerClick size={13} className={isControlMode ? 'text-cyan-400' : ''} />
-              <span className="text-[10px] font-semibold whitespace-nowrap">{isControlMode ? 'Controlling' : 'Take Control'}</span>
+              <span className="text-[10px] font-semibold whitespace-nowrap">{isControlMode ? t('Controlling') : t('Take Control')}</span>
             </button>
           )}
 
@@ -350,8 +351,8 @@ export const VirtualMachinePane: React.FC<VirtualMachinePaneProps> = ({
               playSfx('click');
               setActiveTab((curr) => (curr === 'vault' ? 'browser' : 'vault'));
             }}
-            title={`Saved logins (${savedCount})`}
-            aria-label={`Saved logins (${savedCount})`}
+            title={t('Saved logins ({n})', { n: savedCount })}
+            aria-label={t('Saved logins ({n})', { n: savedCount })}
             className={`p-1.5 rounded-md transition-colors cursor-pointer relative ${
               activeTab === 'vault'
                 ? 'text-sky-400 bg-sky-500/10'
@@ -374,7 +375,7 @@ export const VirtualMachinePane: React.FC<VirtualMachinePaneProps> = ({
                 onRefresh();
                 passwords.reload();
               }}
-              title="Refresh Screenshot & Passwords"
+              title={t('Refresh Screenshot & Passwords')}
               className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors cursor-pointer"
             >
               <RefreshCw size={13} />
@@ -387,7 +388,7 @@ export const VirtualMachinePane: React.FC<VirtualMachinePaneProps> = ({
               playSfx('click');
               onClose();
             }}
-            title="Close VM Pane"
+            title={t('Close VM Pane')}
             className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors cursor-pointer"
           >
             <X size={15} />
@@ -417,7 +418,7 @@ export const VirtualMachinePane: React.FC<VirtualMachinePaneProps> = ({
           }`}
         >
           <Globe size={13} />
-          <span>Browser</span>
+          <span>{t('Browser')}</span>
         </button>
         <button
           type="button"
@@ -433,7 +434,7 @@ export const VirtualMachinePane: React.FC<VirtualMachinePaneProps> = ({
           }`}
         >
           <Terminal size={13} />
-          <span>Terminal</span>
+          <span>{t('Terminal')}</span>
         </button>
         <button
           type="button"
@@ -449,7 +450,7 @@ export const VirtualMachinePane: React.FC<VirtualMachinePaneProps> = ({
           }`}
         >
           <Key size={13} />
-          <span>Logins</span>
+          <span>{t('Logins')}</span>
           {savedCount > 0 && (
             <span className="text-[10px] px-1 py-0.2 rounded-full bg-zinc-800 text-zinc-300 font-mono">
               {savedCount}
@@ -498,10 +499,10 @@ export const VirtualMachinePane: React.FC<VirtualMachinePaneProps> = ({
                     setActiveTab('vault');
                   }}
                   className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 text-[10px] hover:bg-emerald-500/25 transition-colors cursor-pointer flex-shrink-0"
-                  title={`${loginsOnThisPage} saved login${loginsOnThisPage === 1 ? '' : 's'} for this address`}
+                  title={t(loginsOnThisPage === 1 ? '{n} saved login for this address' : '{n} saved logins for this address', { n: loginsOnThisPage })}
                 >
                   <Key size={10} />
-                  <span className="font-mono">{loginsOnThisPage} saved</span>
+                  <span className="font-mono">{t('{n} saved', { n: loginsOnThisPage })}</span>
                 </button>
               )}
 
@@ -511,7 +512,7 @@ export const VirtualMachinePane: React.FC<VirtualMachinePaneProps> = ({
                   target="_blank"
                   rel="noopener"
                   className="text-zinc-400 hover:text-sky-400 p-0.5 flex-shrink-0"
-                  title="Open the live sandbox browser in a new tab (shared with your bots)"
+                  title={t('Open the live sandbox browser in a new tab (shared with your bots)')}
                 >
                   <ExternalLink size={12} />
                 </a>
@@ -529,9 +530,9 @@ export const VirtualMachinePane: React.FC<VirtualMachinePaneProps> = ({
               <div className="flex items-center justify-between px-2.5 py-1 rounded-lg bg-cyan-950/60 border border-cyan-500/30 text-[11px] text-cyan-300 animate-in fade-in duration-150">
                 <div className="flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
-                  <span className="font-medium">Direct Control Active</span>
+                  <span className="font-medium">{t('Direct Control Active')}</span>
                 </div>
-                <span className="text-[10px] text-cyan-400/80">Click & type on screen</span>
+                <span className="text-[10px] text-cyan-400/80">{t('Click & type on screen')}</span>
               </div>
             )}
 
@@ -546,7 +547,7 @@ export const VirtualMachinePane: React.FC<VirtualMachinePaneProps> = ({
                   type="text"
                   value={quickTypeText}
                   onChange={(e) => setQuickTypeText(e.target.value)}
-                  placeholder="Type into focused field (e.g. search, input)..."
+                  placeholder={t('Type into focused field (e.g. search, input)...')}
                   className="flex-1 bg-transparent text-zinc-100 text-[11px] font-mono focus:outline-none"
                 />
                 <button
@@ -554,7 +555,7 @@ export const VirtualMachinePane: React.FC<VirtualMachinePaneProps> = ({
                   disabled={!quickTypeText.trim()}
                   className="px-2 py-0.5 rounded bg-cyan-500 hover:bg-cyan-400 text-zinc-950 font-semibold text-[10px] cursor-pointer disabled:opacity-40"
                 >
-                  Send
+                  {t('Send')}
                 </button>
               </form>
             )}
@@ -568,7 +569,7 @@ export const VirtualMachinePane: React.FC<VirtualMachinePaneProps> = ({
                 }`}
               >
                 {solvedNote ? <CheckCircle2 size={13} aria-hidden="true" /> : <Puzzle size={13} aria-hidden="true" />}
-                <span className="flex-1">{solvedNote ? `Solved, ${teamName} continues` : `Solve the puzzle, ${teamName} continues by itself`}</span>
+                <span className="flex-1">{solvedNote ? t('Solved, {bot} continues', { bot: teamName }) : t('Solve the puzzle, {bot} continues by itself', { bot: teamName })}</span>
                 {!solvedNote && (!isControlMode || narrow) && (
                   <button
                     type="button"
@@ -579,7 +580,7 @@ export const VirtualMachinePane: React.FC<VirtualMachinePaneProps> = ({
                     }}
                     className="px-2 py-1 rounded-md bg-amber-400 text-zinc-950 font-semibold"
                   >
-                    Solve it
+                    {t('Solve it')}
                   </button>
                 )}
               </div>
@@ -621,7 +622,7 @@ export const VirtualMachinePane: React.FC<VirtualMachinePaneProps> = ({
               {isInteracting && (
                 <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-zinc-950/90 border border-cyan-500/40 text-cyan-300 text-[10px] font-mono flex items-center gap-1.5 z-20 shadow-md pointer-events-none">
                   <Loader2 size={10} className="animate-spin text-cyan-400" />
-                  <span>Relaying...</span>
+                  <span>{t('Relaying...')}</span>
                 </div>
               )}
 
@@ -635,7 +636,7 @@ export const VirtualMachinePane: React.FC<VirtualMachinePaneProps> = ({
               ))}
 
               {showFullScreen ? (
-                <p className="text-center p-6 text-zinc-500 text-xs">Showing full screen</p>
+                <p className="text-center p-6 text-zinc-500 text-xs">{t('Showing full screen')}</p>
               ) : currentScreenshot ? (
                 <img
                   key={stream.frame?.id}
@@ -645,7 +646,7 @@ export const VirtualMachinePane: React.FC<VirtualMachinePaneProps> = ({
                       ? currentScreenshot
                       : `data:image/jpeg;base64,${currentScreenshot}`
                   }
-                  alt="Browser Viewport"
+                  alt={t('Browser Viewport')}
                   onLoad={() => { if (stream.frame) stream.acknowledgeFrame(stream.frame.id); }}
                   onError={() => { if (stream.frame) stream.acknowledgeFrame(stream.frame.id); }}
                   draggable={false}
@@ -654,8 +655,12 @@ export const VirtualMachinePane: React.FC<VirtualMachinePaneProps> = ({
               ) : (
                 <div className="text-center p-6 text-zinc-600 text-xs">
                   <Globe size={32} className="mx-auto mb-2 opacity-40 text-zinc-500" />
-                  <p>{browserReady ? 'Browser idle' : 'Browser unavailable'}</p>
-                  <p className="text-[10px] text-zinc-500 mt-1">{browserReady ? 'Enter a URL above to open a page' : isLocal ? 'Check that Chrome is installed, then use Restart Browser below' : 'Start Docker, then use Restart Browser below'}</p>
+                  <p>{browserReady ? t('Browser idle') : t('Browser unavailable')}</p>
+                  <p className="text-[10px] text-zinc-500 mt-1">{browserReady
+                      ? t('Enter a URL above to open a page')
+                      : isLocal
+                        ? t('Check that Chrome is installed, then use Restart Browser below')
+                        : t('Start Docker, then use Restart Browser below')}</p>
                 </div>
               )}
             </div>
@@ -666,7 +671,7 @@ export const VirtualMachinePane: React.FC<VirtualMachinePaneProps> = ({
             {terminalLogs.length === 0 ? (
               <div className="text-center text-zinc-600 text-xs py-8">
                 <Terminal size={24} className="mx-auto mb-1 opacity-40" />
-                <span>No commands executed in container yet</span>
+                <span>{t('No commands executed in container yet')}</span>
               </div>
             ) : (
               terminalLogs.map((log, index) => (
@@ -704,7 +709,7 @@ export const VirtualMachinePane: React.FC<VirtualMachinePaneProps> = ({
               }
             />
           ) : (
-            <p className="flex-1 p-6 text-center text-xs text-zinc-500">Open a bot, team or channel to see its saved logins.</p>
+            <p className="flex-1 p-6 text-center text-xs text-zinc-500">{t('Open a bot, team or channel to see its saved logins.')}</p>
           )
         )}
       </div>
@@ -747,7 +752,7 @@ export const VirtualMachinePane: React.FC<VirtualMachinePaneProps> = ({
             className="hover:text-zinc-200 text-zinc-400 flex items-center gap-1 transition-colors cursor-pointer"
           >
             <RefreshCw size={11} />
-            <span>Restart Browser</span>
+            <span>{t('Restart Browser')}</span>
           </button>
         )}
       </div>

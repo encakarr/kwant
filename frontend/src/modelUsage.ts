@@ -1,6 +1,7 @@
 // Per-bot model calls and tokens from `GET /api/kwants/:id/model-usage` (API-key, custom API and
 // Claude CLI bots), per-day totals from `GET /api/usage/daily`, and the split on each reply.
 import { request } from './threads';
+import { t } from './i18n';
 
 export type UsagePurpose = 'reply' | 'tool_round' | 'summary' | string;
 
@@ -45,9 +46,9 @@ export interface ModelUsage {
 }
 
 const PURPOSE_LABEL: Record<string, [string, string]> = {
-  reply: ['Reply', 'Replies'],
-  tool_round: ['Tool round', 'Tool rounds'],
-  summary: ['Summary', 'Summaries'],
+  reply: [t('Reply'), t('Replies')],
+  tool_round: [t('Tool round'), t('Tool rounds')],
+  summary: [t('Summary'), t('Summaries')],
 };
 /** "Replies" for a group, "Reply" for one call; unknown purposes as they are. */
 export const purposeLabel = (p: UsagePurpose, one = false): string => PURPOSE_LABEL[p]?.[one ? 0 : 1] ?? p;
@@ -122,15 +123,24 @@ export function replyTokens(tokensUsed: number | null | undefined, meta: string 
     const count = u.fresh_input + u.cache_write + u.output;
     const fmt = (n: number) => n.toLocaleString('en-US');
     const parts = [
-      `${fmt(count)} fresh tokens: ${fmt(u.fresh_input)} new input, ${fmt(u.cache_write)} written to cache, ${fmt(u.output)} output`,
-      `${fmt(u.cache_read)} more read from cache (cheap, not counted)`,
+      t('{n} fresh tokens: {input} new input, {written} written to cache, {output} output.', {
+        n: fmt(count),
+        input: fmt(u.fresh_input),
+        written: fmt(u.cache_write),
+        output: fmt(u.output),
+      }),
+      t('{n} more read from cache (cheap, not counted).', { n: fmt(u.cache_read) }),
     ];
     const cost = formatCost(u.cost_usd);
-    if (cost) parts.push(`Cost ${cost}`);
-    return { count, label: `${compactTokens(count)} fresh`, detail: parts.join('. ') + '.' };
+    if (cost) parts.push(t('Cost {cost}.', { cost }));
+    return { count, label: t('{n} fresh', { n: compactTokens(count) }), detail: parts.join(' ') };
   }
   if (!tokensUsed) return null;
-  return { count: tokensUsed, label: `${compactTokens(tokensUsed)} tokens`, detail: `${tokensUsed.toLocaleString('en-US')} tokens, cache reads included` };
+  return {
+    count: tokensUsed,
+    label: t('{n} tokens', { n: compactTokens(tokensUsed) }),
+    detail: t('{n} tokens, cache reads included', { n: tokensUsed.toLocaleString('en-US') }),
+  };
 }
 
 export const modelUsageApi = {

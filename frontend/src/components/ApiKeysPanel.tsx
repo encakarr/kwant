@@ -5,6 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { AlertTriangle, Check, ChevronDown, ChevronRight, Globe, Key, Loader2 } from 'lucide-react';
 import { playSfx } from '../audio/chiptune';
 import { editorProps } from '../escape';
+import { t } from '../i18n';
 
 const DEFAULT_OLLAMA = 'http://localhost:11434/v1';
 
@@ -16,9 +17,9 @@ interface Keys {
 }
 
 const FIELDS: { key: Exclude<keyof Keys, 'ollama_url'>; label: string; placeholder: string }[] = [
-  { key: 'anthropic_api_key', label: 'Anthropic API Key', placeholder: 'sk-ant-api03-...' },
-  { key: 'xai_api_key', label: 'xAI Grok API Key', placeholder: 'xai-...' },
-  { key: 'openai_api_key', label: 'OpenAI API Key', placeholder: 'sk-...' },
+  { key: 'anthropic_api_key', label: t('Anthropic API Key'), placeholder: 'sk-ant-api03-...' },
+  { key: 'xai_api_key', label: t('xAI Grok API Key'), placeholder: 'xai-...' },
+  { key: 'openai_api_key', label: t('OpenAI API Key'), placeholder: 'sk-...' },
 ];
 
 const input =
@@ -51,7 +52,7 @@ export const ApiKeysPanel: React.FC<{ onSaved?: () => void; defaultOpen?: boolea
         setKeys(k);
         setLoaded(k);
       })
-      .catch(() => setLoadError('Couldn’t load your keys.'));
+      .catch(() => setLoadError(t('Couldn’t load your keys.')));
   };
   useEffect(load, []);
 
@@ -71,7 +72,7 @@ export const ApiKeysPanel: React.FC<{ onSaved?: () => void; defaultOpen?: boolea
       });
       if (!res.ok) {
         const data = await res.json().catch(() => null);
-        throw new Error(data && typeof data.error === 'string' ? data.error : `Saving failed (HTTP ${res.status}).`);
+        throw new Error(data && typeof data.error === 'string' ? data.error : t('Saving failed (HTTP {status}).', { status: res.status }));
       }
       playSfx('coin');
       setSaved(true);
@@ -79,7 +80,7 @@ export const ApiKeysPanel: React.FC<{ onSaved?: () => void; defaultOpen?: boolea
       onSaved?.();
       load();
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Could not reach the server.');
+      setSaveError(err instanceof Error ? err.message : t('Could not reach the server.'));
     } finally {
       setSaving(false);
     }
@@ -96,9 +97,11 @@ export const ApiKeysPanel: React.FC<{ onSaved?: () => void; defaultOpen?: boolea
       >
         <Key size={14} className="text-violet-400" aria-hidden="true" />
         <span className="flex-1">
-          <span className="block text-xs font-medium text-zinc-200">API keys and Ollama</span>
+          <span className="block text-xs font-medium text-zinc-200">{t('API keys and Ollama')}</span>
           <span className="block text-[11px] text-zinc-500">
-            Optional, shared by every space. {count ? `${count} saved. ` : ''}Not needed when bots use a signed-in CLI.
+            {count
+              ? t('Optional, shared by every space. {n} saved. Not needed when bots use a signed-in CLI.', { n: count })
+              : t('Optional, shared by every space. Not needed when bots use a signed-in CLI.')}
           </span>
         </span>
         {open ? <ChevronDown size={15} className="text-zinc-500" aria-hidden="true" /> : <ChevronRight size={15} className="text-zinc-500" aria-hidden="true" />}
@@ -106,18 +109,18 @@ export const ApiKeysPanel: React.FC<{ onSaved?: () => void; defaultOpen?: boolea
 
       <form id="space-api-keys" hidden={!open} onSubmit={save} {...editorProps(JSON.stringify(keys) !== JSON.stringify(loaded))} className="space-y-3 px-3 pb-3">
         <p className="text-[11px] text-zinc-500">
-          One key per provider for the API-key engines. To keep several keys for one provider, add them as accounts above.
+          {t('One key per provider for the API-key engines. To keep several keys for one provider, add them as accounts above.')}
         </p>
         {loadError ? (
           <p role="alert" className="flex items-center gap-2 text-xs text-rose-300">
             <AlertTriangle size={13} /> {loadError}
             <button type="button" onClick={load} className="underline hover:text-rose-100">
-              Try again
+              {t('Try again')}
             </button>
           </p>
         ) : !keys ? (
           <p className="flex items-center gap-2 text-xs text-zinc-400">
-            <Loader2 size={13} className="animate-spin motion-reduce:animate-none" /> Loading…
+            <Loader2 size={13} className="animate-spin motion-reduce:animate-none" /> {t('Loading…')}
           </p>
         ) : (
           <>
@@ -140,7 +143,7 @@ export const ApiKeysPanel: React.FC<{ onSaved?: () => void; defaultOpen?: boolea
             <div>
               <label htmlFor="key-ollama" className="mb-1 flex items-center gap-1.5 text-xs font-medium text-zinc-400">
                 <Globe size={13} className="text-zinc-500" />
-                <span>Ollama Base URL</span>
+                <span>{t('Ollama Base URL')}</span>
               </label>
               <input id="key-ollama" type="text" value={keys.ollama_url} onChange={(e) => setKeys({ ...keys, ollama_url: e.target.value })} placeholder={DEFAULT_OLLAMA} className={input} />
             </div>
@@ -152,11 +155,11 @@ export const ApiKeysPanel: React.FC<{ onSaved?: () => void; defaultOpen?: boolea
             <div className="flex items-center justify-end gap-2">
               {saved && (
                 <span role="status" className="flex items-center gap-1 text-xs text-emerald-400">
-                  <Check size={13} /> Saved for every space
+                  <Check size={13} /> {t('Saved for every space')}
                 </span>
               )}
               <button type="submit" disabled={saving} className="px-4 py-2 rounded-lg text-xs font-medium text-white bg-sky-600 hover:bg-sky-500 transition-colors disabled:opacity-50">
-                {saving ? 'Saving…' : 'Save keys'}
+                {saving ? t('Saving…') : t('Save keys')}
               </button>
             </div>
           </>

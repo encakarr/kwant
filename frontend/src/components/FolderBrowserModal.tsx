@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Folder, ChevronRight, ArrowUp, Check, RefreshCw, FolderSearch, Home, Laptop } from 'lucide-react';
 import { playSfx } from '../audio/chiptune';
+import { t } from '../i18n';
 
 export interface FolderBrowserModalProps {
   isOpen: boolean;
@@ -41,7 +42,7 @@ export const FolderBrowserModal: React.FC<FolderBrowserModalProps> = ({
       const url = path ? `/api/system/directories?path=${encodeURIComponent(path)}` : '/api/system/directories';
       const res = await fetch(url);
       if (!res.ok) {
-        throw new Error('Failed to load folder directory');
+        throw new Error(t('Failed to load folder directory'));
       }
       const data: DirectoriesResponse = await res.json();
       setCurrentPath(data.current_path);
@@ -49,7 +50,7 @@ export const FolderBrowserModal: React.FC<FolderBrowserModalProps> = ({
       setDirectories(data.directories);
       setQuickPaths(data.quick_paths);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error reading folder');
+      setError(err instanceof Error ? err.message : t('Error reading folder'));
     } finally {
       setLoading(false);
     }
@@ -96,8 +97,8 @@ export const FolderBrowserModal: React.FC<FolderBrowserModalProps> = ({
               <FolderSearch size={15} />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-zinc-100">Select Folder</h3>
-              <p className="text-[11px] text-zinc-400">Choose a local directory for your team workspace</p>
+              <h3 className="text-sm font-semibold text-zinc-100">{t('Select Folder')}</h3>
+              <p className="text-[11px] text-zinc-400">{t('Choose a local directory for your team workspace')}</p>
             </div>
           </div>
           <button
@@ -115,7 +116,7 @@ export const FolderBrowserModal: React.FC<FolderBrowserModalProps> = ({
         {quickPaths.length > 0 && (
           <div className="mb-3">
             <div className="text-[11px] font-medium text-zinc-400 mb-1.5 flex items-center gap-1">
-              <span>Quick Jumps:</span>
+              <span>{t('Quick Jumps:')}</span>
             </div>
             <div className="flex flex-wrap gap-1.5">
               {quickPaths.map((qp, idx) => (
@@ -182,17 +183,17 @@ export const FolderBrowserModal: React.FC<FolderBrowserModalProps> = ({
                 type="button"
                 onClick={handleNavigateParent}
                 className="p-1 rounded bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 text-[11px] flex items-center gap-1 px-2 transition-colors"
-                title="Go to parent directory"
+                title={t('Go to parent directory')}
               >
                 <ArrowUp size={12} />
-                <span>Up</span>
+                <span>{t('Up')}</span>
               </button>
             )}
             <button
               type="button"
               onClick={() => fetchDirectories(currentPath)}
               className="p-1 rounded bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 transition-colors"
-              title="Refresh"
+              title={t('Refresh')}
             >
               <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
             </button>
@@ -210,12 +211,12 @@ export const FolderBrowserModal: React.FC<FolderBrowserModalProps> = ({
           {loading ? (
             <div className="flex items-center justify-center h-36 text-xs text-zinc-500 gap-2">
               <RefreshCw size={14} className="animate-spin text-amber-400" />
-              <span>Scanning directories...</span>
+              <span>{t('Scanning directories...')}</span>
             </div>
           ) : directories.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-36 text-xs text-zinc-500">
               <Folder size={24} className="text-zinc-600 mb-1 opacity-60" />
-              <span>No subdirectories in this folder</span>
+              <span>{t('No subdirectories in this folder')}</span>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 p-1">
@@ -238,7 +239,7 @@ export const FolderBrowserModal: React.FC<FolderBrowserModalProps> = ({
         {/* Footer Actions */}
         <div className="flex items-center justify-between pt-3 mt-3 border-t border-zinc-800">
           <div className="text-[11px] text-zinc-400 truncate max-w-xs font-mono">
-            Selected: <span className="text-zinc-200">{currentPath || 'None'}</span>
+            {t('Selected:')} <span className="text-zinc-200">{currentPath || t('None')}</span>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -249,7 +250,7 @@ export const FolderBrowserModal: React.FC<FolderBrowserModalProps> = ({
               }}
               className="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
             >
-              Cancel
+              {t('Cancel')}
             </button>
             <button
               type="button"
@@ -258,7 +259,7 @@ export const FolderBrowserModal: React.FC<FolderBrowserModalProps> = ({
               className="flex items-center gap-1.5 px-3.5 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-xs font-medium transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               <Check size={13} />
-              <span>Select Current Folder</span>
+              <span>{t('Select Current Folder')}</span>
             </button>
           </div>
         </div>

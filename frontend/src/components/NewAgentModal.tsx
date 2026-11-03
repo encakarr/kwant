@@ -18,14 +18,15 @@ import { BotApprovalsSetting } from './ApprovalsSetting';
 import { FlightSchoolPanel } from './FlightSchoolPanel';
 import { useEscapeLayer } from '../escape';
 import { BrowserSites, FieldErrorKey, SITE_LIMITS, changedSites, fieldError, sitesOf, sitesSummary } from '../browserSites';
+import { t, tj } from '../i18n';
 
 export type EditTab = 'profile' | 'memory' | 'skills' | 'routines' | 'usage';
 const EDIT_TABS: Array<{ id: EditTab; label: string; Icon: typeof Brain }> = [
-  { id: 'profile', label: 'Profile', Icon: UserRound },
-  { id: 'memory', label: 'Memory', Icon: Brain },
-  { id: 'skills', label: 'Skills', Icon: ListChecks },
-  { id: 'routines', label: 'Routines', Icon: CalendarClock },
-  { id: 'usage', label: 'Usage', Icon: Gauge },
+  { id: 'profile', label: t('Profile'), Icon: UserRound },
+  { id: 'memory', label: t('Memory'), Icon: Brain },
+  { id: 'skills', label: t('Skills'), Icon: ListChecks },
+  { id: 'routines', label: t('Routines'), Icon: CalendarClock },
+  { id: 'usage', label: t('Usage'), Icon: Gauge },
 ];
 
 export interface AgentFormData {
@@ -253,7 +254,7 @@ export const NewAgentModal: React.FC<NewAgentModalProps> = ({
     e.preventDefault();
     if (!name.trim()) return;
     if (/[\s@]/.test(name.trim())) {
-      setError('Name cannot contain spaces or @ — teammates @mention it.');
+      setError(t('Name cannot contain spaces or @ — teammates @mention it.'));
       return;
     }
 
@@ -289,7 +290,7 @@ export const NewAgentModal: React.FC<NewAgentModalProps> = ({
       }
       // Nothing was saved: show why next to the list, and take focus there.
       setFieldErrors({ [named.field]: named.text });
-      setError('Nothing was saved. Fix the entry marked above, then save again.');
+      setError(t('Nothing was saved. Fix the entry marked above, then save again.'));
       if (named.field.startsWith('browser_')) setSitesOpen(true);
       setTimeout(() => document.getElementById(fieldInputId(named.field))?.focus(), 0);
       return;
@@ -313,7 +314,11 @@ export const NewAgentModal: React.FC<NewAgentModalProps> = ({
               {isEdit ? <Pencil size={14} /> : <Sparkles size={15} />}
             </div>
             <h3 id="agent-modal-title" className="text-sm font-semibold text-zinc-100">
-              {isEdit ? `Edit ${initial?.name}` : joinTeamName ? `New bot for @${joinTeamName}` : 'New kwant bot'}
+              {isEdit
+                ? t('Edit {name}', { name: initial?.name ?? '' })
+                : joinTeamName
+                  ? t('New bot for @{team}', { team: joinTeamName })
+                  : t('New kwant bot')}
             </h3>
           </div>
           <button
@@ -321,7 +326,7 @@ export const NewAgentModal: React.FC<NewAgentModalProps> = ({
               playSfx('click');
               onClose();
             }}
-            aria-label="Close"
+            aria-label={t('Close')}
             className="p-1 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
           >
             <X size={17} />
@@ -329,7 +334,7 @@ export const NewAgentModal: React.FC<NewAgentModalProps> = ({
         </div>
 
         {isEdit && kwantId && (
-          <div className="flex p-0.5 rounded-lg bg-zinc-950 border border-zinc-800" role="tablist" aria-label="Bot settings">
+          <div className="flex p-0.5 rounded-lg bg-zinc-950 border border-zinc-800" role="tablist" aria-label={t('Bot settings')}>
             {EDIT_TABS.map(({ id, label, Icon }) => (
               <button
                 key={id}
@@ -348,7 +353,7 @@ export const NewAgentModal: React.FC<NewAgentModalProps> = ({
               >
                 <Icon size={12} aria-hidden="true" /> {label}
                 {id === 'skills' && pendingSkills > 0 && (
-                  <span className="ml-0.5 px-1 min-w-[1rem] rounded-full bg-amber-500/25 text-amber-200 text-[10px]" aria-label={`${pendingSkills} to review`}>
+                  <span className="ml-0.5 px-1 min-w-[1rem] rounded-full bg-amber-500/25 text-amber-200 text-[10px]" aria-label={t('{n} to review', { n: pendingSkills })}>
                     {pendingSkills}
                   </span>
                 )}
@@ -359,12 +364,12 @@ export const NewAgentModal: React.FC<NewAgentModalProps> = ({
 
         {isEdit && kwantId && tab === 'memory' && (
           <div role="tabpanel" id="agent-panel-memory" aria-labelledby="agent-tab-memory">
-            <MemoryPanel kwantId={kwantId} kwantName={initial?.name ?? 'This bot'} />
+            <MemoryPanel kwantId={kwantId} kwantName={initial?.name ?? t('This bot')} />
           </div>
         )}
         {isEdit && kwantId && tab === 'skills' && (
           <div role="tabpanel" id="agent-panel-skills" aria-labelledby="agent-tab-skills">
-            <SkillsPanel kwantId={kwantId} kwantName={initial?.name ?? 'This bot'} />
+            <SkillsPanel kwantId={kwantId} kwantName={initial?.name ?? t('This bot')} />
           </div>
         )}
         {isEdit && kwantId && tab === 'routines' && (
@@ -374,7 +379,7 @@ export const NewAgentModal: React.FC<NewAgentModalProps> = ({
         )}
         {isEdit && kwantId && tab === 'usage' && (
           <div role="tabpanel" id="agent-panel-usage" aria-labelledby="agent-tab-usage">
-            <UsagePanel kwantId={kwantId} kwantName={initial?.name ?? 'This bot'} />
+            <UsagePanel kwantId={kwantId} kwantName={initial?.name ?? t('This bot')} />
           </div>
         )}
 
@@ -382,7 +387,7 @@ export const NewAgentModal: React.FC<NewAgentModalProps> = ({
           {!isEdit && (
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs font-medium text-zinc-400">Start from a persona</label>
+                <label className="text-xs font-medium text-zinc-400">{t('Start from a persona')}</label>
                 <div className="flex p-0.5 rounded-lg bg-zinc-950 border border-zinc-800" role="tablist">
                   {PRESET_GROUPS.map((g) => (
                     <button
@@ -411,7 +416,11 @@ export const NewAgentModal: React.FC<NewAgentModalProps> = ({
                       key={preset?.id ?? 'blank'}
                       type="button"
                       onClick={() => applyPreset(preset)}
-                      title={preset ? `${preset.title}: ${preset.persona_prompt}\n\nSoul: ${preset.soul}` : 'Start with empty fields'}
+                      title={
+                        preset
+                          ? t('{title}: {persona}\n\nSoul: {soul}', { title: preset.title, persona: preset.persona_prompt, soul: preset.soul })
+                          : t('Start with empty fields')
+                      }
                       className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border text-left text-[11px] transition-all ${
                         active
                           ? 'border-sky-500/60 bg-sky-500/10 text-sky-200'
@@ -423,7 +432,7 @@ export const NewAgentModal: React.FC<NewAgentModalProps> = ({
                       ) : (
                         <Sparkles size={13} className="mx-0.5 text-zinc-500" />
                       )}
-                      <span className="truncate font-medium">{preset ? preset.label : 'Blank'}</span>
+                      <span className="truncate font-medium">{preset ? preset.label : t('Blank')}</span>
                     </button>
                   );
                 })}
@@ -432,31 +441,31 @@ export const NewAgentModal: React.FC<NewAgentModalProps> = ({
           )}
 
           <div>
-            <label htmlFor="agent-name" className="block text-xs font-medium text-zinc-400 mb-1">Name</label>
+            <label htmlFor="agent-name" className="block text-xs font-medium text-zinc-400 mb-1">{t('Name')}</label>
             <input
               id="agent-name"
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. DataAnalyst, SecurityAuditor"
+              placeholder={t('e.g. DataAnalyst, SecurityAuditor')}
               className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-100 placeholder-zinc-600 focus:border-sky-500 focus:outline-none transition-colors"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1">Role & Title</label>
+            <label className="block text-xs font-medium text-zinc-400 mb-1">{t('Role & Title')}</label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Senior Security Auditor"
+              placeholder={t('e.g. Senior Security Auditor')}
               className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-100 placeholder-zinc-600 focus:border-sky-500 focus:outline-none transition-colors"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1">Avatar & Role Specialty</label>
+            <label className="block text-xs font-medium text-zinc-400 mb-1">{t('Avatar & Role Specialty')}</label>
             <div className="grid grid-cols-6 gap-1.5">
               {AVATAR_STYLES.map((item) => {
                 const active = roleStyle === item.id;
@@ -495,7 +504,7 @@ export const NewAgentModal: React.FC<NewAgentModalProps> = ({
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label htmlFor="agent-profile" className="text-xs font-medium text-zinc-400">
-                  Account
+                  {t('Account')}
                 </label>
                 {onManageProfiles && (
                   <button
@@ -503,7 +512,7 @@ export const NewAgentModal: React.FC<NewAgentModalProps> = ({
                     onClick={onManageProfiles}
                     className="flex items-center gap-0.5 text-[11px] text-zinc-500 hover:text-sky-300 transition-colors"
                   >
-                    Manage accounts <ChevronRight size={11} />
+                    {t('Manage accounts')} <ChevronRight size={11} />
                   </button>
                 )}
               </div>
@@ -514,9 +523,9 @@ export const NewAgentModal: React.FC<NewAgentModalProps> = ({
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-100 focus:border-sky-500 focus:outline-none transition-colors"
               >
                 <option value="">
-                  {`${ENGINES.find((e) => e.id === engine)?.label} default${
-                    engineProfiles[0]?.is_default ? ` (${engineProfiles[0].name})` : ''
-                  }`}
+                  {engineProfiles[0]?.is_default
+                    ? t('{engine} default ({account})', { engine: ENGINES.find((e) => e.id === engine)?.label ?? '', account: engineProfiles[0].name })
+                    : t('{engine} default', { engine: ENGINES.find((e) => e.id === engine)?.label ?? '' })}
                 </option>
                 {engineProfiles.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -524,12 +533,12 @@ export const NewAgentModal: React.FC<NewAgentModalProps> = ({
                   </option>
                 ))}
                 {profileId && !engineProfiles.some((p) => p.id === profileId) && (
-                  <option value={profileId}>Another engine's account (cleared on save)</option>
+                  <option value={profileId}>{t("Another engine's account (cleared on save)")}</option>
                 )}
               </select>
               <label className="mt-1.5 flex items-start gap-2 text-[11px] text-zinc-400">
                 <input type="checkbox" checked={failover} onChange={(e) => setFailover(e.target.checked)} className="mt-0.5 accent-sky-500" />
-                <span>Switch to the engine's next account when this one runs out of usage or is signed out</span>
+                <span>{t("Switch to the engine's next account when this one runs out of usage or is signed out")}</span>
               </label>
             </div>
           )}
@@ -560,7 +569,7 @@ export const NewAgentModal: React.FC<NewAgentModalProps> = ({
             >
               <summary className="flex items-center gap-2 px-3 py-2 min-h-[40px] cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500">
                 <Globe size={13} className="flex-shrink-0 text-zinc-500" aria-hidden="true" />
-                <span className="text-xs font-medium text-zinc-400">Browser sites</span>
+                <span className="text-xs font-medium text-zinc-400">{t('Browser sites')}</span>
                 <span className="min-w-0 flex-1 truncate text-[11px] text-zinc-500" data-sites-summary>
                   · {sitesSummary(sites)}
                 </span>
@@ -568,22 +577,23 @@ export const NewAgentModal: React.FC<NewAgentModalProps> = ({
               </summary>
               <div className="space-y-3 px-3 pb-3 pt-1">
                 <p className="text-[11px] text-zinc-500 leading-snug">
-                  Which sites this bot's own browser may open. <span className="font-mono text-zinc-400">example.com</span> includes
-                  its subdomains; <span className="font-mono text-zinc-400">*.example.com</span> only the subdomains. Your own
-                  browsing isn't limited.
+                  {tj("Which sites this bot's own browser may open. {domain} includes its subdomains; {wildcard} only the subdomains. Your own browsing isn't limited.", {
+                    domain: <span className="font-mono text-zinc-400">example.com</span>,
+                    wildcard: <span className="font-mono text-zinc-400">*.example.com</span>,
+                  })}
                 </p>
                 <TagListInput
-                  label="Allowed sites"
-                  hint={sites.browser_allowed_sites.length ? 'only these' : 'empty: any site'}
-                  placeholder="e.g. wikipedia.org — Enter to add"
+                  label={t('Allowed sites')}
+                  hint={sites.browser_allowed_sites.length ? t('only these') : t('empty: any site')}
+                  placeholder={t('e.g. wikipedia.org — Enter to add')}
                   value={sites.browser_allowed_sites}
                   limits={SITE_LIMITS}
                   {...listProps('browser_allowed_sites', (next) => setSites({ ...sites, browser_allowed_sites: next }))}
                 />
                 <TagListInput
-                  label="Blocked sites"
-                  hint="never these, even if allowed"
-                  placeholder="e.g. facebook.com — Enter to add"
+                  label={t('Blocked sites')}
+                  hint={t('never these, even if allowed')}
+                  placeholder={t('e.g. facebook.com — Enter to add')}
                   value={sites.browser_blocked_sites}
                   limits={SITE_LIMITS}
                   tone="bad"
@@ -597,8 +607,8 @@ export const NewAgentModal: React.FC<NewAgentModalProps> = ({
                     className="mt-0.5 accent-sky-500"
                   />
                   <span>
-                    Block local and private network addresses
-                    <span className="block text-zinc-500">localhost, 192.168.x.x, 10.x.x.x and names that point to them, such as your router</span>
+                    {t('Block local and private network addresses')}
+                    <span className="block text-zinc-500">{t('localhost, 192.168.x.x, 10.x.x.x and names that point to them, such as your router')}</span>
                   </span>
                 </label>
               </div>
@@ -606,25 +616,25 @@ export const NewAgentModal: React.FC<NewAgentModalProps> = ({
           )}
 
           <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1">Persona & Instructions</label>
+            <label className="block text-xs font-medium text-zinc-400 mb-1">{t('Persona & Instructions')}</label>
             <textarea
               rows={isEdit || presetId ? 6 : 3}
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="What this bot does: expertise, responsibilities, and how it should work..."
+              placeholder={t('What this bot does: expertise, responsibilities, and how it should work...')}
               className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-100 placeholder-zinc-600 focus:border-sky-500 focus:outline-none transition-colors resize-none"
             />
           </div>
 
           <div>
             <label className="block text-xs font-medium text-zinc-400 mb-1">
-              Soul <span className="text-zinc-600 font-normal">· personality, voice, values, quirks</span>
+              {t('Soul')} <span className="text-zinc-600 font-normal">{t('· personality, voice, values, quirks')}</span>
             </label>
             <textarea
               rows={isEdit || presetId ? 4 : 2}
               value={soul}
               onChange={(e) => setSoul(e.target.value)}
-              placeholder="e.g. Warm and witty, a little impatient with jargon, celebrates small wins..."
+              placeholder={t('e.g. Warm and witty, a little impatient with jargon, celebrates small wins...')}
               className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-100 placeholder-zinc-600 focus:border-sky-500 focus:outline-none transition-colors resize-none"
             />
           </div>
@@ -632,23 +642,23 @@ export const NewAgentModal: React.FC<NewAgentModalProps> = ({
           {(!isEdit || initial?.covers) && (
             <div className="space-y-3">
               <TagListInput
-                label="Good for"
-                hint="what to send this bot"
-                placeholder="e.g. taxes, invoices — Enter to add"
+                label={t('Good for')}
+                hint={t('what to send this bot')}
+                placeholder={t('e.g. taxes, invoices — Enter to add')}
                 value={covers}
                 {...listProps('covers', setCovers)}
               />
               <TagListInput
-                label="Not for"
-                hint="what never to send it"
-                placeholder="e.g. legal advice — Enter to add"
+                label={t('Not for')}
+                hint={t('what never to send it')}
+                placeholder={t('e.g. legal advice — Enter to add')}
                 value={avoids}
                 {...listProps('avoids', setAvoids)}
                 tone="bad"
               />
               {!isEdit && (
                 <p className="text-[11px] text-zinc-500 leading-snug">
-                  Channels use these to pick who answers. Optional; you can change them later in the bot's settings.
+                  {t("Channels use these to pick who answers. Optional; you can change them later in the bot's settings.")}
                 </p>
               )}
             </div>
@@ -656,7 +666,7 @@ export const NewAgentModal: React.FC<NewAgentModalProps> = ({
 
           {isEdit && initial && name.trim() !== initial.name && (
             <p className="text-[11px] text-zinc-500">
-              Renaming updates past messages; teammates will need to @mention the new name.
+              {t('Renaming updates past messages; teammates will need to @mention the new name.')}
             </p>
           )}
 
@@ -673,7 +683,7 @@ export const NewAgentModal: React.FC<NewAgentModalProps> = ({
                 className="mr-auto inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-rose-300 hover:text-rose-200 hover:bg-rose-500/10 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-rose-400"
               >
                 <Trash2 size={13} aria-hidden="true" />
-                Delete bot
+                {t('Delete bot')}
               </button>
             )}
             <button
@@ -684,14 +694,14 @@ export const NewAgentModal: React.FC<NewAgentModalProps> = ({
               }}
               className="px-3.5 py-2 rounded-lg text-xs font-medium text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
             >
-              Cancel
+              {t('Cancel')}
             </button>
             <button
               type="submit"
               disabled={submitting || !name.trim()}
               className="px-4 py-2 rounded-lg text-xs font-medium text-white bg-sky-600 hover:bg-sky-500 transition-colors shadow-sm disabled:opacity-50"
             >
-              {isEdit ? 'Save changes' : joinTeamName ? 'Create and add to team' : 'Create bot'}
+              {isEdit ? t('Save changes') : joinTeamName ? t('Create and add to team') : t('Create bot')}
             </button>
           </div>
         </form>

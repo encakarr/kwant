@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Archive, ArchiveRestore, ArrowLeft, ArrowRightLeft, HelpCircle, Loader2, MessageSquare, Plus, RotateCw, Square } from 'lucide-react';
 import { Badge, BadgeKind, Thread, TurnMap, sortThreads, threadBadge } from '../threads';
+import { t } from '../i18n';
 
 const BADGE_STYLE: Record<BadgeKind, string> = {
   working: 'text-sky-300 bg-sky-500/10 border-sky-500/30',
@@ -79,7 +80,7 @@ export const ThreadBar: React.FC<ThreadBarProps> = ({
   };
 
   return (
-    <nav aria-label={`Conversations with ${kwantName}`} className="border-b border-zinc-800/80 bg-zinc-950/60 px-3 sm:px-6 py-2">
+    <nav aria-label={t('Conversations with {name}', { name: kwantName })} className="border-b border-zinc-800/80 bg-zinc-950/60 px-3 sm:px-6 py-2">
       <ul className="flex items-center gap-1.5 overflow-x-auto pb-0.5 -mb-0.5" role="list">
         <li>
           <button
@@ -89,7 +90,7 @@ export const ThreadBar: React.FC<ThreadBarProps> = ({
             className={`${chip} ${!openThreadId ? chipOpen : chipIdle}`}
           >
             <MessageSquare size={12} aria-hidden="true" className="shrink-0" />
-            <span className="truncate">Direct chat</span>
+            <span className="truncate">{t('Direct chat')}</span>
             {directBadge && <StatusBadge badge={directBadge} />}
           </button>
         </li>
@@ -97,35 +98,35 @@ export const ThreadBar: React.FC<ThreadBarProps> = ({
         {threads === undefined && !error && (
           <li className="flex items-center gap-1.5 px-2 text-[11px] text-zinc-500" aria-live="polite">
             <Loader2 size={11} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
-            Loading conversations…
+            {t('Loading conversations…')}
           </li>
         )}
 
         {error && (
           <li className="flex items-center gap-1.5 px-1 text-[11px] text-rose-300" role="alert">
-            <span>Couldn't load conversations.</span>
+            <span>{t("Couldn't load conversations.")}</span>
             <button
               type="button"
               onClick={onRetry}
               className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded border border-rose-500/30 hover:bg-rose-500/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-rose-500"
             >
-              <RotateCw size={10} aria-hidden="true" /> Retry
+              <RotateCw size={10} aria-hidden="true" /> {t('Retry')}
             </button>
           </li>
         )}
 
-        {visible.map((t) => {
-          const badge = threadBadge(t, turns, awaiting);
-          const isOpen = openThreadId === t.id;
-          const delegated = t.kind === 'delegation';
+        {visible.map((th) => {
+          const badge = threadBadge(th, turns, awaiting);
+          const isOpen = openThreadId === th.id;
+          const delegated = th.kind === 'delegation';
           return (
-            <li key={t.id}>
+            <li key={th.id}>
               <button
                 type="button"
-                onClick={() => onOpenThread(t)}
+                onClick={() => onOpenThread(th)}
                 aria-current={isOpen ? 'page' : undefined}
-                title={t.title}
-                className={`${chip} ${isOpen ? chipOpen : chipIdle} ${t.archived ? 'opacity-60' : ''}`}
+                title={th.title}
+                className={`${chip} ${isOpen ? chipOpen : chipIdle} ${th.archived ? 'opacity-60' : ''}`}
               >
                 {delegated ? (
                   <ArrowRightLeft size={12} aria-hidden="true" className="shrink-0 text-amber-300/90" />
@@ -133,9 +134,9 @@ export const ThreadBar: React.FC<ThreadBarProps> = ({
                   <MessageSquare size={12} aria-hidden="true" className="shrink-0" />
                 )}
                 <span className="truncate">
-                  <span className="sr-only">{delegated ? 'Delegated: ' : 'Conversation: '}</span>
-                  {t.title}
-                  {t.archived && <span className="sr-only"> (archived)</span>}
+                  <span className="sr-only">{delegated ? t('Delegated: ') : t('Conversation: ')}</span>
+                  {th.title}
+                  {th.archived && <span className="sr-only"> {t('(archived)')}</span>}
                 </span>
                 {badge && <StatusBadge badge={badge} />}
               </button>
@@ -144,7 +145,7 @@ export const ThreadBar: React.FC<ThreadBarProps> = ({
         })}
 
         {threads !== undefined && visible.length === 0 && !error && (
-          <li className="hidden sm:block px-1 text-[11px] text-zinc-500">No other conversations yet.</li>
+          <li className="hidden sm:block px-1 text-[11px] text-zinc-500">{t('No other conversations yet.')}</li>
         )}
 
         <li>
@@ -153,10 +154,10 @@ export const ThreadBar: React.FC<ThreadBarProps> = ({
             onClick={create}
             disabled={creating}
             className={`${chip} border-dashed border-zinc-700 text-sky-300 hover:bg-sky-500/10 disabled:opacity-50`}
-            title={`Start a separate conversation with ${kwantName}`}
+            title={t('Start a separate conversation with {name}', { name: kwantName })}
           >
             <Plus size={12} aria-hidden="true" />
-            <span>{creating ? 'Starting…' : 'New'}</span>
+            <span>{creating ? t('Starting…') : t('New')}</span>
           </button>
         </li>
 
@@ -169,7 +170,7 @@ export const ThreadBar: React.FC<ThreadBarProps> = ({
               className={`${chip} ${chipIdle}`}
             >
               <Archive size={12} aria-hidden="true" />
-              <span>{showArchived ? 'Hide archived' : `Archived (${archivedCount})`}</span>
+              <span>{showArchived ? t('Hide archived') : t('Archived ({n})', { n: archivedCount })}</span>
             </button>
           </li>
         )}
@@ -215,17 +216,17 @@ export const ThreadHeader: React.FC<ThreadHeaderProps> = ({ thread, badge, deleg
         className="inline-flex items-center gap-1 text-zinc-400 hover:text-zinc-100 rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500"
       >
         <ArrowLeft size={13} aria-hidden="true" />
-        <span>Direct chat</span>
+        <span>{t('Direct chat')}</span>
       </button>
       <div className="flex items-center gap-2 min-w-0 flex-1">
         <h3 className="min-w-0 truncate text-zinc-200 font-medium" title={thread.title}>
           {thread.title}
         </h3>
         <span className="text-zinc-500 shrink-0 hidden sm:inline">
-          {thread.kind === 'delegation' ? `Delegated by ${delegatedBy ?? 'another bot'}` : 'Separate conversation'}
+          {thread.kind === 'delegation' ? t('Delegated by {name}', { name: delegatedBy ?? t('another bot') }) : t('Separate conversation')}
         </span>
         {badge && <StatusBadge badge={badge} />}
-        {thread.archived && <span className="text-[10px] text-zinc-500">Archived</span>}
+        {thread.archived && <span className="text-[10px] text-zinc-500">{t('Archived')}</span>}
       </div>
       <div className="flex items-center gap-1.5">
         {running && (
@@ -236,7 +237,7 @@ export const ThreadHeader: React.FC<ThreadHeaderProps> = ({ thread, badge, deleg
             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-medium text-rose-300 bg-rose-500/10 border border-rose-500/30 hover:bg-rose-500/20 disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-rose-500"
           >
             <Square size={10} fill="currentColor" aria-hidden="true" />
-            {busy === 'stop' ? 'Stopping…' : 'Stop'}
+            {busy === 'stop' ? t('Stopping…') : t('Stop')}
           </button>
         )}
         <button
@@ -246,7 +247,7 @@ export const ThreadHeader: React.FC<ThreadHeaderProps> = ({ thread, badge, deleg
           className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-medium text-zinc-300 bg-zinc-800/80 border border-zinc-700/60 hover:bg-zinc-700/80 disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500"
         >
           {thread.archived ? <ArchiveRestore size={12} aria-hidden="true" /> : <Archive size={12} aria-hidden="true" />}
-          {thread.archived ? 'Unarchive' : 'Archive'}
+          {thread.archived ? t('Unarchive') : t('Archive')}
         </button>
       </div>
       {error && (

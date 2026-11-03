@@ -1,4 +1,5 @@
 // LLM profiles: one account per engine (a work and a personal Claude, say). Keys are write-only.
+import { t } from './i18n';
 
 export type Engine = 'claude' | 'codex' | 'grok' | 'custom';
 export type ProfileKind = 'system' | 'cli_home' | 'api_key' | 'custom_api';
@@ -59,19 +60,19 @@ export const ENGINES: Array<{ id: Engine; label: string }> = [
   { id: 'claude', label: 'Claude' },
   { id: 'codex', label: 'Codex (OpenAI)' },
   { id: 'grok', label: 'Grok (xAI)' },
-  { id: 'custom', label: 'Custom API' },
+  { id: 'custom', label: t('Custom API') },
 ];
 
 export const KIND_LABELS: Record<ProfileKind, string> = {
-  system: 'This machine',
-  cli_home: 'Subscription',
-  api_key: 'API key',
-  custom_api: 'Custom API',
+  system: t('This machine'),
+  cli_home: t('Subscription'),
+  api_key: t('API key'),
+  custom_api: t('Custom API'),
 };
 
 export const PROTOCOLS: Array<{ id: CustomProtocol; label: string; hint: string }> = [
-  { id: 'openai-chat', label: 'OpenAI-compatible', hint: 'Bots can use tools' },
-  { id: 'anthropic-messages', label: 'Anthropic-compatible', hint: 'Bots can use tools' },
+  { id: 'openai-chat', label: t('OpenAI-compatible'), hint: t('Bots can use tools') },
+  { id: 'anthropic-messages', label: t('Anthropic-compatible'), hint: t('Bots can use tools') },
 ];
 export const protocolLabel = (p: CustomProtocol | string) => PROTOCOLS.find((x) => x.id === p)?.label ?? p;
 
@@ -83,10 +84,10 @@ export const CUSTOM_PRESETS: Array<{ id: string; label: string; name: string; ur
     name: 'Copilot',
     urls: { 'openai-chat': 'http://localhost:23333/api/openai/v1', 'anthropic-messages': 'http://localhost:23333/api/anthropic' },
     needsKey: false,
-    note: 'GitHub Copilot models from VS Code. Keep VS Code open with Agent Maestro running.',
+    note: t('GitHub Copilot models from VS Code. Keep VS Code open with Agent Maestro running.'),
   },
-  { id: 'openrouter', label: 'OpenRouter', name: 'OpenRouter', urls: { 'openai-chat': 'https://openrouter.ai/api/v1' }, needsKey: true, note: 'Needs an OpenRouter API key.' },
-  { id: 'lmstudio', label: 'LM Studio', name: 'LM Studio', urls: { 'openai-chat': 'http://localhost:1234/v1' }, needsKey: false, note: 'Start LM Studio’s local server first.' },
+  { id: 'openrouter', label: 'OpenRouter', name: 'OpenRouter', urls: { 'openai-chat': 'https://openrouter.ai/api/v1' }, needsKey: true, note: t('Needs an OpenRouter API key.') },
+  { id: 'lmstudio', label: 'LM Studio', name: 'LM Studio', urls: { 'openai-chat': 'http://localhost:1234/v1' }, needsKey: false, note: t('Start LM Studio’s local server first.') },
 ];
 
 /** The engine a kwant's model runs on, like the server's `Engine::from_model`; null for auto and Ollama. */
@@ -130,16 +131,16 @@ export function activeLimit(limitedUntil: string | null, now = Date.now()): Date
 /** "in 45 min", "in 3 h", or a date when it's further away. */
 export function formatUntil(at: Date, now = Date.now()): string {
   const mins = Math.max(1, Math.round((at.getTime() - now) / 60000));
-  if (mins < 60) return `in ${mins} min`;
+  if (mins < 60) return t('in {n} min', { n: mins });
   const hours = Math.round(mins / 60);
-  if (hours < 24) return `in ${hours} h`;
+  if (hours < 24) return t('in {n} h', { n: hours });
   return at.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
 /** What the server's account label says when Claude Code is set up for another provider, not a Claude login. */
 const THIRD_PARTY_LABELS = new Set(['Amazon Bedrock', 'Google Vertex AI', 'Microsoft Foundry', 'a third-party provider', 'third_party']);
 export const isThirdPartyLabel = (label: string | null | undefined) => !!label && THIRD_PARTY_LABELS.has(label);
-const providerName = (label: string) => (label === 'third_party' ? 'a third-party provider' : label);
+const providerName = (label: string) => (label === 'third_party' || label === 'a third-party provider' ? t('a third-party provider') : label);
 
 export type AccountTone = 'ok' | 'warn' | 'error' | 'muted' | 'info';
 
@@ -151,54 +152,80 @@ export interface AccountState {
   detail: string | null;
 }
 
+/** Account state words in the interface language; `label` itself stays English, since code compares it. */
+const STATE_TEXT: Record<string, string> = {
+  Ready: t('Ready'),
+  'Needs sign-in': t('Needs sign-in'),
+  Off: t('Off'),
+  'Out of usage': t('Out of usage'),
+  'Other provider': t('Other provider'),
+  'No key': t('No key'),
+  Unknown: t('Unknown'),
+  'Can’t connect': t('Can’t connect'),
+  'Key rejected': t('Key rejected'),
+  Error: t('Error'),
+  'Not checked': t('Not checked'),
+  'Not installed': t('Not installed'),
+  'Checking…': t('Checking…'),
+  'Check failed': t('Check failed'),
+  'Signed out': t('Signed out'),
+};
+
+/** An account's state word (AccountState / RowStatus / priority label) as shown. */
+export function accountLabelText(label: string): string {
+  if (STATE_TEXT[label]) return STATE_TEXT[label];
+  const out = /^Out until (.+)$/.exec(label);
+  return out ? t('Out until {time}', { time: out[1] }) : label;
+}
+
 /** The state of an added account (This machine's comes from its engine's check; see accountStatus). */
 export function accountState(p: Profile, now = Date.now()): AccountState {
-  if (!p.enabled) return { label: 'Off', tone: 'muted', detail: 'Bots skip this account' };
+  if (!p.enabled) return { label: 'Off', tone: 'muted', detail: t('Bots skip this account') };
   const limit = activeLimit(p.limited_until, now);
-  if (limit) return { label: 'Out of usage', tone: 'warn', detail: `Back ${formatUntil(limit, now)}` };
-  if (p.last_error === 'auth') return { label: 'Needs sign-in', tone: 'error', detail: 'Its login stopped working. Sign in again.' };
+  if (limit) return { label: 'Out of usage', tone: 'warn', detail: t('Back {when}', { when: formatUntil(limit, now) }) };
+  if (p.last_error === 'auth') return { label: 'Needs sign-in', tone: 'error', detail: t('Its login stopped working. Sign in again.') };
   if (p.kind === 'custom_api') return customState(p.custom ?? null);
-  if (p.kind === 'api_key') return p.has_key ? { label: 'Ready', tone: 'ok', detail: 'Key saved' } : { label: 'No key', tone: 'warn', detail: 'Add a key to use it' };
+  if (p.kind === 'api_key') return p.has_key ? { label: 'Ready', tone: 'ok', detail: t('Key saved') } : { label: 'No key', tone: 'warn', detail: t('Add a key to use it') };
   if (p.signed_in === true) {
     if (isThirdPartyLabel(p.account_label)) {
       const via = providerName(p.account_label!);
       return p.kind === 'system'
-        ? { label: 'Other provider', tone: 'info', detail: `Runs through ${via}, not a Claude login` }
-        : { label: 'Other provider', tone: 'warn', detail: `Runs through ${via} instead of its own Claude login` };
+        ? { label: 'Other provider', tone: 'info', detail: t('Runs through {via}, not a Claude login', { via }) }
+        : { label: 'Other provider', tone: 'warn', detail: t('Runs through {via} instead of its own Claude login', { via }) };
     }
     return { label: 'Ready', tone: 'ok', detail: p.account_label };
   }
   if (p.signed_in === false) return { label: 'Needs sign-in', tone: 'warn', detail: null };
-  return { label: 'Unknown', tone: 'muted', detail: p.kind === 'system' ? 'Uses this computer’s login' : 'Couldn’t check the sign-in (is the CLI installed?)' };
+  return { label: 'Unknown', tone: 'muted', detail: p.kind === 'system' ? t('Uses this computer’s login') : t('Couldn’t check the sign-in (is the CLI installed?)') };
 }
 
 /** The format and key note under a Custom API account's name; "key refused" once the server turned the key down. */
 export function customKindText(p: Pick<Profile, 'has_key' | 'custom'>): string {
   const format = protocolLabel(p.custom?.protocol ?? '');
   if (!p.has_key) return format;
-  return `${format} · ${p.custom?.status === 'key_rejected' ? 'key refused' : 'key saved'}`;
+  return `${format} · ${p.custom?.status === 'key_rejected' ? t('key refused') : t('key saved')}`;
 }
 
 /** The "Model:" line for a Custom API account, or null when it would say nothing true (the server isn't answering). */
 export function customModelText(c: CustomServer): string | null {
   if (c.model) return c.model;
   if (c.status !== 'ready') return null;
-  return c.models.length ? 'each bot’s pick, else the server’s first' : 'none set';
+  return c.models.length ? t('each bot’s pick, else the server’s first') : t('none set');
 }
 
 /** A Custom API account's check, with the server's own words when it failed. */
 function customState(c: CustomServer | null): AccountState {
   switch (c?.status) {
     case 'ready':
-      return { label: 'Ready', tone: 'ok', detail: c.detail ?? 'Connected' };
+      return { label: 'Ready', tone: 'ok', detail: c.detail ?? t('Connected') };
     case 'unreachable':
-      return { label: 'Can’t connect', tone: 'error', detail: c.detail ?? 'Nothing is answering at its address.' };
+      return { label: 'Can’t connect', tone: 'error', detail: c.detail ?? t('Nothing is answering at its address.') };
     case 'key_rejected':
-      return { label: 'Key rejected', tone: 'error', detail: c.detail ?? 'The server refused the key. Replace it.' };
+      return { label: 'Key rejected', tone: 'error', detail: c.detail ?? t('The server refused the key. Replace it.') };
     case 'error':
-      return { label: 'Error', tone: 'error', detail: c.detail ?? 'The check failed.' };
+      return { label: 'Error', tone: 'error', detail: c.detail ?? t('The check failed.') };
     default:
-      return { label: 'Not checked', tone: 'muted', detail: 'Press Check again' };
+      return { label: 'Not checked', tone: 'muted', detail: t('Press Check again') };
   }
 }
 
@@ -207,7 +234,8 @@ export function profileStatus(p: Profile, now = Date.now()): { tone: AccountTone
   const s = accountState(p, now);
   // The email tells two ready accounts apart; Off and Needs sign-in say enough on their own.
   const withDetail = s.label === 'Out of usage' || s.label === 'Other provider' || (s.label === 'Ready' && p.kind !== 'api_key' && p.kind !== 'custom_api');
-  return { tone: s.tone, text: withDetail && s.detail ? `${s.label} · ${s.detail}` : s.label };
+  const label = accountLabelText(s.label);
+  return { tone: s.tone, text: withDetail && s.detail ? `${label} · ${s.detail}` : label };
 }
 
 async function request<T>(method: string, url: string, body?: unknown): Promise<T> {
@@ -217,14 +245,15 @@ async function request<T>(method: string, url: string, body?: unknown): Promise<
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   if (!res.ok) {
-    let message = `Request failed (HTTP ${res.status}).`;
+    let message: string | null = null;
     try {
       const data = await res.json();
       if (data && typeof data.error === 'string' && data.error) message = data.error;
     } catch {
       // no JSON body
     }
-    if (res.status === 409 && message.startsWith('Request failed')) message = 'A profile with that name or folder already exists.';
+    if (!message)
+      message = res.status === 409 ? t('A profile with that name or folder already exists.') : t('Request failed (HTTP {status}).', { status: res.status });
     throw new Error(message);
   }
   if (res.status === 204) return undefined as T;
@@ -278,15 +307,15 @@ export interface ProfileSwitchedEvent {
 
 /** Toast text for a `profile_switched` event. */
 export function describeProfileSwitch(e: ProfileSwitchedEvent, kwantName: string | undefined, now = Date.now()) {
-  const who = kwantName || 'A bot';
+  const who = kwantName || t('A bot');
   const limit = activeLimit(e.retry_at ?? null, now);
   const why =
     e.class === 'auth'
-      ? `${e.from_name} is signed out.`
+      ? t('{name} is signed out.', { name: e.from_name })
       : limit
-        ? `${e.from_name} is out of usage until it resets ${formatUntil(limit, now)}.`
-        : `${e.from_name} is out of usage.`;
-  return { title: `${who} switched to ${e.to_name}`, detail: why };
+        ? t('{name} is out of usage until it resets {when}.', { name: e.from_name, when: formatUntil(limit, now) })
+        : t('{name} is out of usage.', { name: e.from_name });
+  return { title: t('{who} switched to {name}', { who, name: e.to_name }), detail: why };
 }
 
 // ---- Accounts on the "Engines & accounts" cards ----

@@ -1,5 +1,7 @@
 // Channels people make themselves: the name rules, what "New channel" sends, and when Laya picks
-// who answers. No imports, so the node tests can load it on its own.
+// who answers.
+
+import { t } from './i18n';
 
 const unique = (ids: string[]) => ids.filter((id, i) => ids.indexOf(id) === i);
 
@@ -18,10 +20,10 @@ export function channelSlug(typed: string): string {
 
 /** Why `slug` can't be a new channel here, or null when it can. */
 export function channelNameError(slug: string, existing: { name: string }[]): string | null {
-  if (!slug) return 'Give the channel a name.';
-  if (slug.length > 80) return 'Use 80 characters or fewer.';
-  if (slug.startsWith('team-')) return 'Names starting with "team-" are kept for team chats.';
-  if (existing.some((c) => c.name.toLowerCase() === slug)) return `#${slug} already exists in this space.`;
+  if (!slug) return t('Give the channel a name.');
+  if (slug.length > 80) return t('Use 80 characters or fewer.');
+  if (slug.startsWith('team-')) return t('Names starting with "team-" are kept for team chats.');
+  if (existing.some((c) => c.name.toLowerCase() === slug)) return t('#{name} already exists in this space.', { name: slug });
   return null;
 }
 
@@ -70,7 +72,7 @@ export function layaRoutes(c: ChannelLike, botsInSpace: number): boolean {
 
 /** The line under the bot picker, for `picked` bots. */
 export function routingHint(picked: number): string {
-  if (picked === 0) return 'Pick at least one bot.';
-  if (picked === 1) return 'With one bot, it answers every message. Add another and Laya picks who answers.';
-  return 'Laya picks which of these bots answers each message.';
+  if (picked === 0) return t('Pick at least one bot.');
+  if (picked === 1) return t('With one bot, it answers every message. Add another and Laya picks who answers.');
+  return t('Laya picks which of these bots answers each message.');
 }

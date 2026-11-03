@@ -25,6 +25,7 @@ import {
 } from './spaces';
 import { NotifyEvent, TOAST_KINDS, browserNotifyEnabled, notificationPermission, shouldShowOsNotification } from './continuity';
 import { isNotificationOpen, resyncPushOnLoad, showDeviceNotification, targetFromQuery } from './push';
+import { t } from './i18n';
 
 const POLL_MS = 15000;
 
@@ -59,23 +60,23 @@ export const App: React.FC = () => {
       setLoadError(null);
       return list;
     } catch (e) {
-      setLoadError(e instanceof Error ? e.message : 'Couldn’t load spaces.');
+      setLoadError(e instanceof Error ? e.message : t('Couldn’t load spaces.'));
       return null;
     }
   }, []);
 
   /** Opens a space: the request scope changes before the new space renders. */
   const open = useCallback((id: string, to?: SpaceTarget | null, replace = false, view: SpaceView | null = null) => {
-    const t = to ?? lastChat(id) ?? null;
+    const dest = to ?? lastChat(id) ?? null;
     setStartView(view);
     setViewRequest(null);
     viewRef.current = view;
-    chatRef.current = t;
+    chatRef.current = dest;
     setCurrentSpace(id);
     rememberSpace(id);
-    setTarget(t);
+    setTarget(dest);
     setCurrentId(id);
-    const path = spacePath(id, t ?? undefined, view ?? undefined);
+    const path = spacePath(id, dest ?? undefined, view ?? undefined);
     if (window.location.pathname !== path) {
       if (replace) window.history.replaceState(null, '', path);
       else window.history.pushState(null, '', path);
@@ -125,11 +126,11 @@ export const App: React.FC = () => {
 
   // Unread counts for the other spaces.
   useEffect(() => {
-    const t = setInterval(() => !document.hidden && reload(), POLL_MS);
+    const timer = setInterval(() => !document.hidden && reload(), POLL_MS);
     const onFocus = () => reload();
     window.addEventListener('focus', onFocus);
     return () => {
-      clearInterval(t);
+      clearInterval(timer);
       window.removeEventListener('focus', onFocus);
     };
   }, [reload]);
@@ -173,12 +174,12 @@ export const App: React.FC = () => {
         const n = event.data as NotifyEvent;
         const sid = n.space_id ?? event.space_id;
         if (!sid || sid === currentRef.current) return;
-        const name = n.space_name ?? 'another space';
+        const name = n.space_name ?? t('another space');
         const go = () => switchTo(sid, n.channel_id ? { channelId: n.channel_id } : n.kwant_id ? { botId: n.kwant_id } : null);
         reload();
         if (!document.hidden && (TOAST_KINDS as string[]).includes(n.kind)) {
           const id = ++toastIdRef.current;
-          setToasts((prev) => [...prev.slice(-2), { id, title: n.title, detail: n.body, action: { label: `Open in ${name}`, onClick: go } }]);
+          setToasts((prev) => [...prev.slice(-2), { id, title: n.title, detail: n.body, action: { label: t('Open in {name}', { name }), onClick: go } }]);
           return;
         }
         if (!shouldShowOsNotification({ enabled: browserNotifyEnabled(), permission: notificationPermission(), hidden: document.hidden, kind: n.kind })) return;
@@ -231,14 +232,14 @@ export const App: React.FC = () => {
               <AlertTriangle size={14} /> {loadError}
             </p>
             <button type="button" onClick={() => window.location.reload()} className="px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-200 hover:bg-zinc-700">
-              Try again
+              {t('Try again')}
             </button>
           </div>
         ) : spaces && spaces.length === 0 ? (
-          <p>No spaces yet.</p>
+          <p>{t('No spaces yet.')}</p>
         ) : (
           <p className="flex items-center gap-2">
-            <Loader2 size={14} className="animate-spin motion-reduce:animate-none" /> Loading…
+            <Loader2 size={14} className="animate-spin motion-reduce:animate-none" /> {t('Loading…')}
           </p>
         )}
       </div>
@@ -276,14 +277,14 @@ export const App: React.FC = () => {
               if (next) open(next.id);
             });
             const id = ++toastIdRef.current;
-            setToasts((prev) => [...prev, { id, title: `${s.name} is archived`, detail: 'Its routines are paused. Restore it from Archived spaces.' }]);
+            setToasts((prev) => [...prev, { id, title: t('{name} is archived', { name: s.name }), detail: t('Its routines are paused. Restore it from Archived spaces.') }]);
           }}
-          onChatChange={(t) => {
-            rememberChat(current.id, t);
-            chatRef.current = t;
+          onChatChange={(chat) => {
+            rememberChat(current.id, chat);
+            chatRef.current = chat;
             // The Inbox or Settings keeps its own address over the chat underneath.
             if (viewRef.current) return;
-            const path = spacePath(current.id, t);
+            const path = spacePath(current.id, chat);
             if (window.location.pathname !== path) window.history.replaceState(null, '', path);
           }}
         />

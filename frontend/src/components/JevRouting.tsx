@@ -2,6 +2,7 @@
 // Off until a key is saved; without it (or when it fails) channels route as before.
 import React from 'react';
 import { Sparkles } from 'lucide-react';
+import { t } from '../i18n';
 
 export interface JevView {
   enabled: boolean;
@@ -14,16 +15,16 @@ export interface JevView {
 }
 
 export const JEV_PRESETS = [
-  { label: 'OpenCode Zen (free)', url: 'https://opencode.ai/inference/systemone/v1/systemone', model: 'jev-1.13-free' },
+  { label: t('OpenCode Zen (free)'), url: 'https://opencode.ai/inference/systemone/v1/systemone', model: 'jev-1.13-free' },
   { label: 'TypeSafe', url: 'https://api.typesafe.ai/v1/systemone', model: 'jev-latest' },
 ] as const;
 
 /** The status line under the title. */
 export function jevStatus(view: JevView | null): string {
-  if (!view) return 'Loading…';
-  if (view.active) return `On · ${view.model} picks who answers in channels`;
-  if (!view.api_key) return 'Off · add an API key to turn it on';
-  return 'Off · channels pick by keywords and Laya';
+  if (!view) return t('Loading…');
+  if (view.active) return t('On · {model} picks who answers in channels', { model: view.model });
+  if (!view.api_key) return t('Off · add an API key to turn it on');
+  return t('Off · channels pick by keywords and Laya');
 }
 
 const input =
@@ -67,10 +68,10 @@ export const JevRoutingRow: React.FC = () => {
       const { ok, data } = await send('/api/settings/jev', { ...fields(), ...(enabled === undefined ? {} : { enabled }) });
       if (ok) {
         show(data as JevView);
-        setNote({ ok: true, text: 'Saved.' });
-      } else setNote({ ok: false, text: data.error || 'Couldn’t save.' });
+        setNote({ ok: true, text: t('Saved.') });
+      } else setNote({ ok: false, text: data.error || t('Couldn’t save.') });
     } catch {
-      setNote({ ok: false, text: 'Couldn’t reach the server.' });
+      setNote({ ok: false, text: t('Couldn’t reach the server.') });
     } finally {
       setBusy(null);
     }
@@ -83,11 +84,11 @@ export const JevRoutingRow: React.FC = () => {
       const { ok, data } = await send('/api/settings/jev/test', fields());
       setNote(
         ok
-          ? { ok: true, text: `Works: picked ${data.choice} for a sample message in ${data.elapsed_ms} ms.` }
-          : { ok: false, text: data.error || 'The test failed.' },
+          ? { ok: true, text: t('Works: picked {choice} for a sample message in {ms} ms.', { choice: data.choice, ms: data.elapsed_ms }) }
+          : { ok: false, text: data.error || t('The test failed.') },
       );
     } catch {
-      setNote({ ok: false, text: 'Couldn’t reach the server.' });
+      setNote({ ok: false, text: t('Couldn’t reach the server.') });
     } finally {
       setBusy(null);
     }
@@ -100,7 +101,7 @@ export const JevRoutingRow: React.FC = () => {
       <div className="flex-1 min-w-0 space-y-2">
         <div className="flex items-center gap-3">
           <div className="flex-1 min-w-0">
-            <p id="jev-label" className="text-xs font-medium text-zinc-200">Jev, smarter channel routing</p>
+            <p id="jev-label" className="text-xs font-medium text-zinc-200">{t('Jev, smarter channel routing')}</p>
             <p className="mt-0.5 text-[11px] text-zinc-400" role="status">{jevStatus(view)}</p>
           </div>
           <button
@@ -116,8 +117,9 @@ export const JevRoutingRow: React.FC = () => {
           </button>
         </div>
         <p className="text-[11px] text-zinc-500 leading-snug">
-          Reads the meaning of a message, so it also routes Chinese and other languages written without spaces. Each channel
-          message, the channel name and your bots’ names, titles and Good for / Not for lists are sent to the URL below.
+          {t(
+            'Reads the meaning of a message, so it also routes Chinese and other languages written without spaces. Each channel message, the channel name and your bots’ names, titles and Good for / Not for lists are sent to the URL below.',
+          )}
         </p>
         <div className="flex flex-wrap gap-1.5">
           {JEV_PRESETS.map((p) => (
@@ -135,16 +137,16 @@ export const JevRoutingRow: React.FC = () => {
           ))}
         </div>
         <label className="block text-[11px] text-zinc-400">
-          URL
+          {t('URL')}
           <input className={input} value={url} onChange={(e) => setUrl(e.target.value)} placeholder={view?.default_url} spellCheck={false} />
         </label>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <label className="block text-[11px] text-zinc-400">
-            Model
+            {t('Model')}
             <input className={input} value={model} onChange={(e) => setModel(e.target.value)} placeholder={view?.default_model} spellCheck={false} />
           </label>
           <label className="block text-[11px] text-zinc-400">
-            API key
+            {t('API key')}
             <input
               className={input}
               type="password"
@@ -153,16 +155,16 @@ export const JevRoutingRow: React.FC = () => {
               onChange={(e) => setKey(e.target.value)}
               onFocus={() => key.startsWith('•') && setKey('')}
               onBlur={() => !key && view?.api_key && setKey(view.api_key)}
-              placeholder="Paste the key"
+              placeholder={t('Paste the key')}
             />
           </label>
         </div>
         <div className="flex items-center gap-2">
           <button type="button" disabled={busy !== null || !key} onClick={test} className={`${button} bg-zinc-800 text-zinc-200 hover:bg-zinc-700`}>
-            {busy === 'test' ? 'Testing…' : 'Test'}
+            {busy === 'test' ? t('Testing…') : t('Test')}
           </button>
           <button type="button" disabled={busy !== null} onClick={() => save()} className={`${button} bg-sky-600 text-white hover:bg-sky-500`}>
-            {busy === 'save' ? 'Saving…' : 'Save'}
+            {busy === 'save' ? t('Saving…') : t('Save')}
           </button>
           {note && (
             <span className={`text-[11px] ${note.ok ? 'text-emerald-400' : 'text-rose-400'}`} role={note.ok ? 'status' : 'alert'}>

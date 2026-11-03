@@ -1,13 +1,9 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
 import test from 'node:test';
-import ts from 'typescript';
+import { loadBundled } from './bundle.mjs';
 
-const source = await readFile(new URL('../src/mcp.ts', import.meta.url), 'utf8');
-const { outputText } = ts.transpileModule(source, {
-  compilerOptions: { module: ts.ModuleKind.ESNext },
-});
-const mcp = await import(`data:text/javascript;base64,${Buffer.from(outputText).toString('base64')}`);
+// Bundled, not transpiled alone: mcp.ts imports the interface language (src/i18n).
+const mcp = await loadBundled(`export * from './src/mcp';`);
 const {
   MCP_PRESETS,
   MCP_PRESET_CATEGORIES,

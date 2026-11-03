@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Users } from 'lucide-react';
 import { ModernAvatar } from './ModernAvatar';
+import { t } from '../i18n';
 
 export interface MentionItem {
   type: 'kwant' | 'team';
@@ -57,7 +58,7 @@ export const MentionPopover: React.FC<MentionPopoverProps> = ({
             <React.Fragment key={`${item.type}-${item.id}`}>
               {showSectionHeader && (
                 <div className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider px-2.5 py-1 select-none">
-                  {item.type === 'kwant' ? 'Bots' : 'Teams'}
+                  {item.type === 'kwant' ? t('Bots') : t('Teams')}
                 </div>
               )}
               <button
@@ -101,7 +102,7 @@ export const MentionPopover: React.FC<MentionPopoverProps> = ({
 
                 {item.type === 'team' && item.memberCount !== undefined && (
                   <span className="flex-shrink-0 text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-zinc-800/80 text-zinc-400 border border-zinc-700/50">
-                    {item.memberCount} {item.memberCount === 1 ? 'member' : 'members'}
+                    {t(item.memberCount === 1 ? '{n} member' : '{n} members', { n: item.memberCount })}
                   </span>
                 )}
               </button>

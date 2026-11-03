@@ -22,24 +22,25 @@ import {
   rateText,
   tokensText,
 } from '../performance';
+import { t } from '../i18n';
 
 const card = 'rounded-xl border border-zinc-800 bg-zinc-900/40';
 const focusRing = 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500';
 const select =
   'min-h-[40px] sm:min-h-[32px] max-w-full bg-zinc-950 border border-zinc-800 rounded-lg px-2 py-1 text-xs text-zinc-100 focus:border-sky-500 focus:outline-none';
 
-export const EMPTY_TEXT = 'No finished tasks yet. Numbers appear as tasks finish.';
-export const FILTERED_EMPTY_TEXT = 'No finished tasks match these filters.';
-export const REPORT_ONLY_TEXT = 'Report only: these numbers don’t change which bot gets work.';
+export const EMPTY_TEXT = t('No finished tasks yet. Numbers appear as tasks finish.');
+export const FILTERED_EMPTY_TEXT = t('No finished tasks match these filters.');
+export const REPORT_ONLY_TEXT = t('Report only: these numbers don’t change which bot gets work.');
 
 const FewTasks: React.FC<{ n: number; min: number }> = ({ n, min }) => (
   <span
-    title={`Fewer than ${min} finished tasks, so this could change a lot`}
+    title={t('Fewer than {min} finished tasks, so this could change a lot', { min })}
     data-few-tasks
     className="inline-flex shrink-0 px-1.5 py-px rounded border border-amber-500/30 bg-amber-500/10 text-[10px] font-medium text-amber-200"
   >
     {FEW_TASKS}
-    <span className="sr-only">: only {n}, fewer than {min} finished</span>
+    <span className="sr-only">{t(': only {n}, fewer than {min} finished', { n, min })}</span>
   </span>
 );
 
@@ -58,33 +59,33 @@ export const PerformanceTable: React.FC<{ groups: PerfGroup[]; by: PerfBy; minN:
       <thead className="text-[11px] text-zinc-400 border-b border-zinc-800">
         <tr>
           <th scope="col" className={th}>
-            Kind of work
+            {t('Kind of work')}
           </th>
           <th scope="col" className={th}>
-            Bot
+            {t('Bot')}
           </th>
           {by === 'model' && (
             <th scope="col" className={th}>
-              Model
+              {t('Model')}
             </th>
           )}
           <th scope="col" className={`${th} text-right`}>
-            Tasks
+            {t('Tasks')}
           </th>
-          <th scope="col" className={`${th} text-right`} title="Share that ended Verified, with the range it likely falls in (95%)">
-            Verified
+          <th scope="col" className={`${th} text-right`} title={t('Share that ended Verified, with the range it likely falls in (95%)')}>
+            {t('Verified')}
           </th>
-          <th scope="col" className={`${th} text-right`} title="Median time a bot held the task">
-            Median time
+          <th scope="col" className={`${th} text-right`} title={t('Median time a bot held the task')}>
+            {t('Median time')}
           </th>
-          <th scope="col" className={`${th} text-right`} title="Median fresh tokens per task">
-            Median tokens
+          <th scope="col" className={`${th} text-right`} title={t('Median fresh tokens per task')}>
+            {t('Median tokens')}
           </th>
           <th scope="col" className={`${th} text-right`}>
-            Cost per task
+            {t('Cost per task')}
           </th>
-          <th scope="col" className={`${th} text-right`} title="Approvals, unblocks, retries and AutoFix runs per task">
-            You stepped in
+          <th scope="col" className={`${th} text-right`} title={t('Approvals, unblocks, retries and AutoFix runs per task')}>
+            {t('You stepped in')}
           </th>
         </tr>
       </thead>
@@ -128,12 +129,12 @@ export const PerformanceCards: React.FC<{ groups: PerfGroup[]; by: PerfBy; minN:
         <dl className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
           {(
             [
-              ['Tasks', String(g.n)],
-              ['Verified', <Verified key="v" g={g} />],
-              ['Median time', latencyText(g.median_latency_ms)],
-              ['Median tokens', tokensText(g.median_fresh_tokens)],
-              ['Cost per task', costText(g.cost_per_task_usd)],
-              ['You stepped in', `${perTaskText(g.interventions_per_task)} per task`],
+              [t('Tasks'), String(g.n)],
+              [t('Verified'), <Verified key="v" g={g} />],
+              [t('Median time'), latencyText(g.median_latency_ms)],
+              [t('Median tokens'), tokensText(g.median_fresh_tokens)],
+              [t('Cost per task'), costText(g.cost_per_task_usd)],
+              [t('You stepped in'), t('{n} per task', { n: perTaskText(g.interventions_per_task) })],
             ] as Array<[string, React.ReactNode]>
           ).map(([k, v]) => (
             <div key={k} className="min-w-0">
@@ -164,7 +165,7 @@ export const PerformanceBody: React.FC<PerformanceBodyProps> = ({ report, error,
   if (view === 'loading')
     return (
       <p className="flex items-center gap-2 text-xs text-zinc-400" data-perf-loading>
-        <Loader2 size={14} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> Loading performance…
+        <Loader2 size={14} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> {t('Loading performance…')}
       </p>
     );
   if (view === 'error' && error)
@@ -172,10 +173,10 @@ export const PerformanceBody: React.FC<PerformanceBodyProps> = ({ report, error,
       <div role="alert" className="px-3 py-2 rounded-lg border border-rose-500/20 bg-rose-500/5 flex items-center gap-2 text-xs text-rose-300" data-perf-error>
         <AlertTriangle size={14} className="shrink-0" aria-hidden="true" />
         <span className="flex-1 min-w-0 break-words">
-          {error.status === 401 ? 'Only you can see these numbers. Confirm it’s you, then try again.' : `Couldn’t load performance. ${error.message}`}
+          {error.status === 401 ? t('Only you can see these numbers. Confirm it’s you, then try again.') : t('Couldn’t load performance. {error}', { error: error.message })}
         </span>
         <button type="button" onClick={onRetry} className={`shrink-0 px-2 py-0.5 rounded border border-rose-500/30 hover:bg-rose-500/10 min-h-[32px] ${focusRing}`}>
-          Retry
+          {t('Retry')}
         </button>
       </div>
     );
@@ -191,7 +192,9 @@ export const PerformanceBody: React.FC<PerformanceBodyProps> = ({ report, error,
       <PerformanceTable groups={r.groups} by={by} minN={r.min_n} names={names} />
       <PerformanceCards groups={r.groups} by={by} minN={r.min_n} names={names} />
       {r.groups.some((g) => g.low_confidence) && (
-        <p className="mt-2 text-[11px] text-zinc-500">“{FEW_TASKS}”: fewer than {r.min_n} finished tasks, so the range is wide and the numbers can still change a lot.</p>
+        <p className="mt-2 text-[11px] text-zinc-500">
+          {t('“{label}”: fewer than {n} finished tasks, so the range is wide and the numbers can still change a lot.', { label: FEW_TASKS, n: r.min_n })}
+        </p>
       )}
     </div>
   );
@@ -230,7 +233,7 @@ export const PerformancePanel: React.FC<{
       },
       (e) => {
         if (mine !== seq.current) return;
-        setError(e instanceof PerfError ? e : new PerfError(e instanceof Error ? e.message : 'Something went wrong.', 0));
+        setError(e instanceof PerfError ? e : new PerfError(e instanceof Error ? e.message : t('Something went wrong.'), 0));
         setLoading(false);
       },
     );
@@ -249,9 +252,9 @@ export const PerformancePanel: React.FC<{
         <Gauge size={16} className="mt-0.5 shrink-0 text-sky-400" aria-hidden="true" />
         <div className="min-w-0 flex-1">
           <h3 id={ids.title} className="text-sm font-semibold text-zinc-100">
-            Performance
+            {t('Performance')}
           </h3>
-          <p className="mt-0.5 text-xs text-zinc-400">How often each bot’s finished work ends Verified, and what it takes.</p>
+          <p className="mt-0.5 text-xs text-zinc-400">{t('How often each bot’s finished work ends Verified, and what it takes.')}</p>
           <p className="mt-0.5 text-[11px] text-zinc-500" data-report-only>
             {REPORT_ONLY_TEXT}
           </p>
@@ -259,7 +262,7 @@ export const PerformancePanel: React.FC<{
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <div role="group" aria-label="Group by" className="inline-flex rounded-lg border border-zinc-800 p-0.5">
+        <div role="group" aria-label={t('Group by')} className="inline-flex rounded-lg border border-zinc-800 p-0.5">
           {(['bot', 'model'] as const).map((v) => (
             <button
               key={v}
@@ -268,15 +271,15 @@ export const PerformancePanel: React.FC<{
               onClick={() => setBy(v)}
               className={`min-h-[40px] sm:min-h-[28px] px-3 rounded-md text-xs font-medium ${focusRing} ${by === v ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-400 hover:text-zinc-200'}`}
             >
-              {v === 'bot' ? 'By bot' : 'By model'}
+              {v === 'bot' ? t('By bot') : t('By model')}
             </button>
           ))}
         </div>
         <label htmlFor={ids.cls} className="sr-only">
-          Kind of work
+          {t('Kind of work')}
         </label>
         <select id={ids.cls} value={cls} onChange={(e) => setCls(e.target.value)} className={select}>
-          <option value="">All kinds of work</option>
+          <option value="">{t('All kinds of work')}</option>
           {options(classes).map(([k, v]) => (
             <option key={k} value={k}>
               {v}
@@ -284,10 +287,10 @@ export const PerformancePanel: React.FC<{
           ))}
         </select>
         <label htmlFor={ids.bot} className="sr-only">
-          Bot
+          {t('Bot')}
         </label>
         <select id={ids.bot} value={bot} onChange={(e) => setBot(e.target.value)} className={select}>
-          <option value="">All bots</option>
+          <option value="">{t('All bots')}</option>
           {options(bots).map(([k, v]) => (
             <option key={k} value={k}>
               {v}
@@ -295,7 +298,7 @@ export const PerformancePanel: React.FC<{
           ))}
         </select>
         <label htmlFor={ids.since} className="sr-only">
-          Period
+          {t('Period')}
         </label>
         <select id={ids.since} value={since} onChange={(e) => setSince(e.target.value as PerfSince)} className={select}>
           {SINCE_OPTIONS.map((o) => (

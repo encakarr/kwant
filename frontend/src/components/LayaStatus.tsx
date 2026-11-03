@@ -1,6 +1,7 @@
 // Laya's status, shown in App settings (it used to be the header's ROUTER pill).
 import React from 'react';
 import { Cpu } from 'lucide-react';
+import { t } from '../i18n';
 
 export const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
 
@@ -41,20 +42,20 @@ export const useLayaStatus = (): LayaStatus | null => {
 };
 
 export const layaPill = (status: LayaStatus | null) => {
-  const ready = 'Laya is online · picks the best bot for each message';
+  const ready = t('Laya is online · picks the best bot for each message');
   switch (status?.state) {
     case 'online':
     case 'external':
       return { dot: 'bg-emerald-400', label: ready };
     case 'installing':
-      return { dot: 'bg-amber-400 animate-pulse', label: 'Laya is installing · picking by keywords meanwhile' };
+      return { dot: 'bg-amber-400 animate-pulse', label: t('Laya is installing · picking by keywords meanwhile') };
     case 'starting':
-      return { dot: 'bg-amber-400 animate-pulse', label: 'Laya is loading its model · picking by keywords meanwhile' };
+      return { dot: 'bg-amber-400 animate-pulse', label: t('Laya is loading its model · picking by keywords meanwhile') };
     case 'failed':
     case 'offline':
-      return { dot: 'bg-rose-500', label: 'Laya is offline · picking by keywords' };
+      return { dot: 'bg-rose-500', label: t('Laya is offline · picking by keywords') };
     default:
-      return { dot: 'bg-zinc-500 animate-pulse', label: 'Checking Laya…' };
+      return { dot: 'bg-zinc-500 animate-pulse', label: t('Checking Laya…') };
   }
 };
 
@@ -67,7 +68,7 @@ export const LayaStatusRow: React.FC = () => {
     <div className="flex items-start gap-3 bg-zinc-950/60 p-3 rounded-xl border border-zinc-800">
       <Cpu size={15} className="mt-0.5 text-sky-400 shrink-0" aria-hidden="true" />
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-medium text-zinc-200">Laya, the router</p>
+        <p className="text-xs font-medium text-zinc-200">{t('Laya, the router')}</p>
         <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-zinc-400" role="status">
           <span className={`w-2 h-2 rounded-full shrink-0 ${pill.dot}`} aria-hidden="true" />
           <span>{pill.label}</span>
@@ -75,7 +76,7 @@ export const LayaStatusRow: React.FC = () => {
         {laya && (
           <p className="mt-0.5 text-[11px] text-zinc-500 break-all">
             {laya.url}
-            {laya.managed ? ' (started by the app)' : ''}
+            {laya.managed ? t(' (started by the app)') : ''}
             {laya.detail ? ` · ${laya.detail}` : ''}
           </p>
         )}

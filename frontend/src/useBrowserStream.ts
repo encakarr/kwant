@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { browserStreamUrl } from './browserViewport';
+import { t } from './i18n';
 
 export function useBrowserStream(id: string | undefined, visible: boolean) {
   const socket = useRef<WebSocket | null>(null);
@@ -52,7 +53,7 @@ export function useBrowserStream(id: string | undefined, visible: boolean) {
         setControlling(false);
         setBusy(false);
         setFrame(null);
-        setError((current) => current || 'Browser disconnected. Reconnecting…');
+        setError((current) => current || t('Browser disconnected. Reconnecting…'));
         reconnect = setTimeout(connect, Math.min(1000 * 2 ** attempts++, 10000));
       };
     };
@@ -75,9 +76,9 @@ export function useBrowserStream(id: string | undefined, visible: boolean) {
   /** `input` waits for the page's ack (shows busy); pointer moves don't, they're fire-and-forget. */
   const send = useCallback((payload: Record<string, unknown>, input = false) => {
     const ws = socket.current;
-    if (!ws || ws.readyState !== WebSocket.OPEN) { setError('Browser is reconnecting. Try again when connected.'); return; }
+    if (!ws || ws.readyState !== WebSocket.OPEN) { setError(t('Browser is reconnecting. Try again when connected.')); return; }
     if (ws.bufferedAmount > 64 * 1024 || pending.current.size >= 128) {
-      setError('Browser input is busy. Wait for pending input to finish.'); return;
+      setError(t('Browser input is busy. Wait for pending input to finish.')); return;
     }
     const id = ++sequence.current;
     if (input) { pending.current.add(id); setBusy(true); }

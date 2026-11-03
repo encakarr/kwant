@@ -1,6 +1,8 @@
 // Threads, delegations and concurrent turns (batch 2 / A). Pure helpers, so App and the tests share
-// them; the API calls at the bottom are thin wrappers over the routes in design-A.md. No imports, so
-// the node tests can load it on its own.
+// them; the API calls at the bottom are thin wrappers over the routes in design-A.md. Its only import
+// is the interface language (src/i18n), so the node tests bundle it with that.
+
+import { t } from './i18n';
 
 export type DelegationStatus = 'queued' | 'running' | 'completed' | 'failed' | 'cancelled' | 'interrupted';
 
@@ -220,10 +222,10 @@ export interface Badge {
 }
 
 const FINAL_LABEL: Record<string, Badge> = {
-  completed: { kind: 'done', label: 'Done' },
-  failed: { kind: 'failed', label: 'Failed' },
-  cancelled: { kind: 'cancelled', label: 'Cancelled' },
-  interrupted: { kind: 'interrupted', label: 'Interrupted' },
+  completed: { kind: 'done', label: t('Done') },
+  failed: { kind: 'failed', label: t('Failed') },
+  cancelled: { kind: 'cancelled', label: t('Cancelled') },
+  interrupted: { kind: 'interrupted', label: t('Interrupted') },
 };
 
 /**
@@ -232,18 +234,18 @@ const FINAL_LABEL: Record<string, Badge> = {
  */
 export function threadBadge(thread: Pick<Thread, 'id' | 'delegation'>, turns: TurnMap, awaiting?: ReadonlySet<string>): Badge | null {
   const live = turnsIn(turns, thread.id);
-  const running = live.filter((t) => t.state === 'running');
-  if (running.some((t) => !awaiting?.has(t.turn_id))) return { kind: 'working', label: 'Working' };
-  if (running.length) return { kind: 'waiting', label: 'Waiting for you' };
-  const queued = live.find((t) => t.state === 'queued');
+  const running = live.filter((x) => x.state === 'running');
+  if (running.some((x) => !awaiting?.has(x.turn_id))) return { kind: 'working', label: t('Working') };
+  if (running.length) return { kind: 'waiting', label: t('Waiting for you') };
+  const queued = live.find((x) => x.state === 'queued');
   if (queued) {
     const pos = queuePosition(turns, queued.turn_id);
-    return { kind: 'queued', label: pos ? `Queued · #${pos}` : 'Queued' };
+    return { kind: 'queued', label: pos ? t('Queued · #{pos}', { pos }) : t('Queued') };
   }
   const st = thread.delegation?.status;
   if (!st) return null;
-  if (st === 'running') return { kind: 'working', label: 'Working' };
-  if (st === 'queued') return { kind: 'queued', label: 'Queued' };
+  if (st === 'running') return { kind: 'working', label: t('Working') };
+  if (st === 'queued') return { kind: 'queued', label: t('Queued') };
   return FINAL_LABEL[st] ?? null;
 }
 
@@ -315,10 +317,10 @@ export function parseDelegationMeta(raw: unknown): DelegationMeta | null {
     delegation_id: m.delegation_id,
     thread_id: m.thread_id,
     specialist_id: str(m.specialist_id),
-    specialist_name: str(m.specialist_name, 'The specialist'),
+    specialist_name: str(m.specialist_name, t('The specialist')),
     lead_id: typeof m.lead_id === 'string' ? m.lead_id : undefined,
     status: (str(m.status, 'queued') as DelegationStatus),
-    title: str(m.title, 'Delegated task'),
+    title: str(m.title, t('Delegated task')),
   };
 }
 
@@ -330,17 +332,21 @@ export function delegationStatusLine(
 ): string {
   switch (status) {
     case 'queued':
-      return opts.queuePos ? `Waiting for ${specialist} · #${opts.queuePos} in line` : `Waiting for ${specialist} to start`;
+      return opts.queuePos
+        ? t('Waiting for {name} · #{pos} in line', { name: specialist, pos: opts.queuePos })
+        : t('Waiting for {name} to start', { name: specialist });
     case 'running':
-      return `${specialist} is working on it`;
+      return t('{name} is working on it', { name: specialist });
     case 'completed':
-      return `${specialist} finished`;
+      return t('{name} finished', { name: specialist });
     case 'failed':
-      return opts.error ? `${specialist} couldn't finish: ${opts.error}` : `${specialist} couldn't finish`;
+      return opts.error
+        ? t("{name} couldn't finish: {error}", { name: specialist, error: opts.error })
+        : t("{name} couldn't finish", { name: specialist });
     case 'cancelled':
-      return 'Stopped';
+      return t('Stopped');
     case 'interrupted':
-      return 'Interrupted by a restart';
+      return t('Interrupted by a restart');
     default:
       return '';
   }
@@ -360,7 +366,7 @@ export async function request<T>(method: string, url: string, body?: unknown): P
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   if (!res.ok) {
-    let message = res.status === 404 ? 'It no longer exists.' : `Request failed (HTTP ${res.status}).`;
+    let message = res.status === 404 ? t('It no longer exists.') : t('Request failed (HTTP {status}).', { status: res.status });
     try {
       const data = await res.json();
       if (data && typeof data.error === 'string' && data.error) message = data.error;
@@ -403,8 +409,8 @@ export type TurnLimitKey = keyof typeof TURN_LIMITS;
 export function limitError(key: TurnLimitKey, raw: string): string | null {
   const { min, max } = TURN_LIMITS[key];
   const s = raw.trim();
-  if (!/^\d+$/.test(s)) return `Enter a whole number from ${min} to ${max}.`;
+  if (!/^\d+$/.test(s)) return t('Enter a whole number from {min} to {max}.', { min, max });
   const n = Number(s);
-  if (n < min || n > max) return `Use ${min}–${max}.`;
+  if (n < min || n > max) return t('Use {min}–{max}.', { min, max });
   return null;
 }

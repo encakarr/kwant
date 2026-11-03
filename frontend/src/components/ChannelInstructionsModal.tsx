@@ -3,6 +3,7 @@ import { Pin, X } from 'lucide-react';
 import { MAX_INSTRUCTIONS } from '../continuity';
 import { playSfx } from '../audio/chiptune';
 import { InstructionsField } from './Instructions';
+import { t } from '../i18n';
 
 /** Edits one channel's pinned instructions. */
 export const ChannelInstructionsModal: React.FC<{
@@ -61,10 +62,10 @@ export const ChannelInstructionsModal: React.FC<{
               <Pin size={14} />
             </div>
             <h2 id="chan-instr-title" className="text-sm font-semibold">
-              Instructions for {channelLabel}
+              {t('Instructions for {channel}', { channel: channelLabel })}
             </h2>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close" className="p-1 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors">
+          <button type="button" onClick={onClose} aria-label={t('Close')} className="p-1 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors">
             <X size={17} />
           </button>
         </div>
@@ -72,8 +73,8 @@ export const ChannelInstructionsModal: React.FC<{
           value={text}
           onChange={setText}
           autoFocus
-          label="Channel instructions"
-          hint="Every bot reads these before each turn in this channel. Leave empty to unpin."
+          label={t('Channel instructions')}
+          hint={t('Every bot reads these before each turn in this channel. Leave empty to unpin.')}
           rows={7}
         />
         {error && (
@@ -83,14 +84,14 @@ export const ChannelInstructionsModal: React.FC<{
         )}
         <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-zinc-800">
           <button type="button" onClick={onClose} className="px-3.5 py-2 rounded-lg text-xs font-medium text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 transition-colors">
-            Cancel
+            {t('Cancel')}
           </button>
           <button
             type="submit"
             disabled={saving || over}
             className="px-4 py-2 rounded-lg text-xs font-medium text-white bg-sky-600 hover:bg-sky-500 transition-colors shadow-sm disabled:opacity-50"
           >
-            {saving ? 'Saving…' : 'Save'}
+            {saving ? t('Saving…') : t('Save')}
           </button>
         </div>
       </form>

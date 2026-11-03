@@ -12,8 +12,9 @@ import {
   priorityUpdates,
   splitRanked,
 } from '../failover';
-import { Profile, cardOf, profilesApi } from '../profiles';
+import { Profile, accountLabelText, cardOf, profilesApi } from '../profiles';
 import { StatusPill } from './EngineAccounts';
+import { t } from '../i18n';
 
 const arrowBtn =
   'inline-flex items-center justify-center w-8 h-8 sm:w-7 sm:h-7 rounded-md border border-zinc-700/70 bg-zinc-800/70 text-zinc-200 hover:bg-zinc-700 transition-colors disabled:opacity-35 disabled:hover:bg-zinc-800/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-sky-400';
@@ -63,13 +64,13 @@ export const AccountPriority: React.FC<{
     // Show the new order at once, with the numbers it will have, so a late reload can't flip it back.
     const numbered = next.map((p) => ({ ...p, priority: updates.find((u) => u.id === p.id)?.priority ?? p.priority }));
     setPending(numbered);
-    setAnnounce(moveAnnouncement(moved.kind === 'system' ? `${engineLabel(moved)} on this machine` : moved.name, to, next.length));
+    setAnnounce(moveAnnouncement(moved.kind === 'system' ? t('{engine} on this machine', { engine: engineLabel(moved) }) : moved.name, to, next.length));
     try {
       await Promise.all(updates.map((u) => profilesApi.update(u.id, { priority: u.priority })));
       await onChanged();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not save the order.');
-      setAnnounce('Could not save the order. It is back as it was.');
+      setError(e instanceof Error ? e.message : t('Could not save the order.'));
+      setAnnounce(t('Could not save the order. It is back as it was.'));
       await onChanged().catch(() => undefined);
     } finally {
       setPending(null);
@@ -84,18 +85,18 @@ export const AccountPriority: React.FC<{
     void save(next, order[index], to);
   };
 
-  const nameOf = (p: Profile) => (p.kind === 'system' ? 'This machine' : p.name);
+  const nameOf = (p: Profile) => (p.kind === 'system' ? t('This machine') : p.name);
 
   return (
     <section aria-labelledby="account-priority-title" className="rounded-xl border border-zinc-800 bg-zinc-900/90 p-3 text-xs">
       <h3 id="account-priority-title" className="font-semibold text-zinc-100">
-        Order to use
+        {t('Order to use')}
       </h3>
       <p id="account-priority-caption" className="mt-0.5 text-[11px] text-zinc-400">
         {FAILOVER_CAPTION}
       </p>
       {order.length === 0 ? (
-        <p className="mt-2 text-zinc-500">{unranked.length === 0 ? 'No accounts yet. Add one below.' : 'No account is ready to use yet.'}</p>
+        <p className="mt-2 text-zinc-500">{unranked.length === 0 ? t('No accounts yet. Add one below.') : t('No account is ready to use yet.')}</p>
       ) : (
         <ol ref={listRef} aria-describedby="account-priority-caption" className="mt-2.5 space-y-1.5">
           {order.map((p, i) => {
@@ -141,7 +142,7 @@ export const AccountPriority: React.FC<{
                   <p className="text-zinc-100 font-medium truncate">{nameOf(p)}</p>
                   <div className="mt-0.5 flex items-center gap-x-1.5 gap-y-1 flex-wrap">
                     <span className="text-[11px] text-zinc-500">{engineLabel(p)}</span>
-                    <StatusPill tone={status.tone}>{status.label}</StatusPill>
+                    <StatusPill tone={status.tone}>{accountLabelText(status.label)}</StatusPill>
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
@@ -150,8 +151,8 @@ export const AccountPriority: React.FC<{
                     data-focus-key={`${p.id}:up`}
                     className={arrowBtn}
                     disabled={i === 0}
-                    aria-label={`Move ${nameOf(p)} (${engineLabel(p)}) up`}
-                    title="Use it earlier"
+                    aria-label={t('Move {name} ({engine}) up', { name: nameOf(p), engine: engineLabel(p) })}
+                    title={t('Use it earlier')}
                     onClick={() => move(i, i - 1, i - 1 === 0 ? `${p.id}:down` : `${p.id}:up`)}
                   >
                     <ArrowUp size={13} aria-hidden="true" />
@@ -161,8 +162,8 @@ export const AccountPriority: React.FC<{
                     data-focus-key={`${p.id}:down`}
                     className={arrowBtn}
                     disabled={i === order.length - 1}
-                    aria-label={`Move ${nameOf(p)} (${engineLabel(p)}) down`}
-                    title="Use it later"
+                    aria-label={t('Move {name} ({engine}) down', { name: nameOf(p), engine: engineLabel(p) })}
+                    title={t('Use it later')}
                     onClick={() => move(i, i + 1, i + 1 === order.length - 1 ? `${p.id}:up` : `${p.id}:down`)}
                   >
                     <ArrowDown size={13} aria-hidden="true" />
@@ -176,9 +177,9 @@ export const AccountPriority: React.FC<{
       {unranked.length > 0 && (
         <div data-unranked className="mt-3">
           <h4 id="account-unranked-title" className="text-[11px] font-medium text-zinc-400">
-            Not in the order
+            {t('Not in the order')}
           </h4>
-          <p className="mt-0.5 text-[11px] text-zinc-500">These can't run turns until they are installed or signed in.</p>
+          <p className="mt-0.5 text-[11px] text-zinc-500">{t("These can't run turns until they are installed or signed in.")}</p>
           <ul aria-labelledby="account-unranked-title" className="mt-1.5 space-y-1.5">
             {unranked.map((p) => {
               const status = priorityStatus(p, engineOf(p), now);
@@ -188,7 +189,7 @@ export const AccountPriority: React.FC<{
                     <p className="text-zinc-300 font-medium truncate">{nameOf(p)}</p>
                     <div className="mt-0.5 flex items-center gap-x-1.5 gap-y-1 flex-wrap">
                       <span className="text-[11px] text-zinc-500">{engineLabel(p)}</span>
-                      <StatusPill tone={status.tone}>{status.label}</StatusPill>
+                      <StatusPill tone={status.tone}>{accountLabelText(status.label)}</StatusPill>
                     </div>
                   </div>
                 </li>

@@ -243,6 +243,10 @@ test('every approvals-off hover hint says payments still ask: badge, sidebar row
   const { readFile } = await import('node:fs/promises');
   for (const f of ['src/App.tsx', 'src/components/Sidebar.tsx', 'src/components/ApprovalsSetting.tsx']) {
     const src = await readFile(new URL(`../${f}`, import.meta.url), 'utf8');
-    for (const [, tip] of src.matchAll(/<ApprovalsOffBadge[^>]*\btitle=\{`([^`]*)`\}/g)) assert.match(tip, /Payments still ask you\./, `${f}: ${tip}`);
+    // A title is a template literal or a t('…') key (the English text).
+    for (const [, lit, key] of src.matchAll(/<ApprovalsOffBadge[^>]*\btitle=\{(?:`([^`]*)`\}|t\('([^']*)')/g)) {
+      const tip = lit ?? key;
+      assert.match(tip, /Payments still ask you\./, `${f}: ${tip}`);
+    }
   }
 });

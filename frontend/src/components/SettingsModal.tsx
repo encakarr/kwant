@@ -29,6 +29,7 @@ import { signedInDevicesVisible } from '../deviceSignIn';
 import { ComputerModeControl, useComputerMode } from './ComputerModeSwitch';
 import { LayaStatusRow } from './LayaStatus';
 import { JevRoutingRow } from './JevRouting';
+import { LanguageRow } from './LanguageSetting';
 import { AppUpdateAbout, useAppUpdate } from './AppUpdateBanner';
 import { StarAskSettingsLink } from './StarAsk';
 import { ProactiveSettings, WORK_AHEAD_CAP_MAX, WORK_AHEAD_CAP_MIN, parseProactiveSettings } from '../decideFirst';
@@ -52,6 +53,7 @@ import {
 import { FlightSchoolSettings, TIERS, TIER_HINTS, TIER_LABELS, Tier, parseFlightSchoolSettings } from '../flightSchool';
 import { DISCOVERY_CAPS, DISCOVERY_SETTING_EVENT, parseDiscoverySettings } from '../automationDiscovery';
 import { editorProps, isTextField } from '../escape';
+import { t } from '../i18n';
 
 const RECOVERY_PCTS = [0, 10, 25, 50, 100];
 
@@ -93,19 +95,19 @@ const SwitchRow: React.FC<{ id: string; label: string; hint: string; checked: bo
 export const FlightSchoolSetting: React.FC<{ value: FlightSchoolSettings; onChange: (v: FlightSchoolSettings) => void }> = ({ value, onChange }) => (
   <SwitchRow
     id="flight-school"
-    label="Flight School: limit what each bot may do on its own"
-    hint="Give each bot a tier per kind of work: Observe, Sandbox or Act. A tier only adds approval cards, it never removes one. Payments always ask you, whatever the tier."
+    label={t('Flight School: limit what each bot may do on its own')}
+    hint={t('Give each bot a tier per kind of work: Observe, Sandbox or Act. A tier only adds approval cards, it never removes one. Payments always ask you, whatever the tier.')}
     checked={value.flight_school}
     onToggle={() => onChange({ ...value, flight_school: !value.flight_school })}
   >
     {value.flight_school && (
       <div className="mt-2 space-y-2" data-testid="flight-school-options">
         <p className="text-[11px] text-zinc-300">
-          Bots you already have stay at Act, so nothing changes until you lower one in its settings.
+          {t('Bots you already have stay at Act, so nothing changes until you lower one in its settings.')}
         </p>
         <div className="flex flex-wrap items-center gap-2">
           <label htmlFor="flight-school-new-bot" className="text-[11px] text-zinc-300">
-            Bots you add from now on start at
+            {t('Bots you add from now on start at')}
           </label>
           <select
             id="flight-school-new-bot"
@@ -113,9 +115,9 @@ export const FlightSchoolSetting: React.FC<{ value: FlightSchoolSettings; onChan
             onChange={(e) => onChange({ ...value, flight_school_new_bot_tier: e.target.value as Tier })}
             className="bg-zinc-950 border border-zinc-800 rounded-lg px-2 py-1.5 text-xs text-zinc-100 focus:border-sky-500 focus:outline-none"
           >
-            {TIERS.map((t) => (
-              <option key={t} value={t}>
-                {TIER_LABELS[t]}
+            {TIERS.map((tier) => (
+              <option key={tier} value={tier}>
+                {TIER_LABELS[tier]}
               </option>
             ))}
           </select>
@@ -189,21 +191,21 @@ const DefaultLimitField: React.FC<{ id: string; label: string; scope: LimitScope
           }}
           className="bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 min-h-[40px] sm:min-h-[36px] text-xs text-zinc-100 focus:outline-none focus:border-sky-500"
         >
-          <option value={String(NO_LIMIT)}>No limit</option>
+          <option value={String(NO_LIMIT)}>{t('No limit')}</option>
           {LIMIT_PICKS.map((p) => (
             <option key={p} value={String(p)}>
-              {formatTokens(p)} tokens
+              {t('{n} tokens', { n: formatTokens(p) })}
             </option>
           ))}
-          <option value="custom">Custom…</option>
+          <option value="custom">{t('Custom…')}</option>
         </select>
         {custom && (
           <input
-            aria-label={`${label}, custom amount`}
+            aria-label={t('{label}, custom amount', { label })}
             type="text"
             inputMode="decimal"
             autoComplete="off"
-            placeholder="e.g. 300k"
+            placeholder={t('e.g. 300k')}
             value={value}
             onChange={(e) => onChange(e.target.value)}
             aria-invalid={!!err}
@@ -214,7 +216,7 @@ const DefaultLimitField: React.FC<{ id: string; label: string; scope: LimitScope
       </div>
       {custom && (
         <p id={`${id}-err`} className={`text-[11px] ${err ? 'text-rose-300' : 'text-zinc-500'}`}>
-          {err ?? 'Tokens, like 300k or 2M.'}
+          {err ?? t('Tokens, like 300k or 2M.')}
         </p>
       )}
     </div>
@@ -222,19 +224,19 @@ const DefaultLimitField: React.FC<{ id: string; label: string; scope: LimitScope
 };
 
 /** Typed default-limit text → numbers, or null while one can't be saved. */
-const defaultLimitsFrom = (t: { task: string; mission: string }): DefaultLimits | null => {
-  const task = parseLimit(t.task);
-  const mission = parseLimit(t.mission);
+const defaultLimitsFrom = (typed: { task: string; mission: string }): DefaultLimits | null => {
+  const task = parseLimit(typed.task);
+  const mission = parseLimit(typed.mission);
   if (task === null || mission === null) return null;
-  if (task !== NO_LIMIT && tokenLimitError(t.task, 'task')) return null;
-  if (mission !== NO_LIMIT && tokenLimitError(t.mission, 'mission')) return null;
+  if (task !== NO_LIMIT && tokenLimitError(typed.task, 'task')) return null;
+  if (mission !== NO_LIMIT && tokenLimitError(typed.mission, 'mission')) return null;
   return { task, mission };
 };
 
 const LIMIT_FIELDS: { key: TurnLimitKey; label: string; hint: string }[] = [
-  { key: 'max_turns_per_agent', label: 'Replies at once per bot', hint: 'More than this and a bot’s next request waits in line.' },
-  { key: 'max_turns_global', label: 'Replies at once in total', hint: 'Across all bots in every space; keeps the server responsive.' },
-  { key: 'delegation_follow_up_minutes', label: 'Check on delegated work after (minutes)', hint: '0 turns the check-in off.' },
+  { key: 'max_turns_per_agent', label: t('Replies at once per bot'), hint: t('More than this and a bot’s next request waits in line.') },
+  { key: 'max_turns_global', label: t('Replies at once in total'), hint: t('Across all bots in every space; keeps the server responsive.') },
+  { key: 'delegation_follow_up_minutes', label: t('Check on delegated work after (minutes)'), hint: t('0 turns the check-in off.') },
 ];
 
 interface SettingsModalProps {
@@ -259,15 +261,15 @@ const DiscoverySetting: React.FC<{ value: DiscoverySettings; onChange: (v: Disco
   return (
     <SwitchRow
       id="automation-discovery"
-      label="Suggest routines from repeated tasks"
-      hint="When you ask for the same task on the board on a regular rhythm, you get a suggested routine for it, with the bot, the time and the checks it would keep. Nothing is set up until you accept it in Routines. It learns only from board tasks you created, never from chats."
+      label={t('Suggest routines from repeated tasks')}
+      hint={t('When you ask for the same task on the board on a regular rhythm, you get a suggested routine for it, with the bot, the time and the checks it would keep. Nothing is set up until you accept it in Routines. It learns only from board tasks you created, never from chats.')}
       checked={on}
       onToggle={() => onChange({ ...value, automation_discovery: on ? 'off' : 'on' })}
     >
       {on && (
         <div className="mt-2 flex flex-wrap items-center gap-2" data-testid="automation-discovery-options">
           <label htmlFor="automation-discovery-cap" className="text-[11px] text-zinc-300">
-            At most
+            {t('At most')}
           </label>
           <select
             id="automation-discovery-cap"
@@ -282,9 +284,9 @@ const DiscoverySetting: React.FC<{ value: DiscoverySettings; onChange: (v: Disco
               </option>
             ))}
           </select>
-          <span className="text-[11px] text-zinc-300">new {cap === 1 ? 'suggestion' : 'suggestions'} a day</span>
+          <span className="text-[11px] text-zinc-300">{t(cap === 1 ? 'new suggestion a day' : 'new suggestions a day')}</span>
           <p id="automation-discovery-cap-hint" className="basis-full text-[11px] text-zinc-500">
-            {cap === 0 ? 'With 0, it still looks but suggests nothing new; Scan now in Routines shows what it found.' : 'More waiting suggestions come on later days.'}
+            {cap === 0 ? t('With 0, it still looks but suggests nothing new; Scan now in Routines shows what it found.') : t('More waiting suggestions come on later days.')}
           </p>
         </div>
       )}
@@ -426,11 +428,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
     setNotifyBusy(true);
     try {
       const reg = await swRegistration();
-      if (!reg) throw new Error('The app isn’t set up in this browser yet. Reload the page and try again.');
+      if (!reg) throw new Error(t('The app isn’t set up in this browser yet. Reload the page and try again.'));
       await subscribePush(reg);
     } catch (err) {
-      const why = (err instanceof Error ? err.message : 'unknown error').replace(/[.!?]?$/, (m) => m || '.');
-      setNotifyError(`Couldn’t set up notifications for when the app is closed: ${why} You’ll still get them while it’s open.`);
+      const why = (err instanceof Error ? err.message : t('unknown error')).replace(/[.!?。！？]?$/, (m) => m || '.');
+      setNotifyError(t('Couldn’t set up notifications for when the app is closed: {why} You’ll still get them while it’s open.', { why }));
     } finally {
       setNotifyBusy(false);
     }
@@ -482,11 +484,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
         setTimeout(() => setSaveSuccess(false), 2500);
       } else {
         const data = await res.json().catch(() => null);
-        setSaveError(data && typeof data.error === 'string' ? data.error : `Saving failed (HTTP ${res.status}).`);
+        setSaveError(data && typeof data.error === 'string' ? data.error : t('Saving failed (HTTP {status}).', { status: res.status }));
       }
     } catch (err) {
       console.error('Failed to save settings:', err);
-      setSaveError('Could not reach the server.');
+      setSaveError(t('Could not reach the server.'));
     } finally {
       setSaving(false);
     }
@@ -516,8 +518,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
               <Settings size={17} />
             </div>
             <div>
-              <h2 id="settings-title" className="text-sm font-semibold text-zinc-100">App settings</h2>
-              <p className="text-xs text-zinc-400">Shared by every space. Accounts, bots and tools are in each space’s settings.</p>
+              <h2 id="settings-title" className="text-sm font-semibold text-zinc-100">{t('App settings')}</h2>
+              <p className="text-xs text-zinc-400">{t('Shared by every space. Accounts, bots and tools are in each space’s settings.')}</p>
             </div>
           </div>
 
@@ -526,13 +528,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
               playSfx('click');
               onClose();
             }}
-            aria-label="Close settings"
+            aria-label={t('Close settings')}
             className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400"
           >
             <X size={18} />
           </button>
         </div>
         )}
+
+        <LanguageRow />
 
         <LayaStatusRow />
 
@@ -542,7 +546,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
           <div className="flex items-center gap-3 bg-zinc-950/60 p-3 rounded-xl border border-zinc-800">
             <span className="flex-1 text-xs font-medium text-zinc-200 flex items-center gap-2">
               {sfxMuted ? <VolumeX size={15} className="text-zinc-500" aria-hidden="true" /> : <Volume2 size={15} className="text-sky-400" aria-hidden="true" />}
-              <span id="sfx-label">UI sounds</span>
+              <span id="sfx-label">{t('UI sounds')}</span>
             </span>
             <button
               type="button"
@@ -561,7 +565,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
             <div className="flex items-center gap-3 bg-zinc-950/60 p-3 rounded-xl border border-zinc-800">
               <span className="flex-1 text-xs font-medium text-zinc-200 flex items-center gap-2">
                 {vibration ? <Vibrate size={15} className="text-sky-400" aria-hidden="true" /> : <VibrateOff size={15} className="text-zinc-500" aria-hidden="true" />}
-                <span id="vibration-label">Vibration</span>
+                <span id="vibration-label">{t('Vibration')}</span>
               </span>
               <button
                 type="button"
@@ -581,13 +585,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
                 <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform motion-reduce:transition-none ${vibration ? 'translate-x-4' : ''}`} />
               </button>
               <span id="vibration-hint" className="sr-only">
-                A short buzz when you send, answer or solve a puzzle, and when a reply arrives while the app is open.
+                {t('A short buzz when you send, answer or solve a puzzle, and when a reply arrives while the app is open.')}
               </span>
             </div>
           )}
           <div className="flex items-center gap-3 bg-zinc-950/60 p-3 rounded-xl border border-zinc-800">
             <Gauge size={15} className="text-zinc-500" aria-hidden="true" />
-            <span className="flex-1 text-xs font-medium text-zinc-200">Token usage, open chat</span>
+            <span className="flex-1 text-xs font-medium text-zinc-200">{t('Token usage, open chat')}</span>
             <span className="font-mono text-xs text-zinc-300">{tokensUsed} tk</span>
           </div>
         </div>
@@ -600,9 +604,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
             <div>
               <p id="computer-mode-label" className="flex items-center gap-2 text-xs font-medium text-zinc-300">
                 <Monitor size={15} className="text-sky-400" aria-hidden="true" />
-                <span>Computer for browsing and commands</span>
+                <span>{t('Computer for browsing and commands')}</span>
               </p>
-              <p className="mt-1 text-[11px] text-zinc-500">Switches right away, no need to save.</p>
+              <p className="mt-1 text-[11px] text-zinc-500">{t('Switches right away, no need to save.')}</p>
             </div>
             <ComputerModeControl api={computer} />
           </div>
@@ -622,8 +626,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
             >
               <Key size={14} className="text-violet-400" aria-hidden="true" />
               <span className="flex-1">
-                <span className="block text-xs font-medium text-zinc-200">API keys and Ollama</span>
-                <span className="block text-[11px] text-zinc-500">Now in Settings › This space › Accounts, next to the accounts that use them.</span>
+                <span className="block text-xs font-medium text-zinc-200">{t('API keys and Ollama')}</span>
+                <span className="block text-[11px] text-zinc-500">{t('Now in Settings › This space › Accounts, next to the accounts that use them.')}</span>
               </span>
               <ChevronRight size={15} className="text-zinc-500" aria-hidden="true" />
             </button>
@@ -633,12 +637,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
             <fieldset className="space-y-3 pt-2 border-t border-zinc-800">
               <legend className="flex items-center gap-2 text-xs font-medium text-zinc-300 pt-3">
                 <MapPin size={14} className="text-sky-300" aria-hidden="true" />
-                <span>Where you are</span>
+                <span>{t('Where you are')}</span>
               </legend>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label htmlFor="settings-timezone" className="block text-[11px] font-medium text-zinc-300">
-                    Time zone
+                    {t('Time zone')}
                   </label>
                   <input
                     id="settings-timezone"
@@ -657,25 +661,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
                     ))}
                   </datalist>
                   <p id="settings-timezone-hint" className="text-[11px] text-zinc-500">
-                    Bots tell the time and schedule routines in this zone. This device says {defaultTimeZone()}.
+                    {t('Bots tell the time and schedule routines in this zone. This device says {zone}.', { zone: defaultTimeZone() })}
                   </p>
                 </div>
                 <div className="space-y-1">
                   <label htmlFor="settings-location" className="block text-[11px] font-medium text-zinc-300">
-                    City <span className="font-normal text-zinc-500">(optional)</span>
+                    {t('City')} <span className="font-normal text-zinc-500">{t('(optional)')}</span>
                   </label>
                   <input
                     id="settings-location"
                     value={place.location}
                     maxLength={MAX_LOCATION_CHARS}
                     onChange={(e) => setPlace((p) => (p ? { ...p, location: e.target.value } : p))}
-                    placeholder="e.g. Ljubljana"
+                    placeholder={t('e.g. Ljubljana')}
                     autoComplete="address-level2"
                     aria-describedby="settings-location-hint"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-100 placeholder-zinc-600 focus:border-sky-500 focus:outline-none transition-colors"
                   />
                   <p id="settings-location-hint" className="text-[11px] text-zinc-500">
-                    For weather and local tips. Bots only get what you type here, never your GPS location.
+                    {t('For weather and local tips. Bots only get what you type here, never your GPS location.')}
                   </p>
                 </div>
               </div>
@@ -686,7 +690,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
             <fieldset className="space-y-3 pt-2 border-t border-zinc-800">
               <legend className="flex items-center gap-2 text-xs font-medium text-zinc-300 pt-3">
                 <Layers size={14} className="text-sky-300" aria-hidden="true" />
-                <span>Parallel work</span>
+                <span>{t('Parallel work')}</span>
               </legend>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {LIMIT_FIELDS.map(({ key, label, hint }) => {
@@ -721,7 +725,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
               </div>
               {perAgentOverGlobal && (
                 <p className="text-[11px] text-amber-300" role="status">
-                  The total is lower than the per-bot limit, so a bot never gets more than {limits.max_turns_global} at once.
+                  {t('The total is lower than the per-bot limit, so a bot never gets more than {n} at once.', { n: limits.max_turns_global })}
                 </p>
               )}
             </fieldset>
@@ -730,41 +734,40 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
           <fieldset className="space-y-3 pt-2 border-t border-zinc-800">
             <legend className="flex items-center gap-2 text-xs font-medium text-zinc-300 pt-3">
               <Gauge size={14} className="text-sky-300" aria-hidden="true" />
-              <span>Usage</span>
+              <span>{t('Usage')}</span>
             </legend>
             {tokenLimits !== null && (
               <div className="space-y-2" role="group" aria-labelledby="token-limits-h" data-token-limits>
                 <div>
                   <p id="token-limits-h" className="text-[11px] font-semibold text-zinc-200">
-                    Token limits
+                    {t('Token limits')}
                   </p>
-                  <p className="text-[11px] text-zinc-500">Bots can use as many tokens as they need. Set a limit to cap spending per task.</p>
+                  <p className="text-[11px] text-zinc-500">{t('Bots can use as many tokens as they need. Set a limit to cap spending per task.')}</p>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <DefaultLimitField
                     id="default-task-limit"
-                    label="New tasks"
+                    label={t('New tasks')}
                     scope="task"
                     value={tokenLimits.task}
                     onChange={(v) => setTokenLimits((p) => (p ? { ...p, task: v } : p))}
                   />
                   <DefaultLimitField
                     id="default-mission-limit"
-                    label="New missions"
+                    label={t('New missions')}
                     scope="mission"
                     value={tokenLimits.mission}
                     onChange={(v) => setTokenLimits((p) => (p ? { ...p, mission: v } : p))}
                   />
                 </div>
-                <p className="text-[11px] text-zinc-500">You can still set or remove a limit on any task or mission from the board.</p>
+                <p className="text-[11px] text-zinc-500">{t('You can still set or remove a limit on any task or mission from the board.')}</p>
               </div>
             )}
             {chainBudget !== null && (
               <div className="space-y-1" data-chain-token-budget>
-                <DefaultLimitField id="chain-token-budget" label="Hand-offs per request" scope="request" value={chainBudget} onChange={setChainBudget} />
+                <DefaultLimitField id="chain-token-budget" label={t('Hand-offs per request')} scope="request" value={chainBudget} onChange={setChainBudget} />
                 <p className="text-[11px] text-zinc-500">
-                  With no limit, bots hand work to each other until they're done. Set one and they pause and ask you before going over it for one of
-                  your messages.
+                  {t("With no limit, bots hand work to each other until they're done. Set one and they pause and ask you before going over it for one of your messages.")}
                 </p>
               </div>
             )}
@@ -774,9 +777,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
           {agentTools !== null && (
             <div className="flex items-start gap-3 bg-zinc-950/60 p-3 rounded-xl border border-zinc-800">
               <div className="flex-1">
-                <p id="agent-tools-label" className="text-xs font-medium text-zinc-200">Bots can use their own tools</p>
+                <p id="agent-tools-label" className="text-xs font-medium text-zinc-200">{t('Bots can use their own tools')}</p>
                 <p id="agent-tools-hint" className="text-[11px] text-zinc-500">
-                  Delegating to each other, asking you questions, sharing files, skills, searching earlier chats and keeping notes. Off, bots just reply.
+                  {t('Delegating to each other, asking you questions, sharing files, skills, searching earlier chats and keeping notes. Off, bots just reply.')}
                 </p>
               </div>
               <button
@@ -804,25 +807,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
             <fieldset className="space-y-3 pt-2 border-t border-zinc-800" data-testid="proactive-settings">
               <legend className="flex items-center gap-2 text-xs font-medium text-zinc-300 pt-3">
                 <Sparkles size={14} className="text-violet-300" aria-hidden="true" />
-                <span>Bots on their own</span>
+                <span>{t('Bots on their own')}</span>
               </legend>
               <SwitchRow
                 id="decide-first"
-                label="Bots decide reversible choices themselves"
-                hint="Instead of asking you to pick, they run their own checks, ask a teammate, choose, and show it with a Change button. They still ask you before sending, paying, deleting or signing in."
+                label={t('Bots decide reversible choices themselves')}
+                hint={t('Instead of asking you to pick, they run their own checks, ask a teammate, choose, and show it with a Change button. They still ask you before sending, paying, deleting or signing in.')}
                 checked={proactive.decide_first}
                 onToggle={() => setProactive((p) => (p ? { ...p, decide_first: !p.decide_first } : p))}
               />
               <SwitchRow
                 id="work-ahead"
-                label="Bots work ahead while I’m away"
-                hint="When a chat has been quiet for 2 hours, its lead finishes open checks and gets the next step ready. You get one “While you were away” message per chat a day at most. They never send, pay or contact anyone."
+                label={t('Bots work ahead while I’m away')}
+                hint={t('When a chat has been quiet for 2 hours, its lead finishes open checks and gets the next step ready. You get one “While you were away” message per chat a day at most. They never send, pay or contact anyone.')}
                 checked={proactive.work_ahead}
                 onToggle={() => setProactive((p) => (p ? { ...p, work_ahead: !p.work_ahead } : p))}
               >
                 <div className="mt-2 flex items-center gap-2">
                   <label htmlFor="work-ahead-cap" className={`text-[11px] ${proactive.work_ahead ? 'text-zinc-300' : 'text-zinc-500'}`}>
-                    At most
+                    {t('At most')}
                   </label>
                   <select
                     id="work-ahead-cap"
@@ -838,7 +841,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
                     ))}
                   </select>
                   <span className={`text-[11px] ${proactive.work_ahead ? 'text-zinc-300' : 'text-zinc-500'}`}>
-                    {proactive.work_ahead_daily_cap === 1 ? 'time' : 'times'} a day in each space
+                    {t(proactive.work_ahead_daily_cap === 1 ? 'time a day in each space' : 'times a day in each space')}
                   </span>
                 </div>
               </SwitchRow>
@@ -849,26 +852,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
             <fieldset className="space-y-3 pt-2 border-t border-zinc-800" data-testid="mission-board-settings">
               <legend className="flex items-center gap-2 text-xs font-medium text-zinc-300 pt-3">
                 <KanbanSquare size={14} className="text-sky-400" aria-hidden="true" />
-                <span>Mission board</span>
+                <span>{t('Mission board')}</span>
               </legend>
               <SwitchRow
                 id="mission-board"
-                label="Show the Mission board"
-                hint="One board for all your team’s work: Ready, Working, Needs you, Review and Verified. A task reaches Verified only when a check passes, not on a bot’s word."
+                label={t('Show the Mission board')}
+                hint={t('One board for all your team’s work: Ready, Working, Needs you, Review and Verified. A task reaches Verified only when a check passes, not on a bot’s word.')}
                 checked={missionBoard}
                 onToggle={() => setMissionBoard((v) => !v)}
               />
               {autofix !== null && (
                 <SwitchRow
                   id="autofix"
-                  label="Retry failed tasks with AutoFix"
-                  hint="When a task fails, AutoFix works out why and plans a retry that fits: wait a bit, start from a checkpoint, or pass along what the check said. It never retries a missing login, a denied action or a spent budget."
+                  label={t('Retry failed tasks with AutoFix')}
+                  hint={t('When a task fails, AutoFix works out why and plans a retry that fits: wait a bit, start from a checkpoint, or pass along what the check said. It never retries a missing login, a denied action or a spent budget.')}
                   checked={autofix.autofix !== 'off'}
                   onToggle={() => setAutofix((a) => (a ? { ...a, autofix: a.autofix === 'off' ? 'suggest' : 'off' } : a))}
                 >
                   {autofix.autofix !== 'off' && (
                     <div className="mt-2 space-y-2" data-testid="autofix-options">
-                      <div role="radiogroup" aria-label="How AutoFix retries" className="space-y-1">
+                      <div role="radiogroup" aria-label={t('How AutoFix retries')} className="space-y-1">
                         {AUTOFIX_MODES.filter((m) => m.value !== 'off').map((m) => (
                           <label key={m.value} className="flex items-start gap-2 min-h-[32px] cursor-pointer text-[11px]">
                             <input
@@ -880,7 +883,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
                               className="mt-0.5 accent-sky-500"
                             />
                             <span>
-                              <span className="block font-medium text-zinc-200">{m.value === 'suggest' ? 'Ask me first' : 'Retry on its own'}</span>
+                              <span className="block font-medium text-zinc-200">{m.value === 'suggest' ? t('Ask me first') : t('Retry on its own')}</span>
                               <span className="block text-zinc-500">{m.hint}</span>
                             </span>
                           </label>
@@ -888,7 +891,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
                         <label htmlFor="recovery-pct" className="text-[11px] text-zinc-300">
-                          Retries may spend up to
+                          {t('Retries may spend up to')}
                         </label>
                         <select
                           id="recovery-pct"
@@ -904,7 +907,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
                               </option>
                             ))}
                         </select>
-                        <span className="text-[11px] text-zinc-300">of each task’s budget</span>
+                        <span className="text-[11px] text-zinc-300">{t('of each task’s budget')}</span>
                       </div>
                     </div>
                   )}
@@ -914,7 +917,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
               {auditor !== null && (
                 <SwitchRow
                   id="auditor"
-                  label="Challenge important work with an audit"
+                  label={t('Challenge important work with an audit')}
                   hint={AUDITOR_HINT}
                   checked={auditor.auditor === 'on'}
                   onToggle={() => setAuditor((a) => (a ? { ...a, auditor: a.auditor === 'on' ? 'off' : 'on' } : a))}
@@ -922,7 +925,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
                   {auditor.auditor === 'on' && (
                     <div className="mt-2 flex flex-wrap items-center gap-2" data-testid="auditor-options">
                       <label htmlFor="auditor-cap" className="text-[11px] text-zinc-300">
-                        At most
+                        {t('At most')}
                       </label>
                       <select
                         id="auditor-cap"
@@ -938,7 +941,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
                             </option>
                           ))}
                       </select>
-                      <span className="text-[11px] text-zinc-300">{auditor.auditor_daily_cap === 1 ? 'audit' : 'audits'} a day</span>
+                      <span className="text-[11px] text-zinc-300">{t(auditor.auditor_daily_cap === 1 ? 'audit a day' : 'audits a day')}</span>
                     </div>
                   )}
                   {(auditor.auditor === 'on' || modelError) && auditor.auditor_model !== undefined && (
@@ -960,12 +963,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
           <fieldset className="space-y-3 pt-2 border-t border-zinc-800">
             <legend className="flex items-center gap-2 text-xs font-medium text-zinc-300 pt-3">
               <Bell size={14} className="text-amber-300" />
-              <span>Notifications</span>
+              <span>{t('Notifications')}</span>
             </legend>
 
             <div className="flex items-start gap-3 bg-zinc-950/60 p-3 rounded-xl border border-zinc-800" data-testid="device-notify">
               <div className="flex-1 min-w-0">
-                <p id="browser-notify-label" className="text-xs font-medium text-zinc-200">Notify me on this device</p>
+                <p id="browser-notify-label" className="text-xs font-medium text-zinc-200">{t('Notify me on this device')}</p>
                 <p id="browser-notify-hint" className={`text-[11px] ${notifyHint.warn ? 'text-amber-300' : 'text-zinc-500'}`}>
                   {notifyHint.text}
                 </p>
@@ -997,7 +1000,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
 
             <div>
               <label htmlFor="notify-webhook" className="block text-xs font-medium text-zinc-400 mb-1">
-                Phone webhook (optional)
+                {t('Phone webhook (optional)')}
               </label>
               <div className="flex gap-1.5">
                 <input
@@ -1022,22 +1025,22 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
                     onClick={() => setWebhookUrl('')}
                     className="px-2.5 rounded-lg text-[11px] font-medium text-zinc-300 border border-zinc-800 hover:text-rose-200 hover:bg-zinc-800 transition-colors"
                   >
-                    Remove
+                    {t('Remove')}
                   </button>
                 )}
               </div>
               <p id="notify-webhook-hint" className={`mt-1 text-[11px] ${webhookError ? 'text-rose-400' : 'text-zinc-500'}`}>
                 {webhookError ??
                   (webhookUrl === MASK
-                    ? 'A webhook is saved. Type a new URL to replace it.'
+                    ? t('A webhook is saved. Type a new URL to replace it.')
                     : settings?.notify_webhook_url === MASK && !webhookUrl.trim()
-                      ? 'Saving will remove the webhook.'
-                      : 'https only. Each post has a short title and line, never message text.')}
+                      ? t('Saving will remove the webhook.')
+                      : t('https only. Each post has a short title and line, never message text.'))}
               </p>
             </div>
 
             <div className="space-y-1.5" role="group" aria-labelledby="notify-kinds-label">
-              <p id="notify-kinds-label" className="text-xs font-medium text-zinc-400">Tell me when</p>
+              <p id="notify-kinds-label" className="text-xs font-medium text-zinc-400">{t('Tell me when')}</p>
               {notifyKindsFor(appUpdates, !!proactive, !!discovery, !!flightSchool?.flight_school).map((k) => (
                 <label key={k.id} className="flex items-center gap-2 text-[11px] text-zinc-300">
                   <input
@@ -1064,7 +1067,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
           {saveSuccess && (
             <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-3 py-2 rounded-lg text-xs flex items-center gap-2">
               <Check size={14} />
-              <span>Saved for every space</span>
+              <span>{t('Saved for every space')}</span>
             </div>
           )}
 
@@ -1076,10 +1079,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
                   playSfx('click');
                   signOut();
                 }}
-                title="Forget the access token in this browser"
+                title={t('Forget the access token in this browser')}
                 className="mr-auto flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-zinc-400 hover:text-rose-200 hover:bg-zinc-800 transition-colors"
               >
-                <LogOut size={13} /> Sign out
+                <LogOut size={13} /> {t('Sign out')}
               </button>
             )}
             <button
@@ -1090,14 +1093,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
               }}
               className="px-3.5 py-2 rounded-lg text-xs font-medium text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
             >
-              Cancel
+              {t('Cancel')}
             </button>
             <button
               type="submit"
               disabled={saving || !!webhookError || limitsInvalid || tokenLimitsInvalid}
               className="px-4 py-2 rounded-lg text-xs font-medium text-white bg-sky-600 hover:bg-sky-500 transition-colors shadow-sm disabled:opacity-50"
             >
-              {saving ? 'Saving…' : 'Save'}
+              {saving ? t('Saving…') : t('Save')}
             </button>
           </div>
         </form>

@@ -18,6 +18,7 @@ import {
   startDeviceRequest,
   viaLabel,
 } from '../deviceSignIn';
+import { t } from '../i18n';
 
 // ---------------------------------------------------------------- the new browser: show a code, wait
 
@@ -50,22 +51,22 @@ export const DeviceWaitView: React.FC<{ state: WaitState; now?: number; onStart:
         {code ? (
           <>
             <p className="text-xs text-zinc-300 leading-relaxed">
-              On a phone or computer where you’re already signed in to kwant bots, open it and approve this code:
+              {t('On a phone or computer where you’re already signed in to kwant bots, open it and approve this code:')}
             </p>
-            <p className="text-center font-mono text-2xl font-semibold tracking-[0.15em] text-zinc-50 select-all" aria-label={`Code ${code.split('').join(' ')}`}>
+            <p className="text-center font-mono text-2xl font-semibold tracking-[0.15em] text-zinc-50 select-all" aria-label={t('Code {code}', { code: code.split('').join(' ') })}>
               {code}
             </p>
             <p className="flex items-center justify-center gap-2 text-[11px] text-zinc-400">
               <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
-              Waiting for approval · {state.kind === 'waiting' ? countdown(state.expiresAt, now) : ''} left
+              {t('Waiting for approval · {time} left', { time: state.kind === 'waiting' ? countdown(state.expiresAt, now) : '' })}
             </p>
             <button type="button" onClick={onCancel} className={`${secondary} w-full`}>
-              Cancel
+              {t('Cancel')}
             </button>
           </>
         ) : (
           <p className="flex items-center justify-center gap-2 text-xs text-emerald-300">
-            <ShieldCheck size={14} aria-hidden="true" /> Approved. Signing you in…
+            <ShieldCheck size={14} aria-hidden="true" /> {t('Approved. Signing you in…')}
           </p>
         )}
       </div>
@@ -73,11 +74,11 @@ export const DeviceWaitView: React.FC<{ state: WaitState; now?: number; onStart:
   }
   const problem =
     state.kind === 'denied'
-      ? 'The request was denied on your other device. If that wasn’t you, nothing happened: this browser is still signed out.'
+      ? t('The request was denied on your other device. If that wasn’t you, nothing happened: this browser is still signed out.')
       : state.kind === 'expired'
-        ? 'The code expired before it was approved. Codes work for 10 minutes.'
+        ? t('The code expired before it was approved. Codes work for 10 minutes.')
         : state.kind === 'too_many'
-          ? `Too many sign-in requests right now. Try again in ${Math.max(1, Math.ceil(state.retryAfter / 60))} min.`
+          ? t('Too many sign-in requests right now. Try again in {n} min.', { n: Math.max(1, Math.ceil(state.retryAfter / 60)) })
           : state.kind === 'error'
             ? state.message
             : null;
@@ -96,7 +97,7 @@ export const DeviceWaitView: React.FC<{ state: WaitState; now?: number; onStart:
         ) : (
           <MonitorSmartphone size={14} aria-hidden="true" />
         )}
-        {problem ? 'Get a new code' : 'Sign in from another device'}
+        {problem ? t('Get a new code') : t('Sign in from another device')}
       </button>
     </div>
   );
@@ -137,7 +138,7 @@ export const DeviceWait: React.FC<{ onSignedIn: () => void }> = ({ onSignedIn })
         } catch {
           // A blip (phone switching networks): keep waiting, give up after a minute of failures
           if (++failures * every >= 60_000) {
-            setState({ kind: 'error', message: 'Lost the connection to the server while waiting. Get a new code to try again.' });
+            setState({ kind: 'error', message: t('Lost the connection to the server while waiting. Get a new code to try again.') });
             return;
           }
           continue;
@@ -159,15 +160,15 @@ export const DeviceWait: React.FC<{ onSignedIn: () => void }> = ({ onSignedIn })
       }
     } catch (e) {
       if (mine === run.current)
-        setState({ kind: 'error', message: e instanceof Error && e.message !== 'Failed to fetch' ? e.message : 'Could not reach the server.' });
+        setState({ kind: 'error', message: e instanceof Error && e.message !== 'Failed to fetch' ? e.message : t('Could not reach the server.') });
     }
   }, [onSignedIn]);
 
   // The countdown ticks between polls too
   useEffect(() => {
     if (state.kind !== 'waiting') return;
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
   }, [state.kind]);
 
   return (
@@ -210,28 +211,27 @@ export const DeviceRequestCard: React.FC<{
         <button
           type="button"
           onClick={onLater}
-          aria-label="Decide later"
-          title="Decide later"
+          aria-label={t('Decide later')}
+          title={t('Decide later')}
           className="absolute top-3 right-3 p-1.5 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
         >
           <X size={14} />
         </button>
         <h2 id="kwnt-device-request-title" className="flex items-center gap-2 pr-8 text-sm font-semibold">
-          <MonitorSmartphone size={16} className="text-sky-400" aria-hidden="true" /> New device wants access
+          <MonitorSmartphone size={16} className="text-sky-400" aria-hidden="true" /> {t('New device wants access')}
         </h2>
         <div className="rounded-xl bg-zinc-950 border border-zinc-800 p-3 space-y-1.5 text-center">
-          <p className="text-[11px] text-zinc-500">Code</p>
-          <p className="font-mono text-2xl font-semibold tracking-[0.15em] text-zinc-50" aria-label={`Code ${request.user_code.split('').join(' ')}`}>
+          <p className="text-[11px] text-zinc-500">{t('Code')}</p>
+          <p className="font-mono text-2xl font-semibold tracking-[0.15em] text-zinc-50" aria-label={t('Code {code}', { code: request.user_code.split('').join(' ') })}>
             {request.user_code}
           </p>
-          <p className="text-xs text-zinc-300">{request.browser || 'Unknown browser'}</p>
+          <p className="text-xs text-zinc-300">{request.browser || t('Unknown browser')}</p>
           <p className="text-[11px] text-zinc-500 break-words">
-            IP {request.ip || 'unknown'} · asked {ago(request.created_at, now)}
+            {t('IP {ip} · asked {when}', { ip: request.ip || t('unknown'), when: ago(request.created_at, now) })}
           </p>
         </div>
         <p id="kwnt-device-request-warning" className="text-xs text-amber-200/90 leading-relaxed">
-          Approve only if this exact code is on a screen you’re holding right now. That device gets full control of kwant bots, as you. If someone asked you to
-          approve a code, deny it.
+          {t('Approve only if this exact code is on a screen you’re holding right now. That device gets full control of kwant bots, as you. If someone asked you to approve a code, deny it.')}
         </p>
         <label className="flex items-start gap-2 text-xs text-zinc-200 cursor-pointer min-h-[32px]">
           <input
@@ -240,7 +240,7 @@ export const DeviceRequestCard: React.FC<{
             checked={matches}
             onChange={(e) => setMatches(e.target.checked)}
           />
-          <span>The code matches the one on my other device</span>
+          <span>{t('The code matches the one on my other device')}</span>
         </label>
         {error && (
           <p className="text-[11px] text-rose-400 leading-snug" role="alert">
@@ -249,7 +249,7 @@ export const DeviceRequestCard: React.FC<{
         )}
         <div className="flex gap-2">
           <button type="button" onClick={onDeny} disabled={!!busy} className={`${secondary} flex-1 hover:text-rose-200 disabled:opacity-50`}>
-            {busy === 'deny' && <Loader2 size={13} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />} Deny
+            {busy === 'deny' && <Loader2 size={13} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />} {t('Deny')}
           </button>
           <button
             type="button"
@@ -257,10 +257,10 @@ export const DeviceRequestCard: React.FC<{
             disabled={!matches || !!busy}
             className="flex-1 flex items-center justify-center gap-1.5 min-h-[44px] px-4 rounded-lg text-xs font-medium text-white bg-sky-600 hover:bg-sky-500 transition-colors disabled:opacity-50"
           >
-            {busy === 'approve' && <Loader2 size={13} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />} Approve
+            {busy === 'approve' && <Loader2 size={13} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />} {t('Approve')}
           </button>
         </div>
-        {more > 0 && <p className="text-[11px] text-zinc-500 text-center">{more === 1 ? '1 more request is waiting.' : `${more} more requests are waiting.`}</p>}
+        {more > 0 && <p className="text-[11px] text-zinc-500 text-center">{t(more === 1 ? '{n} more request is waiting.' : '{n} more requests are waiting.', { n: more })}</p>}
       </div>
     </div>
   );
@@ -318,7 +318,7 @@ export const DeviceRequestPrompt: React.FC = () => {
       await decideDeviceRequest(current.user_code, approve);
       setRequests((list) => list.filter((r) => r.user_code !== current.user_code));
     } catch (e) {
-      setError(e instanceof Error && e.message !== 'Failed to fetch' ? e.message : 'Could not reach the server.');
+      setError(e instanceof Error && e.message !== 'Failed to fetch' ? e.message : t('Could not reach the server.'));
     } finally {
       setBusy(null);
     }
@@ -352,32 +352,32 @@ export const SessionsList: React.FC<{
   if (state.kind === 'loading')
     return (
       <p className="flex items-center gap-2 text-[11px] text-zinc-500" role="status">
-        <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> Loading signed-in devices…
+        <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> {t('Loading signed-in devices…')}
       </p>
     );
   if (state.kind === 'error')
     return (
       <div className="flex flex-wrap items-center gap-2 text-[11px] text-rose-300" role="alert">
-        <span>Couldn’t load signed-in devices: {state.message}</span>
+        <span>{t('Couldn’t load signed-in devices: {error}', { error: state.message })}</span>
         <button type="button" onClick={onRetry} className="px-2 py-1 rounded-md text-zinc-300 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700">
-          Try again
+          {t('Try again')}
         </button>
       </div>
     );
-  if (state.sessions.length === 0) return <p className="text-[11px] text-zinc-500">No browsers are signed in with a session yet.</p>;
+  if (state.sessions.length === 0) return <p className="text-[11px] text-zinc-500">{t('No browsers are signed in with a session yet.')}</p>;
   return (
     <ul className="divide-y divide-zinc-800 rounded-lg border border-zinc-800">
       {state.sessions.map((s) => (
         <li key={s.id} className="flex items-center gap-3 px-3 py-2">
           <div className="flex-1 min-w-0">
             <p className="flex flex-wrap items-center gap-1.5 text-xs text-zinc-200">
-              <span className="truncate">{s.browser || 'Unknown browser'}</span>
+              <span className="truncate">{s.browser || t('Unknown browser')}</span>
               {s.current && (
-                <span className="px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-300 text-[10px] font-medium">This device</span>
+                <span className="px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-300 text-[10px] font-medium">{t('This device')}</span>
               )}
             </p>
             <p className="text-[11px] text-zinc-500 break-words">
-              {viaLabel(s.via)} · IP {s.ip || 'unknown'} · active {ago(s.last_seen, now)}
+              {viaLabel(s.via)} · {t('IP {ip} · active {when}', { ip: s.ip || t('unknown'), when: ago(s.last_seen, now) })}
             </p>
           </div>
           {!s.current && (
@@ -385,10 +385,10 @@ export const SessionsList: React.FC<{
               type="button"
               onClick={() => onRevoke(s.id)}
               disabled={revoking === s.id}
-              aria-label={`Sign out ${s.browser || 'this browser'}`}
+              aria-label={s.browser ? t('Sign out {browser}', { browser: s.browser }) : t('Sign out this browser')}
               className="shrink-0 flex items-center gap-1 min-h-[32px] px-2.5 rounded-md text-[11px] font-medium text-zinc-300 bg-zinc-800 hover:bg-zinc-700 hover:text-rose-200 border border-zinc-700 transition-colors disabled:opacity-50"
             >
-              {revoking === s.id && <Loader2 size={11} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />} Sign out
+              {revoking === s.id && <Loader2 size={11} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />} {t('Sign out')}
             </button>
           )}
         </li>
@@ -414,7 +414,7 @@ export const QrImage: React.FC<{ text: string }> = ({ text }) => {
     <svg
       viewBox={`0 0 ${size} ${size}`}
       role="img"
-      aria-label="QR code for the one-time sign-in link"
+      aria-label={t('QR code for the one-time sign-in link')}
       shapeRendering="crispEdges"
       className="block w-full h-auto rounded-lg bg-white"
     >
@@ -441,11 +441,11 @@ export const AddDeviceView: React.FC<{
           ) : (
             <QrCode size={14} aria-hidden="true" />
           )}
-          Add a phone or browser
+          {t('Add a phone or browser')}
         </button>
         {state.kind === 'error' && (
           <p className="flex items-center gap-1.5 text-[11px] text-rose-300" role="alert">
-            <AlertTriangle size={12} aria-hidden="true" /> Couldn’t make a sign-in code: {state.message}
+            <AlertTriangle size={12} aria-hidden="true" /> {t('Couldn’t make a sign-in code: {error}', { error: state.message })}
           </p>
         )}
       </div>
@@ -455,17 +455,17 @@ export const AddDeviceView: React.FC<{
     return (
       <div className="space-y-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4" role="status" aria-live="polite">
         <p className="flex items-center gap-2 text-xs font-medium text-emerald-200">
-          <Check size={14} aria-hidden="true" /> Signed in ✓
+          <Check size={14} aria-hidden="true" /> {t('Signed in ✓')}
         </p>
         <p className="text-[11px] text-zinc-400 leading-relaxed">
-          {state.browser || 'A new browser'} signed in with the code. It’s used up now. If that wasn’t you, sign it out below.
+          {t('{browser} signed in with the code. It’s used up now. If that wasn’t you, sign it out below.', { browser: state.browser || t('A new browser') })}
         </p>
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={onShow} className={secondary}>
-            Add another
+            {t('Add another')}
           </button>
           <button type="button" onClick={onHide} className={secondary}>
-            Done
+            {t('Done')}
           </button>
         </div>
       </div>
@@ -474,13 +474,13 @@ export const AddDeviceView: React.FC<{
   if (state.kind === 'expired')
     return (
       <div className="space-y-3 rounded-xl border border-zinc-700 bg-zinc-900/60 p-4" role="status" aria-live="polite">
-        <p className="text-xs text-zinc-300">The code expired, so it was hidden. Make a new one if you still need it.</p>
+        <p className="text-xs text-zinc-300">{t('The code expired, so it was hidden. Make a new one if you still need it.')}</p>
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={onShow} className={secondary}>
-            <RefreshCw size={14} aria-hidden="true" /> New code
+            <RefreshCw size={14} aria-hidden="true" /> {t('New code')}
           </button>
           <button type="button" onClick={onHide} className={secondary}>
-            Hide
+            {t('Hide')}
           </button>
         </div>
       </div>
@@ -490,18 +490,18 @@ export const AddDeviceView: React.FC<{
   return (
     <div className="space-y-3 rounded-xl border border-sky-500/30 bg-sky-500/5 p-4">
       <p className="text-xs text-zinc-300 leading-relaxed">
-        Scan this with the phone’s camera, or open the link in the other browser. It signs that device in once.
+        {t('Scan this with the phone’s camera, or open the link in the other browser. It signs that device in once.')}
       </p>
       <div className="mx-auto w-full max-w-[220px]">
         <QrImage text={link.url} />
       </div>
       <p className="flex items-start gap-1.5 text-[11px] text-amber-200/90 leading-relaxed">
         <AlertTriangle size={12} className="mt-0.5 shrink-0" aria-hidden="true" />
-        Anyone who scans this can sign in once. Don’t share or screenshot it.
+        {t('Anyone who scans this can sign in once. Don’t share or screenshot it.')}
       </p>
       <div className="flex gap-2">
         <label className="sr-only" htmlFor="add-device-link">
-          One-time sign-in link
+          {t('One-time sign-in link')}
         </label>
         <input
           id="add-device-link"
@@ -512,19 +512,19 @@ export const AddDeviceView: React.FC<{
         />
         <button type="button" onClick={onCopy} className={`${secondary} shrink-0`}>
           {copied === 'yes' ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}
-          {copied === 'yes' ? 'Copied' : 'Copy link'}
+          {copied === 'yes' ? t('Copied') : t('Copy link')}
         </button>
       </div>
-      {copied === 'failed' && <p className="text-[11px] text-rose-300">Couldn’t copy. Select the link and copy it yourself.</p>}
+      {copied === 'failed' && <p className="text-[11px] text-rose-300">{t('Couldn’t copy. Select the link and copy it yourself.')}</p>}
       <p className="text-[11px] text-zinc-400" role="timer" aria-live="off">
-        Works once · {countdown(link.expiresAt, now)} left
+        {t('Works once · {time} left', { time: countdown(link.expiresAt, now) })}
       </p>
       <div className="flex flex-wrap gap-2">
         <button type="button" onClick={onShow} className={secondary}>
-          <RefreshCw size={14} aria-hidden="true" /> New code
+          <RefreshCw size={14} aria-hidden="true" /> {t('New code')}
         </button>
         <button type="button" onClick={onHide} className={secondary}>
-          <X size={14} aria-hidden="true" /> Hide
+          <X size={14} aria-hidden="true" /> {t('Hide')}
         </button>
       </div>
     </div>
@@ -555,7 +555,7 @@ export const AddDevice: React.FC<{ onSignedIn: () => void }> = ({ onSignedIn }) 
       setState({ kind: 'showing', link });
     } catch (e) {
       if (mine !== run.current) return;
-      setState({ kind: 'error', message: e instanceof Error && e.message !== 'Failed to fetch' ? e.message : 'Could not reach the server.' });
+      setState({ kind: 'error', message: e instanceof Error && e.message !== 'Failed to fetch' ? e.message : t('Could not reach the server.') });
     }
   };
   const hide = useCallback(() => {
@@ -571,9 +571,9 @@ export const AddDevice: React.FC<{ onSignedIn: () => void }> = ({ onSignedIn }) 
   useEffect(() => {
     if (!showing) return;
     const tick = () => {
-      const t = Date.now();
-      setNow(t);
-      if (t >= showing.expiresAt) {
+      const at = Date.now();
+      setNow(at);
+      if (at >= showing.expiresAt) {
         setCopied(null);
         setState({ kind: 'expired' });
       }
@@ -641,7 +641,7 @@ export const SignedInDevices: React.FC = () => {
     try {
       setState({ kind: 'ready', sessions: await listSessions() });
     } catch (e) {
-      setState({ kind: 'error', message: e instanceof Error && e.message !== 'Failed to fetch' ? e.message : 'Could not reach the server.' });
+      setState({ kind: 'error', message: e instanceof Error && e.message !== 'Failed to fetch' ? e.message : t('Could not reach the server.') });
     }
   }, []);
   useEffect(() => {
@@ -650,10 +650,10 @@ export const SignedInDevices: React.FC = () => {
   return (
     <fieldset className="space-y-3 pt-2 border-t border-zinc-800">
       <legend className="flex items-center gap-2 text-xs font-medium text-zinc-300 pt-3">
-        <MonitorSmartphone size={14} aria-hidden="true" /> Signed-in devices
+        <MonitorSmartphone size={14} aria-hidden="true" /> {t('Signed-in devices')}
       </legend>
       <p className="text-[11px] text-zinc-500 leading-relaxed">
-        Browsers that can use kwant bots as you. Sign out any you don’t recognise; signing out here doesn’t change the access token.
+        {t('Browsers that can use kwant bots as you. Sign out any you don’t recognise; signing out here doesn’t change the access token.')}
       </p>
       <AddDevice onSignedIn={load} />
       <SessionsList
@@ -669,7 +669,7 @@ export const SignedInDevices: React.FC = () => {
             await revokeSession(id);
             await load();
           } catch (e) {
-            setState({ kind: 'error', message: e instanceof Error ? e.message : 'Could not reach the server.' });
+            setState({ kind: 'error', message: e instanceof Error ? e.message : t('Could not reach the server.') });
           } finally {
             setRevoking(null);
           }

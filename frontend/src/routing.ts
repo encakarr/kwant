@@ -5,6 +5,7 @@
 
 import { EngineInfo, FAMILIES, FAMILY_OF, Family, isUsable } from './engines';
 import { Profile, accountRoutable, activeLimit, cardOf, isThirdPartyLabel } from './profiles';
+import { t } from './i18n';
 
 /** Turns try at most this many accounts (MAX_ATTEMPTS on the server). */
 const MAX_TRIES = 3;
@@ -35,22 +36,29 @@ export interface RouteRow {
   fallback: string | null;
 }
 
-const hostName = 'This machine';
+const hostName = t('This machine');
 const accountName = (p: Profile) => (p.kind === 'system' ? hostName : p.name);
 const familyName = (f: Family) => FAMILIES.find((x) => x.id === f)!.label.replace(/ \(.*\)$/, '');
 
 /** "localhost:23333" for a Custom API account, to tell its servers apart. */
 const customHost = (p: Profile) => {
   try {
-    return p.custom ? new URL(p.custom.base_url).host : 'Custom API';
+    return p.custom ? new URL(p.custom.base_url).host : t('Custom API');
   } catch {
-    return 'Custom API';
+    return t('Custom API');
   }
 };
 
 function describe(p: Profile): RouteAccount {
   const otherProvider = isThirdPartyLabel(p.account_label);
-  const detail = p.kind === 'custom_api' ? customHost(p) : p.kind === 'api_key' ? 'API key' : otherProvider ? `via ${p.account_label === 'third_party' ? 'another provider' : p.account_label}` : p.account_label;
+  const detail =
+    p.kind === 'custom_api'
+      ? customHost(p)
+      : p.kind === 'api_key'
+        ? t('API key')
+        : otherProvider
+          ? t('via {provider}', { provider: p.account_label === 'third_party' ? t('another provider') : p.account_label ?? '' })
+          : p.account_label;
   return { name: accountName(p), detail, otherProvider };
 }
 
@@ -69,11 +77,11 @@ export function tryOrder(profiles: Profile[], family: Family, now = Date.now()):
 
 /** Why a turn's first account may not run, or null when it was ready on its last check. */
 function startNote(p: Profile, now: number): string | null {
-  if (activeLimit(p.limited_until, now)) return 'It’s out of usage and nothing else is ready, so bots will stop and say so.';
-  if (p.kind === 'custom_api') return p.custom?.status && p.custom.status !== 'ready' ? 'Its server didn’t answer the last check and nothing else is ready, so bots will stop and say so.' : null;
-  if (p.kind === 'api_key') return p.has_key ? null : 'It has no key and nothing else is ready, so bots will stop and say so.';
-  if (p.signed_in === false) return 'It needs sign-in and nothing else is ready, so bots will stop and say so.';
-  if (p.signed_in === null && p.kind !== 'system') return 'Its sign-in hasn’t been checked yet. Bots try it anyway.';
+  if (activeLimit(p.limited_until, now)) return t('It’s out of usage and nothing else is ready, so bots will stop and say so.');
+  if (p.kind === 'custom_api') return p.custom?.status && p.custom.status !== 'ready' ? t('Its server didn’t answer the last check and nothing else is ready, so bots will stop and say so.') : null;
+  if (p.kind === 'api_key') return p.has_key ? null : t('It has no key and nothing else is ready, so bots will stop and say so.');
+  if (p.signed_in === false) return t('It needs sign-in and nothing else is ready, so bots will stop and say so.');
+  if (p.signed_in === null && p.kind !== 'system') return t('Its sign-in hasn’t been checked yet. Bots try it anyway.');
   return null;
 }
 
@@ -102,13 +110,13 @@ export function routeSummary(engines: EngineInfo[], profiles: Profile[] | null, 
     } else {
       // A ready engine with no account of its own (an API key from Settings, Ollama).
       engine = ready[0];
-      account = { name: engine.uses?.label ?? (engine.kind === 'local' ? 'This computer' : engine.kind === 'api' ? 'API key in Settings' : hostName), detail: null, otherProvider: false };
+      account = { name: engine.uses?.label ?? (engine.kind === 'local' ? t('This computer') : engine.kind === 'api' ? t('API key in Settings') : hostName), detail: null, otherProvider: false };
     }
     const note = start ? startNote(start, now) : null;
     const then = route.slice(1).map(accountName);
     const hostOff = !!host && !host.enabled;
     const fallback = hostOff && engine.kind === 'cli' && mine.some((p) => p.kind !== 'system')
-      ? `If you switch off every ${familyName(family)} account, bots in this space use This machine.`
+      ? t('If you switch off every {family} account, bots in this space use This machine.', { family: familyName(family) })
       : null;
     const defaultModel = engine.models.find((m) => m.default)?.label ?? null;
     return [{ family, label: familyName(family), engine: engine.name, account, note, then, defaultModel, fallback }];

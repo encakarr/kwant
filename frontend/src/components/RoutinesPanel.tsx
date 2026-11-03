@@ -25,6 +25,7 @@ import type { Channel, Kwant } from './Sidebar';
 import { playSfx } from '../audio/chiptune';
 import { SuggestedRoutines } from './SuggestedRoutines';
 import { editorProps } from '../escape';
+import { t, tj } from '../i18n';
 
 const smallBtn =
   'inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium border transition-colors disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500';
@@ -37,12 +38,12 @@ const labelClass = 'block text-xs font-medium text-zinc-400 mb-1';
 const IN_THREAD = '__thread__';
 
 const REPEAT: Array<{ id: ScheduleForm['type']; label: string }> = [
-  { id: 'once', label: 'Once' },
-  { id: 'daily', label: 'Daily' },
-  { id: 'weekly', label: 'Weekly' },
-  { id: 'monthly', label: 'Monthly' },
-  { id: 'interval', label: 'Every…' },
-  { id: 'cron', label: 'Custom' },
+  { id: 'once', label: t('Once') },
+  { id: 'daily', label: t('Daily') },
+  { id: 'weekly', label: t('Weekly') },
+  { id: 'monthly', label: t('Monthly') },
+  { id: 'interval', label: t('Every…') },
+  { id: 'cron', label: t('Custom') },
 ];
 const MONTH_DAYS = Array.from({ length: 31 }, (_, i) => i + 1);
 
@@ -55,10 +56,10 @@ export interface RoutineFocus {
 }
 
 const STATUS: Record<RunStatus, { label: string; cls: string }> = {
-  running: { label: 'Running', cls: 'bg-sky-500/10 text-sky-300 border-sky-500/20' },
-  ok: { label: 'OK', cls: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' },
-  error: { label: 'Failed', cls: 'bg-rose-500/10 text-rose-300 border-rose-500/20' },
-  skipped: { label: 'Skipped', cls: 'bg-zinc-700/30 text-zinc-400 border-zinc-700' },
+  running: { label: t('Running'), cls: 'bg-sky-500/10 text-sky-300 border-sky-500/20' },
+  ok: { label: t('OK'), cls: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' },
+  error: { label: t('Failed'), cls: 'bg-rose-500/10 text-rose-300 border-rose-500/20' },
+  skipped: { label: t('Skipped'), cls: 'bg-zinc-700/30 text-zinc-400 border-zinc-700' },
 };
 
 const StatusBadge: React.FC<{ status: RunStatus }> = ({ status }) => (
@@ -72,10 +73,10 @@ const StatusBadge: React.FC<{ status: RunStatus }> = ({ status }) => (
 export const SuggestedBadge: React.FC = () => (
   <span
     className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border bg-violet-500/10 text-violet-200 border-violet-500/25"
-    title="You added this from a suggestion, after you asked for it on a regular rhythm."
+    title={t('You added this from a suggestion, after you asked for it on a regular rhythm.')}
   >
     <Sparkles size={9} aria-hidden="true" />
-    Suggested for you
+    {t('Suggested for you')}
   </span>
 );
 
@@ -131,9 +132,9 @@ export const RoutineForm: React.FC<{
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!f.name.trim()) return setError('Give the routine a name.');
-    if (!f.instructions.trim()) return setError('Say what the bot should do.');
-    if (!f.kwantId) return setError('Pick a bot.');
+    if (!f.name.trim()) return setError(t('Give the routine a name.'));
+    if (!f.instructions.trim()) return setError(t('Say what the bot should do.'));
+    if (!f.kwantId) return setError(t('Pick a bot.'));
     const built = scheduleFromForm(s);
     if ('error' in built) return setError(built.error);
     setSaving(true);
@@ -157,7 +158,7 @@ export const RoutineForm: React.FC<{
       playSfx('coin');
       onSaved();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Saving failed.');
+      setError(err instanceof Error ? err.message : t('Saving failed.'));
       setSaving(false);
     }
   };
@@ -165,15 +166,15 @@ export const RoutineForm: React.FC<{
   const id = (k: string) => `${uid}-${k}`;
 
   return (
-    <form onSubmit={submit} noValidate {...editorProps(unsaved, onCancel)} className="p-3 rounded-xl border border-sky-500/30 bg-zinc-950/70 space-y-3" aria-label={label ?? (initial ? `Edit ${initial.name}` : 'New routine')}>
+    <form onSubmit={submit} noValidate {...editorProps(unsaved, onCancel)} className="p-3 rounded-xl border border-sky-500/30 bg-zinc-950/70 space-y-3" aria-label={label ?? (initial ? t('Edit {name}', { name: initial.name }) : t('New routine'))}>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label htmlFor={id('name')} className={labelClass}>Name</label>
-          <input id={id('name')} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="Morning digest" className={inputClass} autoFocus />
+          <label htmlFor={id('name')} className={labelClass}>{t('Name')}</label>
+          <input id={id('name')} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder={t('Morning digest')} className={inputClass} autoFocus />
         </div>
         {!fixedKwantId && (
           <div>
-            <label htmlFor={id('kwant')} className={labelClass}>Bot</label>
+            <label htmlFor={id('kwant')} className={labelClass}>{t('Bot')}</label>
             <select id={id('kwant')} value={f.kwantId} onChange={(e) => setF({ ...f, kwantId: e.target.value })} className={inputClass}>
               {kwants.map((k) => (
                 <option key={k.id} value={k.id}>{k.name}</option>
@@ -182,10 +183,10 @@ export const RoutineForm: React.FC<{
           </div>
         )}
         <div>
-          <label htmlFor={id('channel')} className={labelClass}>Posts in</label>
+          <label htmlFor={id('channel')} className={labelClass}>{t('Posts in')}</label>
           <select id={id('channel')} value={f.channelId} onChange={(e) => setF({ ...f, channelId: e.target.value })} className={inputClass}>
-            {base?.thread_id && <option value={IN_THREAD}>The thread it was set up in</option>}
-            <option value="">Direct chat with the bot</option>
+            {base?.thread_id && <option value={IN_THREAD}>{t('The thread it was set up in')}</option>}
+            <option value="">{t('Direct chat with the bot')}</option>
             {channels.map((c) => (
               <option key={c.id} value={c.id}>{channelLabel(c.name)}</option>
             ))}
@@ -194,45 +195,45 @@ export const RoutineForm: React.FC<{
       </div>
 
       <div>
-        <label htmlFor={id('instr')} className={labelClass}>What to do</label>
+        <label htmlFor={id('instr')} className={labelClass}>{t('What to do')}</label>
         <textarea
           id={id('instr')}
           rows={3}
           value={f.instructions}
           onChange={(e) => setF({ ...f, instructions: e.target.value })}
-          placeholder="Summarise yesterday's open pull requests and flag anything blocked."
+          placeholder={t('Summarise yesterday\'s open pull requests and flag anything blocked.')}
           className={`${inputClass} resize-y`}
         />
       </div>
 
       <fieldset className="space-y-2">
-        <legend className={labelClass}>When</legend>
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-1 p-1 bg-zinc-950 rounded-lg border border-zinc-800" role="radiogroup" aria-label="Repeat">
-          {REPEAT.map((t) => (
+        <legend className={labelClass}>{t('When')}</legend>
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-1 p-1 bg-zinc-950 rounded-lg border border-zinc-800" role="radiogroup" aria-label={t('Repeat')}>
+          {REPEAT.map((r) => (
             <button
-              key={t.id}
+              key={r.id}
               type="button"
               role="radio"
-              aria-checked={s.type === t.id}
-              onClick={() => setS({ type: t.id })}
-              className={`py-1.5 sm:py-1 rounded-md text-[11px] font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500 ${s.type === t.id ? 'bg-sky-500/15 text-sky-200' : 'text-zinc-500 hover:text-zinc-300'}`}
+              aria-checked={s.type === r.id}
+              onClick={() => setS({ type: r.id })}
+              className={`py-1.5 sm:py-1 rounded-md text-[11px] font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500 ${s.type === r.id ? 'bg-sky-500/15 text-sky-200' : 'text-zinc-500 hover:text-zinc-300'}`}
             >
-              {t.label}
+              {r.label}
             </button>
           ))}
         </div>
 
         {s.type === 'once' && (
           <div>
-            <label htmlFor={id('at')} className="sr-only">Date and time</label>
+            <label htmlFor={id('at')} className="sr-only">{t('Date and time')}</label>
             <input id={id('at')} type="datetime-local" value={s.onceAt} onChange={(e) => setS({ onceAt: e.target.value })} className={inputClass} />
-            <p className="mt-1 text-[11px] text-zinc-500">In your browser's time zone ({defaultTimeZone()}). Turns itself off after it runs.</p>
+            <p className="mt-1 text-[11px] text-zinc-500">{t('In your browser\'s time zone ({zone}). Turns itself off after it runs.', { zone: defaultTimeZone() })}</p>
           </div>
         )}
 
         {s.type === 'cron' && (
           <div>
-            <label htmlFor={id('cron')} className="text-[11px] text-zinc-500">Rule</label>
+            <label htmlFor={id('cron')} className="text-[11px] text-zinc-500">{t('Rule')}</label>
             <input
               id={id('cron')}
               value={s.cron}
@@ -244,8 +245,10 @@ export const RoutineForm: React.FC<{
               className={`${inputClass} font-mono`}
             />
             <p id={id('cron-hint')} className="mt-1 text-[11px] text-zinc-500 leading-relaxed">
-              Five parts: minute, hour, day of month, month, weekday. <span className="font-mono text-zinc-400">0 9 * * MON#2</span> is 09:00 on the
-              second Monday; <span className="font-mono text-zinc-400">0 18 L * *</span> is 18:00 on the last day of the month.
+              {tj('Five parts: minute, hour, day of month, month, weekday. {a} is 09:00 on the second Monday; {b} is 18:00 on the last day of the month.', {
+                a: <span className="font-mono text-zinc-400">0 9 * * MON#2</span>,
+                b: <span className="font-mono text-zinc-400">0 18 L * *</span>,
+              })}
             </p>
           </div>
         )}
@@ -254,12 +257,12 @@ export const RoutineForm: React.FC<{
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {s.type !== 'cron' && (
               <div>
-                <label htmlFor={id('time')} className="text-[11px] text-zinc-500">At</label>
+                <label htmlFor={id('time')} className="text-[11px] text-zinc-500">{t('At')}</label>
                 <input id={id('time')} type="time" value={s.time} onChange={(e) => setS({ time: e.target.value })} className={inputClass} />
               </div>
             )}
             <div>
-              <label htmlFor={id('tz')} className="text-[11px] text-zinc-500">Time zone</label>
+              <label htmlFor={id('tz')} className="text-[11px] text-zinc-500">{t('Time zone')}</label>
               <input id={id('tz')} list={id('tzs')} value={s.tz} onChange={(e) => setS({ tz: e.target.value })} className={inputClass} spellCheck={false} />
               <datalist id={id('tzs')}>
                 {timeZoneOptions(s.tz).map((z) => (
@@ -271,7 +274,7 @@ export const RoutineForm: React.FC<{
         )}
 
         {s.type === 'weekly' && (
-          <div className="flex flex-wrap gap-1" role="group" aria-label="Days">
+          <div className="flex flex-wrap gap-1" role="group" aria-label={t('Days')}>
             {WEEKDAYS.map((d) => {
               const on = s.weekdays.includes(d.id);
               return (
@@ -293,7 +296,7 @@ export const RoutineForm: React.FC<{
 
         {s.type === 'monthly' && (
           <div className="space-y-1">
-            <div className="grid grid-cols-7 gap-1" role="group" aria-label="Days of the month">
+            <div className="grid grid-cols-7 gap-1" role="group" aria-label={t('Days of the month')}>
               {MONTH_DAYS.map((d) => {
                 const on = s.monthDays.includes(d);
                 return (
@@ -320,16 +323,16 @@ export const RoutineForm: React.FC<{
                   s.monthDays.includes('last') ? 'border-sky-500/50 bg-sky-500/15 text-sky-200' : 'border-zinc-800 text-zinc-500 hover:text-zinc-300'
                 }`}
               >
-                Last day
+                {t('Last day')}
               </button>
             </div>
-            <p className="text-[11px] text-zinc-500">A day a month doesn't have, like the 31st in April, runs on that month's last day.</p>
+            <p className="text-[11px] text-zinc-500">{t('A day a month doesn\'t have, like the 31st in April, runs on that month\'s last day.')}</p>
           </div>
         )}
 
         {s.type === 'interval' && (
           <div className="flex items-center gap-2">
-            <label htmlFor={id('every')} className="text-[11px] text-zinc-500 shrink-0">Every</label>
+            <label htmlFor={id('every')} className="text-[11px] text-zinc-500 shrink-0">{t('Every')}</label>
             <input
               id={id('every')}
               type="number"
@@ -340,7 +343,7 @@ export const RoutineForm: React.FC<{
               onChange={(e) => setS({ everyMinutes: e.target.value })}
               className={`${inputClass} w-24`}
             />
-            <span className="text-[11px] text-zinc-500">minutes (5 to 10080)</span>
+            <span className="text-[11px] text-zinc-500">{t('minutes (5 to 10080)')}</span>
           </div>
         )}
       </fieldset>
@@ -348,7 +351,7 @@ export const RoutineForm: React.FC<{
       {!hideEnabled && (
         <label className="flex items-center gap-2 text-[11px] text-zinc-300">
           <input type="checkbox" checked={f.enabled} onChange={(e) => setF({ ...f, enabled: e.target.checked })} className="accent-sky-500" />
-          Enabled
+          {t('Enabled')}
         </label>
       )}
 
@@ -361,10 +364,10 @@ export const RoutineForm: React.FC<{
       )}
       <div className="flex justify-end gap-2">
         <button type="button" onClick={onCancel} className="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 transition-colors">
-          Cancel
+          {t('Cancel')}
         </button>
         <button type="submit" disabled={saving} className="px-3.5 py-1.5 rounded-lg text-xs font-medium text-white bg-sky-600 hover:bg-sky-500 transition-colors disabled:opacity-50">
-          {saving ? 'Saving…' : submitLabel ?? (initial ? 'Save routine' : 'Create routine')}
+          {saving ? t('Saving…') : submitLabel ?? (initial ? t('Save routine') : t('Create routine'))}
         </button>
       </div>
     </form>
@@ -378,22 +381,22 @@ const RunHistory: React.FC<{ routineId: string; tick: number }> = ({ routineId, 
     let cancelled = false;
     continuityApi.routineRuns(routineId).then(
       (r) => !cancelled && (setRuns(r), setError(null)),
-      (e) => !cancelled && setError(e instanceof Error ? e.message : 'Could not load runs.'),
+      (e) => !cancelled && setError(e instanceof Error ? e.message : t('Could not load runs.')),
     );
     return () => {
       cancelled = true;
     };
   }, [routineId, tick]);
   if (error) return <p className="text-[11px] text-rose-400" role="alert">{error}</p>;
-  if (!runs) return <p className="text-[11px] text-zinc-500" role="status">Loading runs…</p>;
-  if (runs.length === 0) return <p className="text-[11px] text-zinc-500">No runs yet.</p>;
+  if (!runs) return <p className="text-[11px] text-zinc-500" role="status">{t('Loading runs…')}</p>;
+  if (runs.length === 0) return <p className="text-[11px] text-zinc-500">{t('No runs yet.')}</p>;
   return (
-    <ol className="space-y-1" aria-label="Run history">
+    <ol className="space-y-1" aria-label={t('Run history')}>
       {runs.map((r) => (
         <li key={r.id} className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-zinc-400">
           <StatusBadge status={r.status} />
           <span>{formatWhen(r.started_at)}</span>
-          <span className="text-zinc-600">{r.trigger === 'manual' ? 'Run now' : 'Scheduled'}</span>
+          <span className="text-zinc-600">{r.trigger === 'manual' ? t('Run now') : t('Scheduled')}</span>
           {r.error && <span className="basis-full min-w-0 text-rose-300/90 [overflow-wrap:anywhere]">{r.error}</span>}
         </li>
       ))}
@@ -436,7 +439,7 @@ export const RoutineRow: React.FC<{
       await fn();
       onChanged();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'That failed.');
+      setError(e instanceof Error ? e.message : t('That failed.'));
     } finally {
       setBusy(false);
     }
@@ -445,17 +448,17 @@ export const RoutineRow: React.FC<{
   const runNow = () =>
     act(async () => {
       const run = await continuityApi.runRoutine(routine.id);
-      setNotice(run.status === 'skipped' ? 'Already running; this one was skipped.' : 'Started.');
+      setNotice(run.status === 'skipped' ? t('Already running; this one was skipped.') : t('Started.'));
       setOpen(true);
       playSfx('click');
     });
 
-  if (removal.pending) return <UndoNotice as="li" text={`Deleted “${routine.name}”. It won’t run again.`} onUndo={removal.undo} />;
+  if (removal.pending) return <UndoNotice as="li" text={t('Deleted “{name}”. It won’t run again.', { name: routine.name })} onUndo={removal.undo} />;
 
   return (
     <li ref={rowRef} className={`rounded-xl border bg-zinc-950/60 p-3 space-y-2 ${highlight ? 'border-sky-500/60 ring-1 ring-sky-500/30' : 'border-zinc-800'}`}>
       <div className="flex items-start gap-2.5">
-        <label className="relative inline-flex items-center p-1 -m-1 mt-0 cursor-pointer" title={routine.enabled ? 'Turn off' : 'Turn on'}>
+        <label className="relative inline-flex items-center p-1 -m-1 mt-0 cursor-pointer" title={routine.enabled ? t('Turn off') : t('Turn on')}>
           <input
             type="checkbox"
             role="switch"
@@ -463,7 +466,7 @@ export const RoutineRow: React.FC<{
             className="sr-only peer"
             checked={routine.enabled}
             disabled={busy}
-            aria-label={`${routine.name} enabled`}
+            aria-label={t('{name} enabled', { name: routine.name })}
             onChange={(e) => act(() => continuityApi.updateRoutine(routine.id, { enabled: e.target.checked }))}
           />
           <span className="w-7 h-4 rounded-full bg-zinc-700 peer-checked:bg-sky-600 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-sky-500 transition-colors" />
@@ -480,20 +483,20 @@ export const RoutineRow: React.FC<{
             {placeLabel} · <span title={routine.schedule_text || undefined}>{scheduleWords(routine.schedule, routine.schedule_text)}</span>
           </p>
           <p className="text-[11px] text-zinc-400">
-            Next run: <span className="text-zinc-200">{routine.enabled ? formatWhen(routine.next_run_at) : 'off'}</span>
-            {routine.last_run_at && <span className="text-zinc-500"> · last {formatWhen(routine.last_run_at)}</span>}
+            {t('Next run:')} <span className="text-zinc-200">{routine.enabled ? formatWhen(routine.next_run_at) : t('off')}</span>
+            {routine.last_run_at && <span className="text-zinc-500">{t(' · last {when}', { when: formatWhen(routine.last_run_at) })}</span>}
           </p>
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-1.5 pl-9">
         <button type="button" onClick={runNow} disabled={busy} className={`${smallBtn} border-sky-500/40 bg-sky-500/10 text-sky-200 hover:bg-sky-500/20`}>
-          <Play size={11} /> Run now
+          <Play size={11} /> {t('Run now')}
         </button>
         <button type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open} aria-controls={historyId} className={quietBtn}>
-          {open ? <ChevronDown size={11} /> : <ChevronRight size={11} />} <History size={11} /> History
+          {open ? <ChevronDown size={11} /> : <ChevronRight size={11} />} <History size={11} /> {t('History')}
         </button>
         <button type="button" onClick={onEdit} className={quietBtn} data-routine-edit={routine.id}>
-          <Pencil size={11} /> Edit
+          <Pencil size={11} /> {t('Edit')}
         </button>
         <button
           type="button"
@@ -501,14 +504,14 @@ export const RoutineRow: React.FC<{
           onClick={() => removal.start(() => continuityApi.removeRoutine(routine.id))}
           className={`${smallBtn} border-zinc-700/70 bg-zinc-800/70 text-zinc-300 hover:text-rose-200`}
         >
-          <Trash2 size={11} /> Delete
+          <Trash2 size={11} /> {t('Delete')}
         </button>
         {notice && <span className="text-[11px] text-zinc-400" role="status">{notice}</span>}
         {highlight && routine.enabled && !notice && (
-          <span className="text-[11px] text-sky-200" role="status">Turn the switch off to pause it.</span>
+          <span className="text-[11px] text-sky-200" role="status">{t('Turn the switch off to pause it.')}</span>
         )}
       </div>
-      {(error ?? removal.error) && <p className="pl-9 text-[11px] text-rose-400" role="alert">{error ?? `Couldn’t delete it: ${removal.error}`}</p>}
+      {(error ?? removal.error) && <p className="pl-9 text-[11px] text-rose-400" role="alert">{error ?? t('Couldn’t delete it: {error}', { error: removal.error ?? '' })}</p>}
       {open && (
         <div id={historyId} className="pl-9 pt-1">
           <RunHistory routineId={routine.id} tick={tick} />
@@ -541,7 +544,7 @@ export const RoutinesPanel: React.FC<{
       setRoutines(kwantId ? all.filter((r) => r.kwant_id === kwantId) : all);
       setLoadError(null);
     } catch (e) {
-      setLoadError(e instanceof Error ? e.message : 'Could not load routines.');
+      setLoadError(e instanceof Error ? e.message : t('Could not load routines.'));
     }
   }, [kwantId]);
 
@@ -549,7 +552,7 @@ export const RoutinesPanel: React.FC<{
     reload();
     return onContinuity('routine_run', () => {
       reload();
-      setTick((t) => t + 1);
+      setTick((n) => n + 1);
     });
   }, [reload]);
 
@@ -566,10 +569,10 @@ export const RoutinesPanel: React.FC<{
 
   const kwantName = (id: string) => kwants.find((k) => k.id === id)?.name;
   const place = (r: Routine) => {
-    if (r.thread_id) return 'a thread';
-    if (!r.channel_id) return 'direct chat';
+    if (r.thread_id) return t('a thread');
+    if (!r.channel_id) return t('direct chat');
     const c = channels.find((ch) => ch.id === r.channel_id);
-    return c ? channelLabel(c.name) : 'a deleted channel';
+    return c ? channelLabel(c.name) : t('a deleted channel');
   };
   const saved = () => {
     setEditing(null);
@@ -590,7 +593,7 @@ export const RoutinesPanel: React.FC<{
     <div ref={wrapRef} className="space-y-3">
       <div className="flex items-center justify-between gap-2">
         <p className="text-[11px] text-zinc-500 leading-relaxed">
-          A routine posts its instructions to the bot on a schedule, then the bot answers as usual.
+          {t('A routine posts its instructions to the bot on a schedule, then the bot answers as usual.')}
         </p>
         {editing !== 'new' && (
           <button
@@ -600,7 +603,7 @@ export const RoutinesPanel: React.FC<{
             data-routine-new
             className={`${smallBtn} shrink-0 border-sky-500/50 bg-sky-600 text-white hover:bg-sky-500`}
           >
-            <Plus size={11} /> New routine
+            <Plus size={11} /> {t('New routine')}
           </button>
         )}
       </div>
@@ -615,28 +618,28 @@ export const RoutinesPanel: React.FC<{
         <div className="flex items-center justify-between gap-2 bg-rose-500/10 border border-rose-500/20 text-rose-300 px-3 py-2 rounded-lg text-xs" role="alert">
           <span>{loadError}</span>
           <button type="button" onClick={reload} className={quietBtn}>
-            <RefreshCw size={12} /> Retry
+            <RefreshCw size={12} /> {t('Retry')}
           </button>
         </div>
       )}
       {!routines && !loadError && (
         <p className="flex items-center gap-2 text-xs text-zinc-400" role="status">
-          <Loader2 size={14} className="animate-spin motion-reduce:animate-none" /> Loading routines…
+          <Loader2 size={14} className="animate-spin motion-reduce:animate-none" /> {t('Loading routines…')}
         </p>
       )}
       {missing && (
         <p className="text-[11px] text-amber-200 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2" role="status">
-          That routine no longer exists. It may have been undone or deleted.
+          {t('That routine no longer exists. It may have been undone or deleted.')}
         </p>
       )}
       {routines && routines.length === 0 && editing !== 'new' && (
         <div className="text-xs text-zinc-500 border border-dashed border-zinc-800 rounded-lg p-4 text-center space-y-1">
           <CalendarClock size={18} className="mx-auto text-zinc-600" aria-hidden="true" />
-          <p>No routines yet.</p>
+          <p>{t('No routines yet.')}</p>
         </div>
       )}
       {routines && routines.length > 0 && (
-        <ul className="space-y-2" aria-label="Routines">
+        <ul className="space-y-2" aria-label={t('Routines')}>
           {routines.map((r) =>
             editing !== 'new' && editing?.id === r.id ? (
               <li key={r.id}>
@@ -646,7 +649,7 @@ export const RoutinesPanel: React.FC<{
               <RoutineRow
                 key={r.id}
                 routine={r}
-                kwantName={kwantId ? undefined : kwantName(r.kwant_id) ?? 'deleted bot'}
+                kwantName={kwantId ? undefined : kwantName(r.kwant_id) ?? t('deleted bot')}
                 placeLabel={place(r)}
                 tick={tick}
                 focusPause={focus?.mode === 'pause' && focus.id === r.id ? focus.nonce : undefined}

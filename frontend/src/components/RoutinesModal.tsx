@@ -4,6 +4,7 @@ import { RoutinesPanel } from './RoutinesPanel';
 import type { Channel, Kwant } from './Sidebar';
 import { playSfx } from '../audio/chiptune';
 import { useEscapeLayer } from '../escape';
+import { t } from '../i18n';
 
 /** Every kwant's routines in one list. */
 export const RoutinesModal: React.FC<{ isOpen: boolean; onClose: () => void; kwants: Kwant[]; channels: Channel[]; onOpenSettings?: () => void }> = ({
@@ -33,8 +34,8 @@ export const RoutinesModal: React.FC<{ isOpen: boolean; onClose: () => void; kwa
               <CalendarClock size={16} />
             </div>
             <div>
-              <h2 id="routines-title" className="text-sm font-semibold text-zinc-100">Routines</h2>
-              <p className="text-xs text-zinc-400">Scheduled work for the bots in this space</p>
+              <h2 id="routines-title" className="text-sm font-semibold text-zinc-100">{t('Routines')}</h2>
+              <p className="text-xs text-zinc-400">{t('Scheduled work for the bots in this space')}</p>
             </div>
           </div>
           <button
@@ -43,7 +44,7 @@ export const RoutinesModal: React.FC<{ isOpen: boolean; onClose: () => void; kwa
               playSfx('click');
               onClose();
             }}
-            aria-label="Close"
+            aria-label={t('Close')}
             className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
           >
             <X size={18} />

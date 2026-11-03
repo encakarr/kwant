@@ -2,6 +2,7 @@ import React from 'react';
 import { AlertTriangle, CircleDashed, Clock, XCircle, CheckCircle2 } from 'lucide-react';
 import { CheckStatus, VerificationBlock, VerificationCheck, inRange, isObj, isText, optText, parseCommon, uniqueIds } from '../../smartResults';
 import type { RendererProps } from './registry';
+import { t } from '../../i18n';
 
 const STATUSES: CheckStatus[] = ['passed', 'failed', 'error', 'pending'];
 
@@ -34,7 +35,7 @@ export function validVerification(raw: unknown): VerificationBlock | null {
   };
 }
 
-const STATUS_TEXT: Record<CheckStatus, string> = { passed: 'Passed', failed: 'Failed', error: 'Error', pending: 'Pending' };
+const STATUS_TEXT: Record<CheckStatus, string> = { passed: t('Passed'), failed: t('Failed'), error: t('Error'), pending: t('Pending') };
 const STATUS_ICON: Record<CheckStatus, React.ElementType> = { passed: CheckCircle2, failed: XCircle, error: AlertTriangle, pending: CircleDashed };
 const STATUS_COLOR: Record<CheckStatus, string> = {
   passed: 'text-emerald-400',
@@ -81,7 +82,7 @@ export const Verification: React.FC<RendererProps<VerificationBlock>> = ({ block
                 {check.excerpt && (
                   <details className="mt-1">
                     <summary className="cursor-pointer rounded text-[11px] text-sky-400 hover:text-sky-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70">
-                      Details
+                      {t('Details')}
                     </summary>
                     <pre className="mt-1 whitespace-pre-wrap rounded-lg bg-zinc-900 p-2 font-mono text-[11px] leading-relaxed text-zinc-300">
                       {check.excerpt}

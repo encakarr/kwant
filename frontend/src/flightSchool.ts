@@ -2,21 +2,23 @@
 // work. A tier only adds approval cards, never removes one, and payments always ask. On by default,
 // with every bot at Act until the person lowers one; with it switched off nothing here shows.
 
+import { t } from './i18n';
+
 export type Tier = 'observe' | 'sandbox' | 'act';
 export const TIERS: Tier[] = ['observe', 'sandbox', 'act'];
 /** The class that covers every kind of work without its own tier. */
 export const ANY_CLASS = '*';
 export const DEFAULT_CLASS = 'general';
 
-export const TIER_LABELS: Record<Tier, string> = { observe: 'Observe', sandbox: 'Sandbox', act: 'Act' };
+export const TIER_LABELS: Record<Tier, string> = { observe: t('Observe'), sandbox: t('Sandbox'), act: t('Act') };
 export const TIER_HINTS: Record<Tier, string> = {
-  observe: 'Plans, reads and reports. Every change asks you first.',
-  sandbox: 'Changes files in its task folder when they can be undone. Commands that can change things ask you; reading its own folder doesn’t.',
-  act: 'Works as it does today, with its usual approvals.',
+  observe: t('Plans, reads and reports. Every change asks you first.'),
+  sandbox: t('Changes files in its task folder when they can be undone. Commands that can change things ask you; reading its own folder doesn’t.'),
+  act: t('Works as it does today, with its usual approvals.'),
 };
 
 export const isTier = (v: unknown): v is Tier => v === 'observe' || v === 'sandbox' || v === 'act';
-export const tierLabel = (v: string | null | undefined): string => (isTier(v) ? TIER_LABELS[v] : 'Act');
+export const tierLabel = (v: string | null | undefined): string => (isTier(v) ? TIER_LABELS[v] : t('Act'));
 
 export interface CapabilityPolicy {
   id: string;
@@ -64,35 +66,35 @@ export interface CapabilityChange {
 export function fromText(from: string): string {
   switch (from) {
     case 'class':
-      return 'Set for this kind of work';
+      return t('Set for this kind of work');
     case 'any_class':
-      return 'From its tier for all work';
+      return t('From its tier for all work');
     case 'unreadable':
-      return 'Couldn’t be read, so it’s treated as Observe';
+      return t('Couldn’t be read, so it’s treated as Observe');
     default:
-      return 'Not set: works as today (Act)';
+      return t('Not set: works as today (Act)');
   }
 }
 
 /** A task class as people read it: "code-review" → "Code review". */
 export const classLabel = (c: string): string => {
-  if (c === ANY_CLASS) return 'All work';
-  if (c === DEFAULT_CLASS) return 'General';
+  if (c === ANY_CLASS) return t('All work');
+  if (c === DEFAULT_CLASS) return t('General');
   const words = c.replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim();
   return words ? words[0].toUpperCase() + words.slice(1) : c;
 };
 
 /** One line for a tier change in the bot's history. */
 export function capabilityEventText(e: Pick<CapabilityEvent, 'kind' | 'tier' | 'task_class'>): string {
-  const where = e.task_class === ANY_CLASS ? 'all work' : classLabel(e.task_class).toLowerCase();
+  const where = e.task_class === ANY_CLASS ? t('all work') : classLabel(e.task_class).toLowerCase();
   const tier = tierLabel(e.tier);
   switch (e.kind) {
     case 'granted':
-      return `You set ${where} to ${tier}`;
+      return t('You set {where} to {tier}', { where, tier });
     case 'revoked':
-      return `You revoked ${where} to ${tier}`;
+      return t('You revoked {where} to {tier}', { where, tier });
     case 'new_bot_default':
-      return `Started at ${tier} as a new bot`;
+      return t('Started at {tier} as a new bot', { tier });
     default:
       return `${e.kind.replace(/_/g, ' ')}: ${where}${e.tier ? `, ${tier}` : ''}`;
   }
@@ -136,7 +138,9 @@ export function tierReason(details: Record<string, unknown> | null | undefined):
 /** The Needs-you kind the engine guard (D7) raises, and what the person can do about it. */
 export const ENGINE_CANT_SANDBOX = 'engine_cant_sandbox';
 export const engineCantSandboxText = (bot: string | null) =>
-  `${bot ?? 'Its bot'} runs on an engine that can’t be held to a lower tier, so nothing ran. Switch ${bot ?? 'the bot'} to a Claude model, or set its tier for this kind of work to Act, then press Unblock.`;
+  bot
+    ? t('{bot} runs on an engine that can’t be held to a lower tier, so nothing ran. Switch {bot} to a Claude model, or set its tier for this kind of work to Act, then press Unblock.', { bot })
+    : t('Its bot runs on an engine that can’t be held to a lower tier, so nothing ran. Switch the bot to a Claude model, or set its tier for this kind of work to Act, then press Unblock.');
 
 /** Task fields Flight School adds; `owner_tier` is null while the setting is off. */
 export interface TaskTier {
@@ -145,7 +149,7 @@ export interface TaskTier {
 }
 
 /** Whether a task shows its kind of work and tier: only with Flight School on (the server sends `owner_tier`). */
-export const showsTier = (t: TaskTier): t is { task_class?: string; owner_tier: Tier } => isTier(t.owner_tier);
+export const showsTier = (x: TaskTier): x is { task_class?: string; owner_tier: Tier } => isTier(x.owner_tier);
 
 // ---------------------------------------------------------------------------
 // Scorecards and proposals (Phase C4, docs/mission-control.md §14): a bot earns the next tier from
@@ -231,13 +235,13 @@ const pct = (r: number) => `${Math.round(r * 100)}%`;
 
 /** "2 of 3 (67%)", or "None yet" when there's nothing to count. */
 export function ratioText(r: Ratio | null | undefined): string {
-  if (!r || r.n <= 0) return 'None yet';
-  return r.rate === null ? `${r.k} of ${r.n}` : `${r.k} of ${r.n} (${pct(r.rate)})`;
+  if (!r || r.n <= 0) return t('None yet');
+  return r.rate === null ? t('{k} of {n}', { k: r.k, n: r.n }) : t('{k} of {n} ({pct})', { k: r.k, n: r.n, pct: pct(r.rate) });
 }
 
 /** "Sandy asks for Sandbox on Code" (the card's heading). */
 export const proposalTitle = (p: Pick<TierProposal, 'task_class' | 'to_tier'>, bot: string): string =>
-  `${bot} asks for ${tierLabel(p.to_tier)} on ${classLabel(p.task_class)}`;
+  t('{bot} asks for {tier} on {work}', { bot, tier: tierLabel(p.to_tier), work: classLabel(p.task_class) });
 
 /** "From Observe to Sandbox: …" (what changes if you grant it). */
 export const proposalChange = (p: Pick<TierProposal, 'from_tier' | 'to_tier'>): string =>
@@ -248,13 +252,15 @@ export function proposalOutcome(p: Pick<TierProposal, 'status' | 'to_tier' | 'ta
   const where = classLabel(p.task_class);
   switch (p.status) {
     case 'granted':
-      return `Granted: ${bot} is now ${tierLabel(p.to_tier)} on ${where}. You can revoke it in one tap from ${bot}’s settings.`;
+      return t('Granted: {bot} is now {tier} on {where}. You can revoke it in one tap from {bot}’s settings.', { bot, tier: tierLabel(p.to_tier), where });
     case 'declined':
-      return `Declined. ${bot} can ask again in 7 days.`;
+      return t('Declined. {bot} can ask again in 7 days.', { bot });
     case 'stale':
-      return `No longer holds${p.note ? `: ${p.note.replace(/[.\s]+$/, '')}` : ''}. ${bot} has to ask again.`;
+      return p.note
+        ? t('No longer holds: {note}. {bot} has to ask again.', { note: p.note.replace(/[.\s]+$/, ''), bot })
+        : t('No longer holds. {bot} has to ask again.', { bot });
     default:
-      return 'Waiting for you.';
+      return t('Waiting for you.');
   }
 }
 
@@ -265,12 +271,12 @@ export function proposalOutcome(p: Pick<TierProposal, 'status' | 'to_tier' | 'ta
 export function proposalConflictText(status: string | null, message: string): string {
   switch (status) {
     case 'granted':
-      return 'Someone got there first: it’s already granted.';
+      return t('Someone got there first: it’s already granted.');
     case 'declined':
-      return 'Someone got there first: it’s already declined.';
+      return t('Someone got there first: it’s already declined.');
     case 'stale': {
       const why = /^this proposal is stale:\s*(.+?)[.\s]*$/i.exec(message.trim())?.[1];
-      return `This request no longer holds${why ? `: ${why}` : ''}. The bot has to ask again.`;
+      return why ? t('This request no longer holds: {why}. The bot has to ask again.', { why }) : t('This request no longer holds. The bot has to ask again.');
     }
     default:
       return message;
@@ -287,22 +293,26 @@ export interface ScorecardRow {
 /** The scorecard as label/value rows, in the order the rules read. */
 export function scorecardRows(c: Partial<Scorecard>): ScorecardRow[] {
   const rows: ScorecardRow[] = [];
-  const t = c.tasks;
-  if (t) rows.push({ label: 'Verified', value: t.settled > 0 ? `${t.verified} of ${t.settled} settled` : 'None settled yet' });
-  if (c.first_try) rows.push({ label: 'Verified on the first try', value: ratioText(c.first_try) });
-  if (c.false_success) rows.push({ label: 'Said done, check failed', value: c.false_success.n > 0 ? `${c.false_success.k} of ${c.false_success.n}` : 'None yet', bad: c.false_success.k > 0 });
+  const tk = c.tasks;
+  if (tk) rows.push({ label: t('Verified'), value: tk.settled > 0 ? t('{k} of {n} settled', { k: tk.verified, n: tk.settled }) : t('None settled yet') });
+  if (c.first_try) rows.push({ label: t('Verified on the first try'), value: ratioText(c.first_try) });
+  if (c.false_success)
+    rows.push({ label: t('Said done, check failed'), value: c.false_success.n > 0 ? t('{k} of {n}', { k: c.false_success.k, n: c.false_success.n }) : t('None yet'), bad: c.false_success.k > 0 });
   if (c.recent_denials) {
     const d = c.recent_denials;
-    rows.push({ label: `Denied in its last ${d.of}`, value: d.n > 0 ? `${d.with_denial} of ${d.n}` : 'None yet', bad: d.with_denial > 0 });
+    rows.push({ label: t('Denied in its last {n}', { n: d.of }), value: d.n > 0 ? t('{k} of {n}', { k: d.with_denial, n: d.n }) : t('None yet'), bad: d.with_denial > 0 });
   }
-  if (c.cards && c.cards.shown > 0) rows.push({ label: 'Approval cards', value: `${c.cards.approved} approved, ${c.cards.denied} denied`, bad: c.cards.denied > 0 });
+  if (c.cards && c.cards.shown > 0) rows.push({ label: t('Approval cards'), value: t('{approved} approved, {denied} denied', { approved: c.cards.approved, denied: c.cards.denied }), bad: c.cards.denied > 0 });
   return rows;
 }
 
 /** One line under the scorecard: what it can ask for, or what it still needs. */
 export function scorecardStatus(c: Pick<Scorecard, 'tier' | 'next_tier' | 'eligible' | 'missing'>): { text: string; ready: boolean } {
-  if (!c.next_tier) return { text: `${tierLabel(c.tier)} is the top tier: nothing more to earn here.`, ready: false };
-  if (c.eligible) return { text: `Qualifies to ask for ${tierLabel(c.next_tier)}. Only you can grant it.`, ready: true };
+  if (!c.next_tier) return { text: t('{tier} is the top tier: nothing more to earn here.', { tier: tierLabel(c.tier) }), ready: false };
+  if (c.eligible) return { text: t('Qualifies to ask for {tier}. Only you can grant it.', { tier: tierLabel(c.next_tier) }), ready: true };
   const need = c.missing.map((m) => m.replace(/[.\s]+$/, '')).join('; ');
-  return { text: `Not yet ready for ${tierLabel(c.next_tier)}${need ? `: needs ${need}` : ''}.`, ready: false };
+  return {
+    text: need ? t('Not yet ready for {tier}: needs {need}.', { tier: tierLabel(c.next_tier), need }) : t('Not yet ready for {tier}.', { tier: tierLabel(c.next_tier) }),
+    ready: false,
+  };
 }

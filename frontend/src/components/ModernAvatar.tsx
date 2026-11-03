@@ -1,6 +1,7 @@
 import React, { useCallback, useSyncExternalStore } from 'react';
 import { isKwantWorking, subscribeKwant } from '../kwantActivity';
 import { STATUS_DOT, STATUS_PRIORITY, statusText, type BotStatus } from '../botStatus';
+import { t } from '../i18n';
 
 interface ModernAvatarProps {
   role?: string;
@@ -72,28 +73,28 @@ const PALETTES: Record<string, Omit<Creature, 'accessory'>> = {
 
 /** Avatar styles an agent can pick; `avatar_sprite` stores the id. */
 export const AVATAR_STYLES: Array<{ id: string; label: string }> = [
-  { id: 'architect', label: 'Architecture' },
-  { id: 'tech_lead', label: 'Tech Lead' },
-  { id: 'devops', label: 'DevOps' },
-  { id: 'security', label: 'Security' },
-  { id: 'fast', label: 'Speed' },
-  { id: 'designer', label: 'Design' },
-  { id: 'data', label: 'Data' },
-  { id: 'qa', label: 'QA' },
-  { id: 'product', label: 'Product' },
-  { id: 'writer', label: 'Writing' },
-  { id: 'research', label: 'Research' },
-  { id: 'teacher', label: 'Teacher' },
-  { id: 'marketing', label: 'Marketing' },
-  { id: 'legal', label: 'Legal' },
-  { id: 'coach', label: 'Coach' },
-  { id: 'traveler', label: 'Travel' },
-  { id: 'chef', label: 'Chef' },
-  { id: 'fitness', label: 'Fitness' },
-  { id: 'party', label: 'Party' },
-  { id: 'builder', label: 'Builder' },
-  { id: 'zen', label: 'Wellbeing' },
-  { id: 'default', label: 'Droid' },
+  { id: 'architect', label: t('Architecture') },
+  { id: 'tech_lead', label: t('Tech Lead') },
+  { id: 'devops', label: t('DevOps') },
+  { id: 'security', label: t('Security') },
+  { id: 'fast', label: t('Speed') },
+  { id: 'designer', label: t('Design') },
+  { id: 'data', label: t('Data') },
+  { id: 'qa', label: t('QA') },
+  { id: 'product', label: t('Product') },
+  { id: 'writer', label: t('Writing') },
+  { id: 'research', label: t('Research') },
+  { id: 'teacher', label: t('Teacher') },
+  { id: 'marketing', label: t('Marketing') },
+  { id: 'legal', label: t('Legal') },
+  { id: 'coach', label: t('Coach') },
+  { id: 'traveler', label: t('Travel') },
+  { id: 'chef', label: t('Chef') },
+  { id: 'fitness', label: t('Fitness') },
+  { id: 'party', label: t('Party') },
+  { id: 'builder', label: t('Builder') },
+  { id: 'zen', label: t('Wellbeing') },
+  { id: 'default', label: t('Droid') },
 ];
 
 const ROLE_CREATURES: Record<string, [keyof typeof PALETTES, Accessory]> = {
@@ -336,7 +337,7 @@ export const ModernAvatar: React.FC<ModernAvatarProps> = ({
   const working = useKwantWorking(kwantId);
   // Never green (or idle grey) while a turn runs: the turn stream wins over a stale status.
   const shown = status && working && STATUS_PRIORITY.indexOf(status) > STATUS_PRIORITY.indexOf('working') ? 'working' : status;
-  const label = shown ? statusText(name, shown) : name ? (working ? `${name} is working…` : name) : undefined;
+  const label = shown ? statusText(name, shown) : name ? (working ? t('{name} is working…', { name }) : name) : undefined;
   const creature = pickCreature(role, name);
   // At tiny sizes the frame would dominate, so zoom in on the creature alone
   const framed = size > 20;

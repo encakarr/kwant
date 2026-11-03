@@ -32,6 +32,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { PERSON_SIGNED_IN_EVENT, requestPersonToken } from '../auth';
+import { t, tj } from '../i18n';
 import { ModernAvatar } from './ModernAvatar';
 import { PerformancePanel } from './PerformancePanel';
 import { TierRequests } from './TierProposals';
@@ -234,7 +235,7 @@ export const LimitEditor: React.FC<{
   hideNone?: boolean;
   onSet: (budget: number) => void;
   onClose?: () => void;
-}> = ({ budget, spent, scope, disabled = false, startOpen = false, saveLabel = 'Save', hideNone = false, onSet, onClose }) => {
+}> = ({ budget, spent, scope, disabled = false, startOpen = false, saveLabel = t('Save'), hideNone = false, onSet, onClose }) => {
   const [open, setOpen] = useState(startOpen);
   const [custom, setCustom] = useState<string | null>(null);
   const fieldId = useId();
@@ -258,15 +259,15 @@ export const LimitEditor: React.FC<{
         {budget > 0 ? (
           <>
             <button type="button" disabled={disabled} onClick={() => setOpen(true)} className={link} data-limit-change>
-              Change
+              {t('Change')}
             </button>
             <button type="button" disabled={disabled} onClick={() => onSet(NO_LIMIT)} className={link} data-limit-remove>
-              Remove limit
+              {t('Remove limit')}
             </button>
           </>
         ) : (
           <button type="button" disabled={disabled} onClick={() => setOpen(true)} className={link} data-limit-set>
-            Set a limit
+            {t('Set a limit')}
           </button>
         )}
       </span>
@@ -277,11 +278,11 @@ export const LimitEditor: React.FC<{
       on ? 'border-sky-500 bg-sky-500/15 text-sky-100' : 'border-zinc-700 bg-zinc-900 text-zinc-200 hover:bg-zinc-800'
     }`;
   return (
-    <div role="group" aria-label={`${scope === 'mission' ? 'Mission' : 'Task'} token limit`} className="mt-1.5 space-y-2" data-limit-editor="open">
+    <div role="group" aria-label={scope === 'mission' ? t('Mission token limit') : t('Task token limit')} className="mt-1.5 space-y-2" data-limit-editor="open">
       <div className="flex flex-wrap gap-1.5">
         {!hideNone && (
           <button type="button" disabled={disabled} aria-pressed={budget === NO_LIMIT} onClick={() => set(NO_LIMIT)} className={chip(budget === NO_LIMIT)} data-limit-pick={0}>
-            No limit
+            {t('No limit')}
           </button>
         )}
         {picks.map((n) => (
@@ -290,7 +291,7 @@ export const LimitEditor: React.FC<{
           </button>
         ))}
         <button type="button" disabled={disabled} aria-pressed={custom !== null} onClick={() => setCustom((c) => (c === null ? '' : c))} className={chip(custom !== null)} data-limit-custom>
-          Custom
+          {t('Custom')}
         </button>
       </div>
       {custom !== null && (
@@ -303,14 +304,14 @@ export const LimitEditor: React.FC<{
           }}
         >
           <label htmlFor={fieldId} className="sr-only">
-            Token limit
+            {t('Token limit')}
           </label>
           <input
             id={fieldId}
             autoFocus
             inputMode="decimal"
             autoComplete="off"
-            placeholder="e.g. 300k"
+            placeholder={t('e.g. 300k')}
             value={custom}
             onChange={(e) => setCustom(e.target.value)}
             aria-invalid={!!(custom.trim() && err)}
@@ -321,37 +322,40 @@ export const LimitEditor: React.FC<{
             {saveLabel}
           </button>
           <p id={hintId} className={`basis-full text-[11px] ${custom.trim() && err ? 'text-rose-300' : 'text-zinc-500'}`}>
-            {custom.trim() && err ? err : 'Tokens, like 300k or 2M.'}
+            {custom.trim() && err ? err : t('Tokens, like 300k or 2M.')}
           </p>
         </form>
       )}
       <button type="button" onClick={close} className={link}>
-        Cancel
+        {t('Cancel')}
       </button>
     </div>
   );
 };
 
 /** A task stopped by its token limit: the way on is to remove the limit, or raise it past what it used. */
-const LimitReachedBox: React.FC<{ task: Task; busy: boolean; onContinue?: (budget: number) => void }> = ({ task: t, busy, onContinue }) => {
+const LimitReachedBox: React.FC<{ task: Task; busy: boolean; onContinue?: (budget: number) => void }> = ({ task, busy, onContinue }) => {
   const [raising, setRaising] = useState(false);
   return (
     <div className="px-3 py-2.5 rounded-lg border border-rose-500/30 bg-rose-500/10 space-y-2" data-limit-reached>
       <p className="text-xs text-rose-200">
-        It stopped at its {formatTokens(t.budget_tokens)} token limit after using {formatTokens(t.spent_tokens)}. Remove the limit to let it finish, or raise it.
+        {t('It stopped at its {limit} token limit after using {used}. Remove the limit to let it finish, or raise it.', {
+          limit: formatTokens(task.budget_tokens),
+          used: formatTokens(task.spent_tokens),
+        })}
       </p>
       {onContinue && !raising && (
         <div className="flex flex-wrap gap-2">
           <button type="button" disabled={busy} onClick={() => onContinue(NO_LIMIT)} className={mainBtn} data-remove-limit-continue>
-            Remove limit and continue
+            {t('Remove limit and continue')}
           </button>
           <button type="button" disabled={busy} onClick={() => setRaising(true)} className={quietBtn} data-raise-limit>
-            Raise limit
+            {t('Raise limit')}
           </button>
         </div>
       )}
       {onContinue && raising && (
-        <LimitEditor budget={t.budget_tokens} spent={t.spent_tokens} scope="task" disabled={busy} startOpen hideNone saveLabel="Raise and continue" onSet={onContinue} onClose={() => setRaising(false)} />
+        <LimitEditor budget={task.budget_tokens} spent={task.spent_tokens} scope="task" disabled={busy} startOpen hideNone saveLabel={t('Raise and continue')} onSet={onContinue} onClose={() => setRaising(false)} />
       )}
     </div>
   );
@@ -404,27 +408,27 @@ export const InsightsStrip: React.FC<{
   const needsNow = needsYou ?? insights.needs_you_now;
   const blockedMin = insights.blocked_minutes_7d;
   const items: Array<{ label: string; value: string; hint: string; tone?: Tone; sub?: string }> = [
-    { label: 'Verified this week', value: String(insights.verified_7d), hint: 'Tasks a check confirmed in the last 7 days', tone: 'emerald' },
+    { label: t('Verified this week'), value: String(insights.verified_7d), hint: t('Tasks a check confirmed in the last 7 days'), tone: 'emerald' },
     {
-      label: 'False successes',
+      label: t('False successes'),
       value: String(insights.false_success_7d),
-      hint: 'A bot said done, then the check failed (last 7 days)',
+      hint: t('A bot said done, then the check failed (last 7 days)'),
       tone: insights.false_success_7d > 0 ? 'rose' : undefined,
     },
-    { label: 'Needs you now', value: String(needsNow), hint: 'Waiting on a question, approval or step from you', tone: needsNow > 0 ? 'amber' : undefined },
+    { label: t('Needs you now'), value: String(needsNow), hint: t('Waiting on a question, approval or step from you'), tone: needsNow > 0 ? 'amber' : undefined },
     typeof blockedMin === 'number'
       ? {
-          label: 'Blocked this week',
+          label: t('Blocked this week'),
           value: durationText(blockedMin),
-          hint: 'Time tasks spent blocked in the last 7 days',
+          hint: t('Time tasks spent blocked in the last 7 days'),
           tone: insights.blocked_now > 0 ? 'rose' : undefined,
-          sub: insights.blocked_now > 0 ? `${insights.blocked_now} blocked now` : undefined,
+          sub: insights.blocked_now > 0 ? t('{n} blocked now', { n: insights.blocked_now }) : undefined,
         }
-      : { label: 'Blocked now', value: String(insights.blocked_now), hint: 'Tasks that can’t move until something changes', tone: insights.blocked_now > 0 ? 'rose' : undefined },
+      : { label: t('Blocked now'), value: String(insights.blocked_now), hint: t('Tasks that can’t move until something changes'), tone: insights.blocked_now > 0 ? 'rose' : undefined },
     {
-      label: 'Tokens per verified',
+      label: t('Tokens per verified'),
       value: insights.tokens_per_verified_7d === null ? '—' : formatTokens(insights.tokens_per_verified_7d),
-      hint: `${formatTokens(insights.tokens_7d)} tokens used in the last 7 days`,
+      hint: t('{n} tokens used in the last 7 days', { n: formatTokens(insights.tokens_7d) }),
     },
   ];
   const af = insights.autofix_7d;
@@ -434,16 +438,18 @@ export const InsightsStrip: React.FC<{
       .sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))
       .map(([c, n]) => `${failureClassLabel(c)}: ${n}`);
     items.push({
-      label: 'Fixed by AutoFix',
-      value: af.attempts > 0 ? `${af.succeeded} of ${af.attempts}` : '0',
-      hint: `Retries AutoFix ran in the last 7 days, and how many ended Verified.${byClass.length ? ` Failures: ${byClass.join(', ')}.` : ''}`,
+      label: t('Fixed by AutoFix'),
+      value: af.attempts > 0 ? t('{k} of {n}', { k: af.succeeded, n: af.attempts }) : '0',
+      hint: byClass.length
+        ? t('Retries AutoFix ran in the last 7 days, and how many ended Verified. Failures: {list}.', { list: byClass.join(t(', ')) })
+        : t('Retries AutoFix ran in the last 7 days, and how many ended Verified.'),
       tone: af.succeeded > 0 ? 'emerald' : undefined,
-      sub: af.attempts > 0 ? `${formatTokens(af.tokens)} tokens on retries` : 'No retries this week',
+      sub: af.attempts > 0 ? t('{n} tokens on retries', { n: formatTokens(af.tokens) }) : t('No retries this week'),
     });
   }
   const valueTone: Partial<Record<Tone, string>> = { emerald: 'text-emerald-300', rose: 'text-rose-300', amber: 'text-amber-300' };
   return (
-    <section aria-label="This week" data-insights>
+    <section aria-label={t('This week')} data-insights>
       <dl className={`grid grid-cols-2 sm:grid-cols-3 ${items.length > 5 ? 'lg:grid-cols-6' : 'lg:grid-cols-5'} gap-2`}>
         {items.map((it, i) => (
           <div key={it.label} title={it.hint} className={`${card} px-3 py-2 ${i === items.length - 1 && items.length % 2 === 1 ? 'col-span-2 sm:col-span-1' : ''}`}>
@@ -468,11 +474,11 @@ export const MeasuresPanel: React.FC<{ insights: Insights | null; timeZone?: str
   return (
     <section aria-labelledby={headId} className={`${card} px-3 py-2.5`} data-measures>
       <h3 id={headId} className="sr-only">
-        Measures
+        {t('Measures')}
       </h3>
       <div className="grid gap-3 sm:grid-cols-[minmax(0,10rem)_minmax(0,1fr)_minmax(0,12rem)] sm:items-end">
         <dl className="min-w-0" data-measure="per-week">
-          <dt className="text-[11px] text-zinc-400">Verified per active week</dt>
+          <dt className="text-[11px] text-zinc-400">{t('Verified per active week')}</dt>
           <dd className="text-lg font-semibold tabular-nums text-emerald-300">{v.headline}</dd>
           <dd className="text-[10px] text-zinc-400">{v.headlineSub}</dd>
         </dl>
@@ -480,7 +486,7 @@ export const MeasuresPanel: React.FC<{ insights: Insights | null; timeZone?: str
         <figure className="min-w-0" data-measure="trend">
           <ol
             className="flex h-14 items-end gap-1"
-            aria-label={`Verified tasks per week, oldest first: ${v.trendText}`}
+            aria-label={t('Verified tasks per week, oldest first: {trend}', { trend: v.trendText })}
             data-weeks={v.weeks.length}
           >
             {v.weeks.map((w, n) => (
@@ -503,13 +509,13 @@ export const MeasuresPanel: React.FC<{ insights: Insights | null; timeZone?: str
             ))}
           </ol>
           <figcaption className="mt-1 flex justify-between text-[10px] text-zinc-500" aria-hidden="true">
-            <span>8 weeks ago</span>
-            <span>This week</span>
+            <span>{t('8 weeks ago')}</span>
+            <span>{t('This week')}</span>
           </figcaption>
         </figure>
 
         <dl className="min-w-0" data-measure="cost">
-          <dt className="text-[11px] text-zinc-400">Cost per verified result</dt>
+          <dt className="text-[11px] text-zinc-400">{t('Cost per verified result')}</dt>
           <dd className={`text-lg font-semibold tabular-nums ${/^[<$]/.test(v.cost) ? 'text-zinc-100' : 'text-zinc-400'}`} data-cost={v.cost}>
             {v.cost}
           </dd>
@@ -543,7 +549,7 @@ export const MissionSummary: React.FC<{
     .filter(([k]) => k !== 'cancelled')
     .reduce((n, [, v]) => n + v, 0);
   return (
-    <section className={`${card} p-3 sm:p-4 space-y-2`} data-mission={m.id} aria-label={`Mission: ${m.title}`}>
+    <section className={`${card} p-3 sm:p-4 space-y-2`} data-mission={m.id} aria-label={t('Mission: {title}', { title: m.title })}>
       <div className="flex flex-wrap items-start gap-2">
         <Target size={16} className="mt-0.5 shrink-0 text-sky-400" aria-hidden="true" />
         <div className="min-w-0 flex-1">
@@ -556,34 +562,34 @@ export const MissionSummary: React.FC<{
           )}
         </div>
         <Badge tone={st.tone}>{st.label}</Badge>
-        {m.over_budget && <Badge tone="rose">Over its limit</Badge>}
+        {m.over_budget && <Badge tone="rose">{t('Over its limit')}</Badge>}
       </div>
       <div className="space-y-1">
         <div className="flex flex-wrap justify-between gap-x-3 text-[11px] text-zinc-400">
           <span>
-            {m.counts.verified} of {total} task{total === 1 ? '' : 's'} verified
-            {m.lead_name ? ` · Led by ${m.lead_name}` : ''}
+            {t(total === 1 ? '{k} of {n} task verified' : '{k} of {n} tasks verified', { k: m.counts.verified, n: total })}
+            {m.lead_name ? ` · ${t('Led by {name}', { name: m.lead_name })}` : ''}
           </span>
           <span className="tabular-nums" data-mission-cost>
             {costText(m.spent_tokens, m.budget_tokens)}
           </span>
         </div>
-        {m.budget_tokens > 0 && <SpendBar spent={m.spent_tokens} budget={m.budget_tokens} label="Mission token limit used" />}
+        {m.budget_tokens > 0 && <SpendBar spent={m.spent_tokens} budget={m.budget_tokens} label={t('Mission token limit used')} />}
         {onSetBudget && m.status !== 'done' && m.status !== 'cancelled' && (
           <div className="flex justify-end">
             <LimitEditor budget={m.budget_tokens} spent={m.spent_tokens} scope="mission" disabled={busy} onSet={onSetBudget} />
           </div>
         )}
       </div>
-      {m.over_budget && <p className="text-[11px] text-rose-300">No new task starts until you raise or remove the mission’s token limit.</p>}
+      {m.over_budget && <p className="text-[11px] text-rose-300">{t('No new task starts until you raise or remove the mission’s token limit.')}</p>}
       {m.status === 'draft' && (
         <div className="flex flex-wrap items-center gap-2 pt-1">
-          <p className="text-xs text-amber-200 flex-1 min-w-[12rem]">{m.lead_name ?? 'A bot'} planned this. Nothing runs until you approve it.</p>
+          <p className="text-xs text-amber-200 flex-1 min-w-[12rem]">{t('{name} planned this. Nothing runs until you approve it.', { name: m.lead_name ?? t('A bot') })}</p>
           <button type="button" disabled={busy} onClick={onApprove} className={mainBtn}>
-            Approve mission
+            {t('Approve mission')}
           </button>
           <button type="button" disabled={busy} onClick={onCancel} className={quietBtn}>
-            Don’t run it
+            {t('Don’t run it')}
           </button>
         </div>
       )}
@@ -610,43 +616,43 @@ export const TaskCard: React.FC<{
   onQuick?: (t: Task, a: QuickAction, note?: string) => void;
   /** Dismiss the folded older runs together. */
   onDismissMany?: (ts: Task[]) => void;
-}> = ({ task: t, names, now = Date.now(), showMission = true, onOpen, onRemoveLimit, busy = false, openRisks = 0, older = [], onQuick, onDismissMany }) => {
-  const owner = (t.owner_kwant_id && names[t.owner_kwant_id]) || t.owner_name;
-  const checks = checksText(t.checks_summary);
-  const optionalNote = optionalChecksNote(t.checks_summary);
-  const status = cardStatus(t, names, now);
-  const flags = openFlags(t);
-  const dimmed = t.state === 'backlog' && !flags.length && !t.held_at;
-  const autofixLive = !!autofixCardText(t, now);
-  const quick = onQuick && columnOfTask(t) === 'review' ? quickActionsFor(t) : [];
+}> = ({ task, names, now = Date.now(), showMission = true, onOpen, onRemoveLimit, busy = false, openRisks = 0, older = [], onQuick, onDismissMany }) => {
+  const owner = (task.owner_kwant_id && names[task.owner_kwant_id]) || task.owner_name;
+  const checks = checksText(task.checks_summary);
+  const optionalNote = optionalChecksNote(task.checks_summary);
+  const status = cardStatus(task, names, now);
+  const flags = openFlags(task);
+  const dimmed = task.state === 'backlog' && !flags.length && !task.held_at;
+  const autofixLive = !!autofixCardText(task, now);
+  const quick = onQuick && columnOfTask(task) === 'review' ? quickActionsFor(task) : [];
   const [sending, setSending] = useState(false);
   const [note, setNote] = useState('');
   const noteId = useId();
   return (
-    <li data-task={t.id} data-state={t.state} data-repeats={older.length ? older.length + 1 : undefined}>
+    <li data-task={task.id} data-state={task.state} data-repeats={older.length ? older.length + 1 : undefined}>
       <button
         type="button"
-        onClick={() => onOpen(t)}
+        onClick={() => onOpen(task)}
         className={`${card} w-full text-left p-3 space-y-2 hover:border-zinc-700 hover:bg-zinc-900/70 ${focusRing} ${dimmed ? 'opacity-60' : ''}`}
       >
         <span className="flex flex-wrap items-center gap-1.5">
-          {t.state === 'blocked' && <Badge tone="rose">Blocked</Badge>}
-          {t.state === 'failed' && <Badge tone="rose">Failed</Badge>}
-          {t.state === 'backlog' && !t.held_at && <Badge tone="zinc">Waiting</Badge>}
-          {t.held_at && (t.state === 'ready' || t.state === 'backlog') && (
+          {task.state === 'blocked' && <Badge tone="rose">{t('Blocked')}</Badge>}
+          {task.state === 'failed' && <Badge tone="rose">{t('Failed')}</Badge>}
+          {task.state === 'backlog' && !task.held_at && <Badge tone="zinc">{t('Waiting')}</Badge>}
+          {task.held_at && (task.state === 'ready' || task.state === 'backlog') && (
             <span data-held-badge>
-              <Badge tone="amber">On hold</Badge>
+              <Badge tone="amber">{t('On hold')}</Badge>
             </span>
           )}
           {autofixLive && (
             <span data-autofix-badge>
-              <Badge tone="violet">AutoFix</Badge>
+              <Badge tone="violet">{t('AutoFix')}</Badge>
             </span>
           )}
-          {t.state === 'review' && approvalHolds(t.checks_summary) && <Badge tone="amber">Needs you</Badge>}
+          {task.state === 'review' && approvalHolds(task.checks_summary) && <Badge tone="amber">{t('Needs you')}</Badge>}
           {flags.length > 0 && (
             <span data-flag-badge>
-              <Badge tone="amber">May be invalid</Badge>
+              <Badge tone="amber">{t('May be invalid')}</Badge>
             </span>
           )}
           {openRisks > 0 && (
@@ -654,21 +660,21 @@ export const TaskCard: React.FC<{
               <Badge tone="amber">{riskBadgeText(openRisks)}</Badge>
             </span>
           )}
-          {t.state === 'verified' && flags.length > 0 && <Badge tone="emerald">Verified</Badge>}
-          {t.priority >= 2 && <Badge tone={t.priority >= 3 ? 'rose' : 'amber'}>{priorityLabel(t.priority)}</Badge>}
-          {showsTier(t) && t.owner_tier !== 'act' && (
-            <span data-tier-badge={t.owner_tier} title={`Flight School: ${classLabel(t.task_class ?? DEFAULT_CLASS).toLowerCase()} work at ${tierLabel(t.owner_tier)}`}>
-              <Badge tone="sky">{tierLabel(t.owner_tier)}</Badge>
+          {task.state === 'verified' && flags.length > 0 && <Badge tone="emerald">{t('Verified')}</Badge>}
+          {task.priority >= 2 && <Badge tone={task.priority >= 3 ? 'rose' : 'amber'}>{priorityLabel(task.priority)}</Badge>}
+          {showsTier(task) && task.owner_tier !== 'act' && (
+            <span data-tier-badge={task.owner_tier} title={t('Flight School: {work} work at {tier}', { work: classLabel(task.task_class ?? DEFAULT_CLASS).toLowerCase(), tier: tierLabel(task.owner_tier) })}>
+              <Badge tone="sky">{tierLabel(task.owner_tier)}</Badge>
             </span>
           )}
-          {showMission && t.mission_title && <span className="min-w-0 truncate text-[11px] text-zinc-500">{t.mission_title}</span>}
+          {showMission && task.mission_title && <span className="min-w-0 truncate text-[11px] text-zinc-500">{task.mission_title}</span>}
         </span>
         <span className="flex items-start gap-2 text-sm font-medium text-zinc-100 break-words">
-          <span className="min-w-0 flex-1">{t.title}</span>
+          <span className="min-w-0 flex-1">{task.title}</span>
           {older.length > 0 && (
             <span
               className="shrink-0 mt-0.5 px-1.5 rounded-md bg-zinc-800 border border-zinc-700 text-[11px] font-semibold tabular-nums text-zinc-300"
-              title={`${older.length + 1} runs; the newest is shown`}
+              title={t('{n} runs; the newest is shown', { n: older.length + 1 })}
               data-repeat-count
             >
               ×{older.length + 1}
@@ -676,7 +682,7 @@ export const TaskCard: React.FC<{
           )}
         </span>
         {status && (
-          <span className={`block text-[11px] break-words line-clamp-2 ${t.state === 'needs_you' || t.held_at || (t.state === 'review' && approvalHolds(t.checks_summary)) ? 'text-amber-200' : autofixLive ? 'text-violet-200' : t.state === 'blocked' || t.state === 'failed' ? 'text-rose-300' : 'text-zinc-400'}`}>
+          <span className={`block text-[11px] break-words line-clamp-2 ${task.state === 'needs_you' || task.held_at || (task.state === 'review' && approvalHolds(task.checks_summary)) ? 'text-amber-200' : autofixLive ? 'text-violet-200' : task.state === 'blocked' || task.state === 'failed' ? 'text-rose-300' : 'text-zinc-400'}`}>
             {status}
           </span>
         )}
@@ -685,22 +691,22 @@ export const TaskCard: React.FC<{
             <AlertTriangle size={11} className="mt-0.5 shrink-0" aria-hidden="true" />
             <span className="line-clamp-2">
               {flags[0].text}
-              {flags.length > 1 ? ` (+${flags.length - 1} more)` : ''}
+              {flags.length > 1 ? t(' (+{n} more)', { n: flags.length - 1 }) : ''}
             </span>
           </span>
         )}
-        {t.forked_from && <span className="block text-[11px] text-zinc-500" data-forked-from>A copy, made to redo an earlier task</span>}
+        {task.forked_from && <span className="block text-[11px] text-zinc-500" data-forked-from>{t('A copy, made to redo an earlier task')}</span>}
         <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-zinc-400">
           {owner ? (
             <span className="inline-flex items-center gap-1 min-w-0">
-              <OwnerAvatar kwantId={t.owner_kwant_id} name={owner} />
+              <OwnerAvatar kwantId={task.owner_kwant_id} name={owner} />
               <span className="truncate">{owner}</span>
             </span>
           ) : (
-            <span className="text-zinc-500">No owner yet</span>
+            <span className="text-zinc-500">{t('No owner yet')}</span>
           )}
-          <span className="tabular-nums">{costText(t.spent_tokens, t.budget_tokens)}</span>
-          {(t.state === 'review' || t.state === 'verified' || t.state === 'failed' || t.checks_summary.total > 0) && (
+          <span className="tabular-nums">{costText(task.spent_tokens, task.budget_tokens)}</span>
+          {(task.state === 'review' || task.state === 'verified' || task.state === 'failed' || task.checks_summary.total > 0) && (
             <span className={`inline-flex items-center gap-1 ${checks.tone === 'emerald' ? 'text-emerald-300' : checks.tone === 'rose' ? 'text-rose-300' : checks.tone === 'amber' ? 'text-amber-200' : 'text-zinc-400'}`}>
               {checks.tone === 'emerald' ? <CheckCircle2 size={11} aria-hidden="true" /> : checks.tone === 'rose' ? <XCircle size={11} aria-hidden="true" /> : <CircleDashed size={11} aria-hidden="true" />}
               {checks.text}
@@ -713,9 +719,9 @@ export const TaskCard: React.FC<{
           )}
         </span>
       </button>
-      {onRemoveLimit && outOfBudget(t) && (
-        <button type="button" disabled={busy} onClick={() => onRemoveLimit(t)} className={`${mainBtn} mt-1.5 w-full`} data-card-remove-limit>
-          Remove limit and continue
+      {onRemoveLimit && outOfBudget(task) && (
+        <button type="button" disabled={busy} onClick={() => onRemoveLimit(task)} className={`${mainBtn} mt-1.5 w-full`} data-card-remove-limit>
+          {t('Remove limit and continue')}
         </button>
       )}
       {quick.length > 0 && !sending && (
@@ -725,7 +731,7 @@ export const TaskCard: React.FC<{
               key={a}
               type="button"
               disabled={busy}
-              onClick={() => (a === 'reject' ? setSending(true) : onQuick!(t, a))}
+              onClick={() => (a === 'reject' ? setSending(true) : onQuick!(task, a))}
               className={`${cardBtn} ${a === 'verify' || a === 'retry' ? cardGoodBtn : a === 'cancel' ? cardQuietBtn : cardPlainBtn}`}
               data-card-action={a}
             >
@@ -735,7 +741,7 @@ export const TaskCard: React.FC<{
           ))}
           {older.length > 0 && onDismissMany && (
             <button type="button" disabled={busy} onClick={() => onDismissMany(older)} className={`${cardBtn} ${cardQuietBtn}`} data-card-dismiss-older>
-              Dismiss {older.length} older
+              {t('Dismiss {n} older', { n: older.length })}
             </button>
           )}
         </div>
@@ -745,14 +751,14 @@ export const TaskCard: React.FC<{
           className="mt-1.5 space-y-1.5 rounded-xl border border-zinc-800 bg-zinc-900/60 p-2"
           onSubmit={(e) => {
             e.preventDefault();
-            onQuick!(t, 'reject', note);
+            onQuick!(task, 'reject', note);
             setSending(false);
             setNote('');
           }}
           data-card-send-back
         >
           <label htmlFor={noteId} className="block text-[11px] text-zinc-400">
-            What still needs doing? <span className="text-zinc-500">(optional)</span>
+            {t('What still needs doing?')} <span className="text-zinc-500">{t('(optional)')}</span>
           </label>
           <textarea
             id={noteId}
@@ -765,14 +771,14 @@ export const TaskCard: React.FC<{
               if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) e.currentTarget.form?.requestSubmit();
             }}
             className={`${field} w-full resize-none text-xs`}
-            placeholder="e.g. The links in section 2 are broken"
+            placeholder={t('e.g. The links in section 2 are broken')}
           />
           <div className="flex gap-1.5">
             <button type="submit" disabled={busy} className={`${cardBtn} ${cardGoodBtn}`}>
-              Send back
+              {t('Send back')}
             </button>
             <button type="button" onClick={() => setSending(false)} className={`${cardBtn} ${cardQuietBtn}`}>
-              Cancel
+              {t('Cancel')}
             </button>
           </div>
         </form>
@@ -837,7 +843,7 @@ export const Board: React.FC<{
     const more =
       olderCount > 0 ? (
         <button type="button" onClick={() => setShowOlder((v) => !v)} className={`${subtleBtn} ml-0 w-full justify-center`} data-show-older={hidden}>
-          {showOlder ? 'Show the last 24 hours only' : `Show older (${hidden})`}
+          {showOlder ? t('Show the last 24 hours only') : t('Show older ({n})', { n: hidden })}
         </button>
       ) : null;
     if (!cards.length) {
@@ -845,7 +851,7 @@ export const Board: React.FC<{
       return (
         <div className="space-y-2">
           <p className="px-3 py-6 rounded-xl border border-dashed border-zinc-800 text-center text-xs text-zinc-500" data-empty-column={key}>
-            {key === 'verified' && hidden > 0 ? 'Nothing verified in the last 24 hours.' : meta.empty}
+            {key === 'verified' && hidden > 0 ? t('Nothing verified in the last 24 hours.') : meta.empty}
           </p>
           {more}
         </div>
@@ -902,7 +908,7 @@ export const Board: React.FC<{
         <span className="text-[11px] tabular-nums text-zinc-500">{key ? l.columns[key].length : l.total}</span>
         {l.needsYou > 0 && (
           <span className="ml-1" data-lane-needs-you={l.needsYou}>
-            <Badge tone="amber">{l.needsYou} needs you</Badge>
+            <Badge tone="amber">{t('{n} needs you', { n: l.needsYou })}</Badge>
           </span>
         )}
         {!open && key === null && (
@@ -922,7 +928,7 @@ export const Board: React.FC<{
     <>
       {/* Phone and tablet: one column at a time, picked from tabs with counts */}
       <div className="lg:hidden space-y-3" data-board="tabs">
-        <div role="tablist" aria-label="Board columns" className="flex gap-1 overflow-x-auto -mx-1 px-1 pb-1 [scrollbar-width:none]">
+        <div role="tablist" aria-label={t('Board columns')} className="flex gap-1 overflow-x-auto -mx-1 px-1 pb-1 [scrollbar-width:none]">
           {COLUMNS.map((c, i) => {
             const on = c.key === column;
             return (
@@ -1025,14 +1031,14 @@ export const LiveStrip: React.FC<{
   const groups = liveByTeam(bots, teams);
   const idle = bots.length === 0;
   return (
-    <section aria-label="Live now" className={`${card} px-3 py-2.5`} data-live={bots.length}>
+    <section aria-label={t('Live now')} className={`${card} px-3 py-2.5`} data-live={bots.length}>
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
         <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-100">
           <span className="relative flex h-2 w-2" aria-hidden="true">
             {!idle && <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60 animate-ping motion-reduce:animate-none" />}
             <span className={`relative inline-flex h-2 w-2 rounded-full ${idle ? 'bg-zinc-600' : 'bg-emerald-400'}`} />
           </span>
-          Live now
+          {t('Live now')}
         </span>
         <span className="text-[11px] text-zinc-400" data-live-summary>
           {liveSummary(bots, workingCards)}
@@ -1050,7 +1056,11 @@ export const LiveStrip: React.FC<{
                       type="button"
                       onClick={onOpen ? () => onOpen(b) : undefined}
                       disabled={!onOpen}
-                      title={`${b.name}: ${b.what}${b.more ? ` (+${b.more} more)` : ''}. Open the conversation.`}
+                      title={
+                        b.more
+                          ? t('{name}: {what} (+{n} more). Open the conversation.', { name: b.name, what: b.what, n: b.more })
+                          : t('{name}: {what}. Open the conversation.', { name: b.name, what: b.what })
+                      }
                       className={`group flex items-center gap-2 w-[220px] sm:w-[240px] min-h-[44px] px-2 py-1.5 rounded-xl border text-left ${
                         b.kind === 'task' ? 'border-sky-500/30 bg-sky-500/5 hover:bg-sky-500/10' : 'border-emerald-500/25 bg-emerald-500/5 hover:bg-emerald-500/10'
                       } ${focusRing}`}
@@ -1069,7 +1079,7 @@ export const LiveStrip: React.FC<{
                           </span>
                         </span>
                         <span className="block truncate text-[11px] text-zinc-400">
-                          {b.kind === 'task' && <span className="text-sky-300">Task · </span>}
+                          {b.kind === 'task' && <span className="text-sky-300">{t('Task · ')}</span>}
                           {b.what}
                           {b.more > 0 && <span className="text-zinc-500"> · +{b.more}</span>}
                         </span>
@@ -1099,7 +1109,7 @@ export const BoardToolbar: React.FC<{
   <div className="space-y-2" data-board-toolbar>
     <div className="flex flex-wrap items-center gap-2">
       <span className="text-[11px] font-medium text-zinc-400" id="board-group-label">
-        Group
+        {t('Group')}
       </span>
       <div role="group" aria-labelledby="board-group-label" className="inline-flex rounded-lg border border-zinc-800 p-0.5" data-group-by={groupBy}>
         {(['none', 'team', 'bot'] as const).map((g) => (
@@ -1110,7 +1120,7 @@ export const BoardToolbar: React.FC<{
             onClick={() => onGroupBy(g)}
             className={`min-h-[40px] sm:min-h-[30px] px-3 rounded-md text-xs font-medium ${focusRing} ${groupBy === g ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-400 hover:text-zinc-200'}`}
           >
-            {g === 'none' ? 'None' : g === 'team' ? 'Team' : 'Bot'}
+            {g === 'none' ? t('None') : g === 'team' ? t('Team') : t('Bot')}
           </button>
         ))}
       </div>
@@ -1122,19 +1132,19 @@ export const BoardToolbar: React.FC<{
           data-clear-old={oldReviews}
         >
           <Trash2 size={12} aria-hidden="true" />
-          Clear old reviews ({oldReviews})
+          {t('Clear old reviews ({n})', { n: oldReviews })}
         </button>
       )}
     </div>
     {teamChips.length > 1 && (
-      <div role="group" aria-label="Show teams" className="flex gap-1.5 overflow-x-auto -mx-1 px-1 pb-1 [scrollbar-width:none]" data-team-chips>
+      <div role="group" aria-label={t('Show teams')} className="flex gap-1.5 overflow-x-auto -mx-1 px-1 pb-1 [scrollbar-width:none]" data-team-chips>
         <button
           type="button"
           aria-pressed={picked.length === 0}
           onClick={() => onPick([])}
           className={`shrink-0 min-h-[36px] sm:min-h-[28px] px-3 rounded-full text-xs border ${focusRing} ${picked.length === 0 ? 'bg-sky-500/15 border-sky-500/40 text-sky-100' : 'border-zinc-800 text-zinc-400 hover:text-zinc-200'}`}
         >
-          All teams
+          {t('All teams')}
         </button>
         {teamChips.map((c) => {
           const on = picked.includes(c.id);
@@ -1163,9 +1173,9 @@ export const UndoToast: React.FC<{ text: string; onUndo: () => void; onClose: ()
     <div role="status" aria-live="polite" className="pointer-events-auto flex items-center gap-3 max-w-md w-full sm:w-auto px-4 py-2.5 rounded-xl border border-zinc-700 bg-zinc-900 shadow-2xl shadow-black/50">
       <span className="min-w-0 flex-1 text-xs text-zinc-100 break-words">{text}</span>
       <button type="button" onClick={onUndo} className={`shrink-0 min-h-[36px] px-3 rounded-lg text-xs font-semibold text-sky-300 hover:bg-sky-500/10 ${focusRing}`} data-undo>
-        Undo
+        {t('Undo')}
       </button>
-      <button type="button" onClick={onClose} aria-label="Close" className={`shrink-0 p-1.5 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 ${focusRing}`}>
+      <button type="button" onClick={onClose} aria-label={t('Close')} className={`shrink-0 p-1.5 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 ${focusRing}`}>
         <X size={14} aria-hidden="true" />
       </button>
     </div>
@@ -1193,7 +1203,7 @@ const evidenceIcon = (k: Evidence['kind']) =>
 const EvidenceItem: React.FC<{ e: Evidence; names: Record<string, string> }> = ({ e, names }) => {
   const href = safeHttps(e.uri);
   const size = formatBytes(e.bytes);
-  const by = e.captured_by === 'person' ? 'you' : e.captured_by === 'kwant' ? 'kwant' : names[e.captured_by] || 'a bot';
+  const by = e.captured_by === 'person' ? t('you') : e.captured_by === 'kwant' ? 'kwant' : names[e.captured_by] || t('a bot');
   return (
     <li className="flex items-start gap-2 text-xs" data-evidence={e.id}>
       <span className="mt-0.5 text-zinc-400">{evidenceIcon(e.kind)}</span>
@@ -1209,7 +1219,7 @@ const EvidenceItem: React.FC<{ e: Evidence; names: Record<string, string> }> = (
         {e.path && <code className="block mt-0.5 text-[11px] text-zinc-400 break-all">{e.path}</code>}
         {e.excerpt && <p className="mt-0.5 text-[11px] text-zinc-400 whitespace-pre-wrap break-words line-clamp-4">{e.excerpt}</p>}
         <p className="mt-0.5 text-[10px] text-zinc-500">
-          {[`Added by ${by}`, ago(e.captured_at), size, e.sha256 ? `SHA-256 ${e.sha256.slice(0, 12)}…` : null].filter(Boolean).join(' · ')}
+          {[t('Added by {name}', { name: by }), ago(e.captured_at), size, e.sha256 ? `SHA-256 ${e.sha256.slice(0, 12)}…` : null].filter(Boolean).join(' · ')}
         </p>
       </div>
     </li>
@@ -1224,31 +1234,36 @@ export const EvidenceReceipt: React.FC<{
 }> = ({ receipt, names, busy = false, onApproveCheck }) => (
   <section aria-labelledby="receipt-h" className="space-y-3" data-receipt>
     <h4 id="receipt-h" className="flex items-center gap-1.5 text-xs font-semibold text-zinc-200">
-      <ShieldCheck size={14} className="text-emerald-400" aria-hidden="true" /> Evidence receipt
+      <ShieldCheck size={14} className="text-emerald-400" aria-hidden="true" /> {t('Evidence receipt')}
     </h4>
     {receipt.verifiedBy && (
       <p className="px-3 py-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-xs text-emerald-200" data-verified-by>
-        Verified: {checkKindLabel(receipt.verifiedBy.check.kind).toLowerCase()} passed
-        {receipt.verifiedBy.by ? `, checked by ${receipt.verifiedBy.by}` : ''}
-        {receipt.verifiedBy.check.finished_at ? ` ${ago(receipt.verifiedBy.check.finished_at)}` : ''}.
+        {(() => {
+          const v = receipt.verifiedBy!;
+          const vars = { kind: checkKindLabel(v.check.kind).toLowerCase(), by: v.by ?? '', when: v.check.finished_at ? ago(v.check.finished_at) : '' };
+          if (v.by) return v.check.finished_at ? t('Verified: {kind} passed, checked by {by} {when}.', vars) : t('Verified: {kind} passed, checked by {by}.', vars);
+          return v.check.finished_at ? t('Verified: {kind} passed {when}.', vars) : t('Verified: {kind} passed.', vars);
+        })()}
       </p>
     )}
     {receipt.waitingOnYou && (
       <p className="px-3 py-2 rounded-lg border border-amber-500/30 bg-amber-500/10 text-xs text-amber-200" data-waiting-on-you>
-        Not verified yet. {receipt.waitingOnYou}. A check a bot adds runs and counts only after you allow it below.
+        {t('Not verified yet. {waiting}. A check a bot adds runs and counts only after you allow it below.', { waiting: receipt.waitingOnYou })}
       </p>
     )}
     {receipt.optionalWaiting && (
       <p className="px-3 py-2 rounded-lg border border-zinc-800 text-xs text-zinc-400" data-optional-waiting>
-        {receipt.optionalWaiting}.{' '}
-        {receipt.settledVerified ? 'The task is verified without it. You can still run it.' : 'It doesn’t hold the task: it can be verified without it.'}
+        {t('{text}.', { text: receipt.optionalWaiting })}{' '}
+        {receipt.settledVerified ? t('The task is verified without it. You can still run it.') : t('It doesn’t hold the task: it can be verified without it.')}
       </p>
     )}
     {receipt.notChecked && (
       <div className="px-3 py-2 rounded-lg border border-dashed border-zinc-700 text-xs" data-not-checked>
-        <p className="font-semibold text-zinc-200">Not checked</p>
+        <p className="font-semibold text-zinc-200">{t('Not checked')}</p>
         <p className="mt-0.5 text-zinc-400">
-          No check has run on this task yet. It can’t be marked verified on a bot’s word: a check has to pass, a teammate has to review it with evidence, or you verify it yourself.
+          {t(
+            'No check has run on this task yet. It can’t be marked verified on a bot’s word: a check has to pass, a teammate has to review it with evidence, or you verify it yourself.',
+          )}
         </p>
       </div>
     )}
@@ -1262,41 +1277,41 @@ export const EvidenceReceipt: React.FC<{
                 <p className="flex flex-wrap items-center gap-1.5 text-xs">
                   <span className="font-medium text-zinc-100">{checkKindLabel(l.check.kind)}</span>
                   {receipt.quietOptional(l.check) ? (
-                    <Badge tone="zinc">Not run</Badge>
+                    <Badge tone="zinc">{t('Not run')}</Badge>
                   ) : (
                     <Badge tone={l.status.tone}>{l.status.label}</Badge>
                   )}
-                  {!l.check.required && <span className="text-[10px] text-zinc-500">Optional</span>}
+                  {!l.check.required && <span className="text-[10px] text-zinc-500">{t('Optional')}</span>}
                 </p>
                 {l.target && <code className="block mt-1 text-[11px] text-zinc-300 break-all whitespace-pre-wrap">{l.target}</code>}
                 <p className="mt-1 text-[10px] text-zinc-500">
-                  {[l.by ? `Checked by ${l.by}` : null, l.check.finished_at ? ago(l.check.finished_at) : null].filter(Boolean).join(' · ') || 'Hasn’t run yet'}
+                  {[l.by ? t('Checked by {name}', { name: l.by }) : null, l.check.finished_at ? ago(l.check.finished_at) : null].filter(Boolean).join(' · ') || t('Hasn’t run yet')}
                 </p>
                 {l.notCounting && !l.ownClaim && !receipt.quietOptional(l.check) && !(receipt.settledVerified && !l.check.required) && (
                   <p className="mt-1 text-[11px] text-amber-200" data-not-counting>
                     {l.notCounting}
                   </p>
                 )}
-                {l.ownClaim && <p className="mt-1 text-[11px] text-amber-200">This is the owner’s own check, so it doesn’t count toward Verified.</p>}
+                {l.ownClaim && <p className="mt-1 text-[11px] text-amber-200">{t('This is the owner’s own check, so it doesn’t count toward Verified.')}</p>}
               </div>
             </div>
             {onApproveCheck && receipt.quietOptional(l.check) ? (
               <div className="pl-6">
                 <button type="button" disabled={busy} onClick={() => onApproveCheck(l.check)} className={subtleBtn} data-run-optional>
-                  Run this optional check
+                  {t('Run this optional check')}
                 </button>
               </div>
             ) : l.check.status === 'needs_approval' && onApproveCheck && (
               <div className="flex flex-wrap items-center gap-2 pl-6">
-                <p className="text-[11px] text-amber-200 flex-1 min-w-[10rem]">{l.notCounting ? '' : 'A bot added this check. It runs only after you OK it.'}</p>
+                <p className="text-[11px] text-amber-200 flex-1 min-w-[10rem]">{l.notCounting ? '' : t('A bot added this check. It runs only after you OK it.')}</p>
                 <button type="button" disabled={busy} onClick={() => onApproveCheck(l.check)} className={quietBtn}>
-                  Allow this check
+                  {t('Allow this check')}
                 </button>
               </div>
             )}
             {(l.check.output_excerpt || l.output?.excerpt) && (
               <details className="pl-6 group">
-                <summary className={`cursor-pointer text-[11px] text-zinc-400 hover:text-zinc-200 rounded ${focusRing}`}>Show output</summary>
+                <summary className={`cursor-pointer text-[11px] text-zinc-400 hover:text-zinc-200 rounded ${focusRing}`}>{t('Show output')}</summary>
                 <pre className="mt-1 max-h-48 overflow-auto p-2 rounded-lg bg-zinc-950 border border-zinc-800 text-[11px] text-zinc-300 whitespace-pre-wrap break-words">
                   {l.check.output_excerpt || l.output?.excerpt}
                 </pre>
@@ -1307,7 +1322,7 @@ export const EvidenceReceipt: React.FC<{
       </ol>
     )}
     <div>
-      <h5 className="text-[11px] font-medium text-zinc-400 mb-1.5">Attached by the team</h5>
+      <h5 className="text-[11px] font-medium text-zinc-400 mb-1.5">{t('Attached by the team')}</h5>
       {receipt.attachments.length ? (
         <ul className="space-y-2">
           {receipt.attachments.map((e) => (
@@ -1315,9 +1330,9 @@ export const EvidenceReceipt: React.FC<{
           ))}
         </ul>
       ) : (
-        <p className="text-[11px] text-zinc-500">Nothing attached.</p>
+        <p className="text-[11px] text-zinc-500">{t('Nothing attached.')}</p>
       )}
-      <p className="mt-2 text-[10px] text-zinc-500">Attached files and links are evidence to look at. They never mark a task verified on their own.</p>
+      <p className="mt-2 text-[10px] text-zinc-500">{t('Attached files and links are evidence to look at. They never mark a task verified on their own.')}</p>
     </div>
   </section>
 );
@@ -1341,14 +1356,14 @@ export const FlagBox: React.FC<{
       <p className="flex items-start gap-1.5 break-words">
         <AlertTriangle size={14} className="mt-px shrink-0 text-amber-300" aria-hidden="true" />
         <span>
-          <span className="font-semibold">May be invalid: </span>
-          {flag.text}.{' '}
-          {state === 'verified' ? 'It stays Verified until you decide.' : 'Nothing has changed on the task until you decide.'}
+          <span className="font-semibold">{t('May be invalid: ')}</span>
+          {t('{text}.', { text: flag.text })}{' '}
+          {state === 'verified' ? t('It stays Verified until you decide.') : t('Nothing has changed on the task until you decide.')}
           {flag.causeTaskId && flag.cause !== 'evidence_changed' && onOpenTask && (
             <>
               {' '}
               <button type="button" onClick={() => onOpenTask(flag.causeTaskId!)} className={`text-sky-300 hover:underline rounded ${focusRing}`} data-flag-cause-link>
-                Open {causeTitle ? `“${causeTitle}”` : 'that task'}
+                {t('Open {task}', { task: causeTitle ? `“${causeTitle}”` : t('that task') })}
               </button>
             </>
           )}
@@ -1356,7 +1371,7 @@ export const FlagBox: React.FC<{
       </p>
       {onResolve && (
         <>
-          <div className="flex flex-wrap gap-2" role="group" aria-label="Decide on this flag" aria-describedby={hintId}>
+          <div className="flex flex-wrap gap-2" role="group" aria-label={t('Decide on this flag')} aria-describedby={hintId}>
             {opts.map((o) => (
               <button
                 key={o.choice}
@@ -1377,7 +1392,7 @@ export const FlagBox: React.FC<{
               .filter((o) => !o.disabled && o.hint)
               .map((o) => (
                 <li key={o.choice} data-resolve-hint={o.choice}>
-                  <span className="font-medium">{o.label}:</span> {o.hint}
+                  <span className="font-medium">{t('{label}:', { label: o.label })}</span> {o.hint}
                 </li>
               ))}
             {off.map((o) => (
@@ -1399,14 +1414,14 @@ export const HeldBox: React.FC<{ task: Task; busy?: boolean; now?: number; onRun
   <section aria-labelledby="held-h" className="px-3 py-2.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-xs text-amber-100 space-y-2" data-held>
     <h4 id="held-h" className="flex items-center gap-1.5 font-semibold">
       <PauseCircle size={14} className="shrink-0 text-amber-300" aria-hidden="true" />
-      On hold after restore
+      {t('On hold after restore')}
     </h4>
     <p>
-      You restored its files {task.held_at ? ago(task.held_at, now) : ''}. No bot picks it up until you press Run, so you can look at the files first.
+      {t('You restored its files {when}. No bot picks it up until you press Run, so you can look at the files first.', { when: task.held_at ? ago(task.held_at, now) : '' })}
     </p>
     {onRun && (
       <button type="button" disabled={busy} onClick={onRun} className={mainBtn} data-run-held>
-        <Play size={13} aria-hidden="true" /> Run
+        <Play size={13} aria-hidden="true" /> {t('Run')}
       </button>
     )}
   </section>
@@ -1440,7 +1455,7 @@ export const FailureBox: React.FC<{
     <section aria-labelledby="fail-h" className="space-y-2" data-failure>
       <h4 id="fail-h" className="flex items-center gap-1.5 text-xs font-semibold text-zinc-200">
         <Wrench size={13} className="text-zinc-400" aria-hidden="true" />
-        What went wrong
+        {t('What went wrong')}
       </h4>
       <div className={`${card} px-3 py-2.5 space-y-2 text-xs`}>
         {f && (
@@ -1454,13 +1469,13 @@ export const FailureBox: React.FC<{
         )}
         {fix && (
           <p className="px-2.5 py-2 rounded-md border border-amber-500/30 bg-amber-500/10 text-amber-100" data-fix-needed>
-            <span className="font-medium">To fix: </span>
+            <span className="font-medium">{t('To fix: ')}</span>
             {fix}
           </p>
         )}
         {latest?.excerpt && (
           <details className="text-[11px]">
-            <summary className={`cursor-pointer text-zinc-400 hover:text-zinc-200 rounded ${focusRing}`}>Show the output</summary>
+            <summary className={`cursor-pointer text-zinc-400 hover:text-zinc-200 rounded ${focusRing}`}>{t('Show the output')}</summary>
             <pre className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap break-words rounded bg-zinc-950 p-2 text-zinc-300">{latest.excerpt}</pre>
           </details>
         )}
@@ -1474,29 +1489,29 @@ export const FailureBox: React.FC<{
           <div className="flex flex-wrap gap-2">
             {onRetry && (
               <button type="button" disabled={busy} onClick={() => onRetry(latest?.id)} className={mainBtn} data-autofix-retry>
-                <RefreshCw size={13} aria-hidden="true" /> Retry now
+                <RefreshCw size={13} aria-hidden="true" /> {t('Retry now')}
               </button>
             )}
             {onSkip && (
               <button type="button" disabled={busy} onClick={() => onSkip(a!)} className={quietBtn} data-autofix-skip>
-                Don’t retry
+                {t('Don’t retry')}
               </button>
             )}
           </div>
         )}
         <dl className="grid grid-cols-2 gap-3 pt-1">
-          <Fact label="AutoFix tries">
+          <Fact label={t('AutoFix tries')}>
             {task.autofix_attempts ?? 0}
           </Fact>
-          {recovery && <Fact label="Spent on retries">{recovery}</Fact>}
+          {recovery && <Fact label={t('Spent on retries')}>{recovery}</Fact>}
         </dl>
         {earlier.length > 0 && (
           <details className="text-[11px]" data-earlier-failures>
-            <summary className={`cursor-pointer text-zinc-400 hover:text-zinc-200 rounded ${focusRing}`}>Earlier failures ({earlier.length})</summary>
+            <summary className={`cursor-pointer text-zinc-400 hover:text-zinc-200 rounded ${focusRing}`}>{t('Earlier failures ({n})', { n: earlier.length })}</summary>
             <ul className="mt-1 space-y-1.5">
               {earlier.map((x) => (
                 <li key={x.id} className="break-words text-zinc-400">
-                  <span className="text-zinc-300">Try {x.attempt}:</span> {failureClassLabel(x.class)}. {x.summary}
+                  <span className="text-zinc-300">{t('Try {n}:', { n: x.attempt })}</span> {t('{failure}. {summary}', { failure: failureClassLabel(x.class), summary: x.summary })}
                   {x.autofix && <span className="block text-zinc-500">{autofixStatusText(x.autofix, now)}</span>}
                 </li>
               ))}
@@ -1520,7 +1535,7 @@ export const WorkflowChangeBox: React.FC<{
   const rows = change ? changeRows(change.before, change.after) : [];
   const changed = rows.filter((r) => r.changed);
   const same = rows.filter((r) => !r.changed);
-  const by = change ? (change.proposed_by === 'kwant' ? 'AutoFix' : change.proposed_by_name || names[change.proposed_by] || 'A bot') : null;
+  const by = change ? (change.proposed_by === 'kwant' ? t('AutoFix') : change.proposed_by_name || names[change.proposed_by] || t('A bot')) : null;
   const Cell: React.FC<{ label: string; value: string; tone: 'before' | 'after' }> = ({ label, value, tone }) => (
     <div className={`min-w-0 rounded-md px-2 py-1.5 ${tone === 'before' ? 'bg-zinc-950/60 text-zinc-400' : 'bg-emerald-500/10 text-emerald-100'}`}>
       <p className="text-[10px] uppercase tracking-wide opacity-70">{label}</p>
@@ -1530,22 +1545,22 @@ export const WorkflowChangeBox: React.FC<{
   return (
     <li className="px-3 py-2.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-xs text-amber-100 space-y-2" data-workflow-change={item.id}>
       <p className="break-words">
-        <span className="font-semibold">Proposed change{change ? ` to ${workflowTargetLabel(change.target).toLowerCase()}` : ''}: </span>
+        <span className="font-semibold">{change ? t('Proposed change to {target}: ', { target: workflowTargetLabel(change.target).toLowerCase() }) : t('Proposed change: ')}</span>
         {change ? change.reason : item.text}
       </p>
       {change && by && (
         <p className="text-[11px] text-amber-100/70">
-          {by} proposed it {ago(change.created_at, now)}.
+          {t('{name} proposed it {when}.', { name: by, when: ago(change.created_at, now) })}
         </p>
       )}
       {changed.length > 0 && (
-        <ul className="space-y-2" aria-label="What changes">
+        <ul className="space-y-2" aria-label={t('What changes')}>
           {changed.map((r) => (
             <li key={r.key} className="space-y-1" data-change-row={r.key}>
               <p className="text-[11px] font-medium text-amber-100">{r.label}</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                <Cell label="Now" value={r.before} tone="before" />
-                <Cell label="After" value={r.after} tone="after" />
+                <Cell label={t('Now')} value={r.before} tone="before" />
+                <Cell label={t('After')} value={r.after} tone="after" />
               </div>
             </li>
           ))}
@@ -1553,7 +1568,7 @@ export const WorkflowChangeBox: React.FC<{
       )}
       {same.length > 0 && (
         <details className="text-[11px]">
-          <summary className={`cursor-pointer text-amber-100/70 hover:text-amber-100 rounded ${focusRing}`}>Unchanged ({same.length})</summary>
+          <summary className={`cursor-pointer text-amber-100/70 hover:text-amber-100 rounded ${focusRing}`}>{t('Unchanged ({n})', { n: same.length })}</summary>
           <dl className="mt-1 space-y-1">
             {same.map((r) => (
               <div key={r.key} className="min-w-0">
@@ -1564,18 +1579,18 @@ export const WorkflowChangeBox: React.FC<{
           </dl>
         </details>
       )}
-      {!change && <p className="text-[11px] text-amber-100/70">Loading the details…</p>}
+      {!change && <p className="text-[11px] text-amber-100/70">{t('Loading the details…')}</p>}
       {onDecide && (
         <>
-          <div className="flex flex-wrap gap-2" role="group" aria-label="Decide on this change">
+          <div className="flex flex-wrap gap-2" role="group" aria-label={t('Decide on this change')}>
             <button type="button" disabled={busy || !change} onClick={() => onDecide(item.id, true)} className={goodBtn} data-change-approve>
-              <CheckCircle2 size={13} aria-hidden="true" /> Approve and apply
+              <CheckCircle2 size={13} aria-hidden="true" /> {t('Approve and apply')}
             </button>
             <button type="button" disabled={busy || !change} onClick={() => onDecide(item.id, false)} className={dangerBtn} data-change-reject>
-              Reject
+              {t('Reject')}
             </button>
           </div>
-          <p className="text-[11px] text-amber-100/70">Nothing changes until you approve.</p>
+          <p className="text-[11px] text-amber-100/70">{t('Nothing changes until you approve.')}</p>
         </>
       )}
     </li>
@@ -1599,16 +1614,16 @@ export const RestorePreviewForm: React.FC<{
     <div className="space-y-3 text-xs" data-restore-preview>
       {checkpoint && (
         <p className="text-zinc-400">
-          Back to: <span className="text-zinc-200">{checkpointLabel(checkpoint.kind)}</span>, try {checkpoint.attempt}
+          {tj('Back to: {label}, try {n}', { label: <span className="text-zinc-200">{checkpointLabel(checkpoint.kind)}</span>, n: checkpoint.attempt })}
         </p>
       )}
       {preview.refused && (
         <p className="px-3 py-2 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-200" data-restore-refused={preview.refused}>
-          {preview.refused === 'running' ? 'A bot is working on it now. Restore once it stops.' : 'A verified task isn’t restored. Use “Redo as a copy” instead.'}
+          {preview.refused === 'running' ? t('A bot is working on it now. Restore once it stops.') : t('A verified task isn’t restored. Use “Redo as a copy” instead.')}
         </p>
       )}
-      <section aria-label="Files that change" className="space-y-1">
-        <h5 className="text-[11px] font-semibold text-zinc-300">Files that change ({preview.changes.length})</h5>
+      <section aria-label={t('Files that change')} className="space-y-1">
+        <h5 className="text-[11px] font-semibold text-zinc-300">{t('Files that change ({n})', { n: preview.changes.length })}</h5>
         {preview.changes.length ? (
           <ul className="space-y-0.5 max-h-40 overflow-auto">
             {preview.changes.map((c) => (
@@ -1619,13 +1634,13 @@ export const RestorePreviewForm: React.FC<{
             ))}
           </ul>
         ) : (
-          <p className="text-zinc-500">No files need changing.</p>
+          <p className="text-zinc-500">{t('No files need changing.')}</p>
         )}
       </section>
       {preview.conflicts.length > 0 && (
         <fieldset className="space-y-1.5" data-restore-conflicts>
-          <legend className="text-[11px] font-semibold text-amber-200">Changed since then ({preview.conflicts.length})</legend>
-          <p className="text-[11px] text-zinc-400">These are left alone unless you tick them.</p>
+          <legend className="text-[11px] font-semibold text-amber-200">{t('Changed since then ({n})', { n: preview.conflicts.length })}</legend>
+          <p className="text-[11px] text-zinc-400">{t('These are left alone unless you tick them.')}</p>
           <ul className="space-y-1">
             {preview.conflicts.map((c) => (
               <li key={c.path}>
@@ -1634,7 +1649,7 @@ export const RestorePreviewForm: React.FC<{
                   <span className="min-w-0">
                     <span className="block break-all font-mono text-zinc-200">{c.path}</span>
                     <span className="block text-[11px] text-amber-200/80" data-conflict-by>
-                      {conflictText(c, titleOf)}. Tick to put it back anyway.
+                      {t('{why}. Tick to put it back anyway.', { why: conflictText(c, titleOf) })}
                     </span>
                   </span>
                 </label>
@@ -1645,7 +1660,7 @@ export const RestorePreviewForm: React.FC<{
       )}
       {preview.skipped.length > 0 && (
         <details className="text-[11px]">
-          <summary className={`cursor-pointer text-zinc-400 hover:text-zinc-200 rounded ${focusRing}`}>Not restored ({preview.skipped.length})</summary>
+          <summary className={`cursor-pointer text-zinc-400 hover:text-zinc-200 rounded ${focusRing}`}>{t('Not restored ({n})', { n: preview.skipped.length })}</summary>
           <ul className="mt-1 space-y-0.5">
             {preview.skipped.map((s) => (
               <li key={s.path} className="break-all text-zinc-400">
@@ -1667,25 +1682,27 @@ export const RestorePreviewForm: React.FC<{
               ))}
             </ul>
           )}
-          {!preview.effects_known && <p className="text-[11px]" data-effects-unknown>Side effects unknown: a run changed files without a logged tool call, so something else may have happened too.</p>}
+          {!preview.effects_known && <p className="text-[11px]" data-effects-unknown>
+              {t('Side effects unknown: a run changed files without a logged tool call, so something else may have happened too.')}
+            </p>}
         </section>
       )}
       {preview.task_state_after && (
         <p className="text-[11px] text-zinc-400">
-          The task goes back to {stateLabel(preview.task_state_after).label}. With “Restore”, it stays on hold until you press Run.
+          {t('The task goes back to {state}. With “Restore”, it stays on hold until you press Run.', { state: stateLabel(preview.task_state_after).label })}
         </p>
       )}
       {onRestore && !preview.refused && (
         <div className="flex flex-wrap gap-2">
           <button type="button" disabled={busy || nothing} onClick={() => onRestore({ force_paths: force, rerun: false })} className={mainBtn} data-restore>
-            <RotateCcw size={13} aria-hidden="true" /> Restore
+            <RotateCcw size={13} aria-hidden="true" /> {t('Restore')}
           </button>
           <button type="button" disabled={busy || nothing} onClick={() => onRestore({ force_paths: force, rerun: true })} className={quietBtn} data-restore-rerun>
-            Restore and run again
+            {t('Restore and run again')}
           </button>
           {onCancel && (
             <button type="button" onClick={onCancel} className={quietBtn}>
-              Never mind
+              {t('Never mind')}
             </button>
           )}
         </div>
@@ -1781,7 +1798,7 @@ export const RestoreSection: React.FC<{
     setOpen(true);
     const c = cps.find((x) => x.id === undoId);
     if (c) void pick(c);
-    else setErr('The checkpoint taken before the restore isn’t there any more.');
+    else setErr(t('The checkpoint taken before the restore isn’t there any more.'));
   };
 
   if (!task.checkpoint_count) return null;
@@ -1791,20 +1808,20 @@ export const RestoreSection: React.FC<{
     <section aria-labelledby="tm-h" className="space-y-2" data-restore-section>
       <h4 id="tm-h" className="flex items-center gap-1.5 text-xs font-semibold text-zinc-200">
         <History size={13} className="text-zinc-400" aria-hidden="true" />
-        Checkpoints
+        {t('Checkpoints')}
       </h4>
       {err && <Notice text={err} error />}
       {undoId && !picked && (
         <button type="button" onClick={() => void undo()} className={quietBtn} data-restore-undo>
-          <RotateCcw size={13} aria-hidden="true" /> Undo this restore
+          <RotateCcw size={13} aria-hidden="true" /> {t('Undo this restore')}
         </button>
       )}
       {blocked ? (
         <p className="text-[11px] text-zinc-500">
-          {task.state === 'verified' ? 'A verified task isn’t restored. Use “Redo as a copy” to work on it again.' : 'A cancelled task isn’t restored.'}
+          {task.state === 'verified' ? t('A verified task isn’t restored. Use “Redo as a copy” to work on it again.') : t('A cancelled task isn’t restored.')}
         </p>
       ) : task.state === 'working' ? (
-        <p className="text-[11px] text-zinc-500">A bot is working on it now. You can restore once it stops.</p>
+        <p className="text-[11px] text-zinc-500">{t('A bot is working on it now. You can restore once it stops.')}</p>
       ) : !open ? (
         <button
           type="button"
@@ -1815,7 +1832,7 @@ export const RestoreSection: React.FC<{
           className={quietBtn}
           data-restore-open
         >
-          <History size={13} aria-hidden="true" /> Restore files from a checkpoint ({task.checkpoint_count})
+          <History size={13} aria-hidden="true" /> {t('Restore files from a checkpoint ({n})', { n: task.checkpoint_count })}
         </button>
       ) : picked ? (
         preview ? (
@@ -1832,12 +1849,12 @@ export const RestoreSection: React.FC<{
           />
         ) : (
           <p className="flex items-center gap-1.5 text-[11px] text-zinc-400">
-            <Loader2 size={13} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> Working out what would change…
+            <Loader2 size={13} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> {t('Working out what would change…')}
           </p>
         )
       ) : list === null ? (
         <p className="flex items-center gap-1.5 text-[11px] text-zinc-400">
-          <Loader2 size={13} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> Loading checkpoints…
+          <Loader2 size={13} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> {t('Loading checkpoints…')}
         </p>
       ) : (
         <ul className="space-y-1" data-checkpoints>
@@ -1852,19 +1869,19 @@ export const RestoreSection: React.FC<{
                 data-checkpoint={c.id}
               >
                 <span className="block text-xs text-zinc-200">
-                  {checkpointLabel(c.kind)} · try {c.attempt}
+                  {checkpointLabel(c.kind)} · {t('try {n}', { n: c.attempt })}
                 </span>
                 <span className="block text-[11px] text-zinc-500">
-                  {ago(c.created_at, now)} · {c.files} {c.files === 1 ? 'file' : 'files'}
-                  {c.effects_after.external.length > 0 && ` · ${c.effects_after.external.length} outside actions after it`}
-                  {!c.restorable && ' · can’t be restored'}
+                  {ago(c.created_at, now)} · {t(c.files === 1 ? '{n} file' : '{n} files', { n: c.files })}
+                  {c.effects_after.external.length > 0 && ` · ${t('{n} outside actions after it', { n: c.effects_after.external.length })}`}
+                  {!c.restorable && ` · ${t('can’t be restored')}`}
                 </span>
               </button>
             </li>
           ))}
           <li>
             <button type="button" onClick={() => setOpen(false)} className={subtleBtn}>
-              Close
+              {t('Close')}
             </button>
           </li>
         </ul>
@@ -1902,7 +1919,7 @@ const TaskClassEditor: React.FC<{ task: Task; disabled: boolean; onSetClass?: (c
       }}
     >
       <label htmlFor={id} className="sr-only">
-        Kind of work
+        {t('Kind of work')}
       </label>
       <input
         id={id}
@@ -1913,7 +1930,7 @@ const TaskClassEditor: React.FC<{ task: Task; disabled: boolean; onSetClass?: (c
       />
       {slug !== current && (
         <button type="submit" disabled={disabled || !validClass(slug)} className="px-2 py-1 min-h-[32px] rounded border border-zinc-700 text-[11px] hover:bg-zinc-800 disabled:opacity-50">
-          Save
+          {t('Save')}
         </button>
       )}
     </form>
@@ -1993,15 +2010,15 @@ export const TaskDetailBody: React.FC<{
   onResolveRisk,
   onOpenAuditCard,
 }) => {
-  const t = detail.task;
-  const limitHit = outOfBudget(t);
-  const flags = openFlags(t);
-  const others = t.needs_you.filter((n) => !OWN_SECTION.has(n.kind));
-  const changeItems = t.needs_you.filter((n) => n.kind === 'workflow_change');
-  const fixText = t.needs_you.find((n) => n.kind === 'fix_needed')?.text ?? null;
-  const held = !!t.held_at && (t.state === 'ready' || t.state === 'backlog');
-  const copies = Object.values(tasksById).filter((x) => x.forked_from === t.id && x.id !== t.id);
-  const source = t.forked_from ? tasksById[t.forked_from] : undefined;
+  const task = detail.task;
+  const limitHit = outOfBudget(task);
+  const flags = openFlags(task);
+  const others = task.needs_you.filter((n) => !OWN_SECTION.has(n.kind));
+  const changeItems = task.needs_you.filter((n) => n.kind === 'workflow_change');
+  const fixText = task.needs_you.find((n) => n.kind === 'fix_needed')?.text ?? null;
+  const held = !!task.held_at && (task.state === 'ready' || task.state === 'backlog');
+  const copies = Object.values(tasksById).filter((x) => x.forked_from === task.id && x.id !== task.id);
+  const source = task.forked_from ? tasksById[task.forked_from] : undefined;
   const [forking, setForking] = useState(false);
   const [forkReason, setForkReason] = useState('');
   const forkId = useId();
@@ -2009,11 +2026,11 @@ export const TaskDetailBody: React.FC<{
   const [asking, setAsking] = useState<TaskAction | null>(null);
   const [reason, setReason] = useState('');
   const reasonId = useId();
-  const owner = (t.owner_kwant_id && names[t.owner_kwant_id]) || t.owner_name;
-  const st = taskStateLabel(t);
+  const owner = (task.owner_kwant_id && names[task.owner_kwant_id]) || task.owner_name;
+  const st = taskStateLabel(task);
   // Unblocking without a new limit would stop it again at once.
-  const actions = actionsFor(t).filter((a) => !(limitHit && a === 'unblock'));
-  const chat = sourceChat(t);
+  const actions = actionsFor(task).filter((a) => !(limitHit && a === 'unblock'));
+  const chat = sourceChat(task);
   const [showAll, setShowAll] = useState(false);
   const events = showAll ? detail.events : detail.events.slice(-12);
 
@@ -2022,7 +2039,7 @@ export const TaskDetailBody: React.FC<{
     setReason('');
     setForking(false);
     setForkReason('');
-  }, [t.id, t.state]);
+  }, [task.id, task.state]);
 
   const press = (a: TaskAction) => {
     if (NEEDS_REASON[a]) {
@@ -2037,15 +2054,15 @@ export const TaskDetailBody: React.FC<{
       <div className="space-y-2">
         <div className="flex flex-wrap items-center gap-1.5">
           <Badge tone={st.tone}>{st.label}</Badge>
-          {t.priority >= 2 && <Badge tone={t.priority >= 3 ? 'rose' : 'amber'}>{priorityLabel(t.priority)}</Badge>}
-          {t.mission_title && <span className="text-[11px] text-zinc-500 break-words">{t.mission_title}</span>}
+          {task.priority >= 2 && <Badge tone={task.priority >= 3 ? 'rose' : 'amber'}>{priorityLabel(task.priority)}</Badge>}
+          {task.mission_title && <span className="text-[11px] text-zinc-500 break-words">{task.mission_title}</span>}
         </div>
-        {limitHit && <LimitReachedBox task={t} busy={busy} onContinue={onContinueWithLimit} />}
-        {((t.state === 'blocked' && !limitHit) || t.state === 'failed') && (
-          <p className="px-3 py-2 rounded-lg border border-rose-500/30 bg-rose-500/10 text-xs text-rose-200">{cardStatus(t, names, now)}</p>
+        {limitHit && <LimitReachedBox task={task} busy={busy} onContinue={onContinueWithLimit} />}
+        {((task.state === 'blocked' && !limitHit) || task.state === 'failed') && (
+          <p className="px-3 py-2 rounded-lg border border-rose-500/30 bg-rose-500/10 text-xs text-rose-200">{cardStatus(task, names, now)}</p>
         )}
         {notice && <Notice text={notice.text} error={notice.error} />}
-        {held && <HeldBox task={t} busy={busy} now={now} onRun={onRunHeld} />}
+        {held && <HeldBox task={task} busy={busy} now={now} onRun={onRunHeld} />}
         {actions.length > 0 && !asking && (
           <div className="flex flex-wrap gap-2" data-actions>
             {actions.map((a) => (
@@ -2060,7 +2077,7 @@ export const TaskDetailBody: React.FC<{
                 {ACTION_LABELS[a]}
               </button>
             ))}
-            {busy && <Loader2 size={14} className="self-center animate-spin motion-reduce:animate-none text-zinc-400" aria-label="Working" />}
+            {busy && <Loader2 size={14} className="self-center animate-spin motion-reduce:animate-none text-zinc-400" aria-label={t('Working')} />}
           </div>
         )}
         {asking && (
@@ -2081,18 +2098,18 @@ export const TaskDetailBody: React.FC<{
                 {ACTION_LABELS[asking]}
               </button>
               <button type="button" onClick={() => setAsking(null)} className={quietBtn}>
-                Never mind
+                {t('Never mind')}
               </button>
             </div>
           </form>
         )}
-        {t.state === 'review' && <p className="text-[11px] text-zinc-500">“Mark verified” records that you checked it yourself.</p>}
-        {t.state === 'verified' && onFork && !forking && (
+        {task.state === 'review' && <p className="text-[11px] text-zinc-500">{t('“Mark verified” records that you checked it yourself.')}</p>}
+        {task.state === 'verified' && onFork && !forking && (
           <button type="button" disabled={busy} onClick={() => setForking(true)} className={quietBtn} data-fork>
-            <Copy size={13} aria-hidden="true" /> Redo as a copy
+            <Copy size={13} aria-hidden="true" /> {t('Redo as a copy')}
           </button>
         )}
-        {t.state === 'verified' && onFork && forking && (
+        {task.state === 'verified' && onFork && forking && (
           <form
             className="space-y-2"
             data-fork-form
@@ -2103,35 +2120,37 @@ export const TaskDetailBody: React.FC<{
             }}
           >
             <label htmlFor={forkId} className="block text-[11px] font-medium text-zinc-300">
-              Why redo it?
+              {t('Why redo it?')}
             </label>
             <textarea id={forkId} autoFocus rows={2} maxLength={500} value={forkReason} onChange={(e) => setForkReason(e.target.value)} className={`${field} resize-y`} />
-            <p className="text-[11px] text-zinc-400">The copy starts running on its own. This task stays Verified, and tasks that build on it get a “May be invalid” flag.</p>
+            <p className="text-[11px] text-zinc-400">
+              {t('The copy starts running on its own. This task stays Verified, and tasks that build on it get a “May be invalid” flag.')}
+            </p>
             <div className="flex flex-wrap gap-2">
               <button type="submit" disabled={busy || !forkReason.trim()} className={mainBtn}>
-                Make the copy
+                {t('Make the copy')}
               </button>
               <button type="button" onClick={() => setForking(false)} className={quietBtn}>
-                Never mind
+                {t('Never mind')}
               </button>
             </div>
           </form>
         )}
-        {t.state === 'verified' && !forking && !inGoalMission && <KeepTrueBox task={t} checks={detail.checks} names={names} />}
+        {task.state === 'verified' && !forking && !inGoalMission && <KeepTrueBox task={task} checks={detail.checks} names={names} />}
       </div>
 
       {flags.length > 0 && (
         <section aria-labelledby="flag-h" className="space-y-2" data-flags>
           <h4 id="flag-h" className="text-xs font-semibold text-amber-200">
-            May be invalid
+            {t('May be invalid')}
           </h4>
           <ul className="space-y-2">
             {flags.map((f) => (
               <FlagBox
                 key={f.id}
                 flag={f}
-                state={t.state}
-                causeTitle={(t.flags ?? []).find((x) => x.id === f.id)?.cause_title ?? (f.causeTaskId ? tasksById[f.causeTaskId]?.title : null)}
+                state={task.state}
+                causeTitle={(task.flags ?? []).find((x) => x.id === f.id)?.cause_title ?? (f.causeTaskId ? tasksById[f.causeTaskId]?.title : null)}
                 busy={busy}
                 onResolve={onResolveFlag}
                 onOpenTask={onOpenTask}
@@ -2144,7 +2163,7 @@ export const TaskDetailBody: React.FC<{
       {changeItems.length > 0 && (
         <section aria-labelledby="wc-h" className="space-y-2" data-workflow-changes>
           <h4 id="wc-h" className="text-xs font-semibold text-amber-200">
-            Change to approve
+            {t('Change to approve')}
           </h4>
           <ul className="space-y-2">
             {changeItems.map((n) => (
@@ -2154,20 +2173,20 @@ export const TaskDetailBody: React.FC<{
         </section>
       )}
 
-      <FailureBox task={t} failures={failures} fixText={fixText} busy={busy} now={now} onRetry={onRetryAutofix} onSkip={onSkipAutofix} />
+      <FailureBox task={task} failures={failures} fixText={fixText} busy={busy} now={now} onRetry={onRetryAutofix} onSkip={onSkipAutofix} />
 
-      {(t.forked_from || copies.length > 0) && (
-        <section aria-label="Copies" className="space-y-1 text-xs" data-copies>
-          {t.forked_from && (
+      {(task.forked_from || copies.length > 0) && (
+        <section aria-label={t('Copies')} className="space-y-1 text-xs" data-copies>
+          {task.forked_from && (
             <p className="flex flex-wrap items-center gap-1.5 text-zinc-400" data-copied-from>
               <GitBranch size={13} aria-hidden="true" />
-              Copied from{' '}
+              {t('Copied from')}{' '}
               {onOpenTask ? (
-                <button type="button" onClick={() => onOpenTask(t.forked_from!)} className={`text-left text-sky-300 hover:underline rounded ${focusRing}`}>
-                  {source ? `“${source.title}”` : 'an earlier task'}
+                <button type="button" onClick={() => onOpenTask(task.forked_from!)} className={`text-left text-sky-300 hover:underline rounded ${focusRing}`}>
+                  {source ? `“${source.title}”` : t('an earlier task')}
                 </button>
               ) : (
-                <span className="text-zinc-200">{source ? `“${source.title}”` : 'an earlier task'}</span>
+                <span className="text-zinc-200">{source ? `“${source.title}”` : t('an earlier task')}</span>
               )}
               {source && <span className="text-zinc-500">· {stateLabel(source.state).label}</span>}
             </p>
@@ -2175,7 +2194,7 @@ export const TaskDetailBody: React.FC<{
           {copies.map((c) => (
             <p key={c.id} className="flex flex-wrap items-center gap-1.5 text-zinc-400" data-redone-as={c.id}>
               <Copy size={13} aria-hidden="true" />
-              Redone as{' '}
+              {t('Redone as')}{' '}
               {onOpenTask ? (
                 <button type="button" onClick={() => onOpenTask(c.id)} className={`text-left text-sky-300 hover:underline rounded ${focusRing}`}>
                   “{c.title}”
@@ -2191,73 +2210,75 @@ export const TaskDetailBody: React.FC<{
 
       <section aria-labelledby="acc-h" className="space-y-1">
         <h4 id="acc-h" className="text-xs font-semibold text-zinc-200">
-          What done looks like
+          {t('What done looks like')}
         </h4>
-        {t.acceptance.trim() ? (
-          <p className="text-xs text-zinc-300 whitespace-pre-wrap break-words">{t.acceptance}</p>
+        {task.acceptance.trim() ? (
+          <p className="text-xs text-zinc-300 whitespace-pre-wrap break-words">{task.acceptance}</p>
         ) : (
-          <p className="text-xs text-zinc-500">No acceptance criteria were written for this task.</p>
+          <p className="text-xs text-zinc-500">{t('No acceptance criteria were written for this task.')}</p>
         )}
       </section>
 
       <dl className="grid grid-cols-2 gap-3">
-        <Fact label="Owner">
+        <Fact label={t('Owner')}>
           {owner ? (
             <span className="inline-flex items-center gap-1.5 min-w-0" data-panel-owner>
-              <OwnerAvatar kwantId={t.owner_kwant_id} name={owner} size={20} />
+              <OwnerAvatar kwantId={task.owner_kwant_id} name={owner} size={20} />
               <span className="truncate">{owner}</span>
             </span>
           ) : (
-            <span className="text-zinc-500">No owner yet</span>
+            <span className="text-zinc-500">{t('No owner yet')}</span>
           )}
         </Fact>
-        <Fact label="From">{sourceLabel(t.source_kind)}</Fact>
-        <Fact label="Cost">
+        <Fact label={t('From')}>{sourceLabel(task.source_kind)}</Fact>
+        <Fact label={t('Cost')}>
           <span className="tabular-nums" data-task-cost>
-            {costText(t.spent_tokens, t.budget_tokens)}
+            {costText(task.spent_tokens, task.budget_tokens)}
           </span>
-          {t.budget_tokens > 0 && (
+          {task.budget_tokens > 0 && (
             <span className="block mt-1">
-              <SpendBar spent={t.spent_tokens} budget={t.budget_tokens} label="Task token limit used" />
+              <SpendBar spent={task.spent_tokens} budget={task.budget_tokens} label={t('Task token limit used')} />
             </span>
           )}
-          {onSetBudget && !limitHit && t.state !== 'verified' && t.state !== 'cancelled' && (
-            <LimitEditor budget={t.budget_tokens} spent={t.spent_tokens} scope="task" disabled={busy} onSet={onSetBudget} />
+          {onSetBudget && !limitHit && task.state !== 'verified' && task.state !== 'cancelled' && (
+            <LimitEditor budget={task.budget_tokens} spent={task.spent_tokens} scope="task" disabled={busy} onSet={onSetBudget} />
           )}
         </Fact>
-        <Fact label="Tries">
-          {t.attempts} of {t.max_attempts}
-        </Fact>
-        {showsTier(t) && (
+        <Fact label={t('Tries')}>{t('{k} of {n}', { k: task.attempts, n: task.max_attempts })}</Fact>
+        {showsTier(task) && (
           <>
-            <Fact label="Kind of work">
-              <TaskClassEditor task={t} disabled={busy} onSetClass={onSetClass} />
+            <Fact label={t('Kind of work')}>
+              <TaskClassEditor task={task} disabled={busy} onSetClass={onSetClass} />
             </Fact>
-            <Fact label="Flight School tier">
-              <span data-owner-tier={t.owner_tier}>{tierLabel(t.owner_tier)}</span>
-              <span className="block text-[11px] text-zinc-500">{TIER_HINTS[t.owner_tier]}</span>
+            <Fact label={t('Flight School tier')}>
+              <span data-owner-tier={task.owner_tier}>{tierLabel(task.owner_tier)}</span>
+              <span className="block text-[11px] text-zinc-500">{TIER_HINTS[task.owner_tier]}</span>
             </Fact>
           </>
         )}
       </dl>
 
       {chat && onOpenChat && (
-        <button type="button" onClick={() => onOpenChat(t)} className={quietBtn} data-open-chat>
-          <MessageSquare size={13} aria-hidden="true" /> Open the chat it came from
+        <button type="button" onClick={() => onOpenChat(task)} className={quietBtn} data-open-chat>
+          <MessageSquare size={13} aria-hidden="true" /> {t('Open the chat it came from')}
         </button>
       )}
 
-      {t.claim && (
+      {task.claim && (
         <section aria-labelledby="live-h" className="px-3 py-2 rounded-lg border border-violet-500/30 bg-violet-500/10 text-xs" data-live>
           <h4 id="live-h" className="flex items-center gap-1.5 font-semibold text-violet-100">
             <span className="relative flex w-2 h-2" aria-hidden="true">
               <span className="absolute inline-flex w-full h-full rounded-full bg-violet-400 opacity-75 animate-ping motion-reduce:animate-none" />
               <span className="relative inline-flex w-2 h-2 rounded-full bg-violet-400" />
             </span>
-            Working now
+            {t('Working now')}
           </h4>
           <p className="mt-0.5 text-violet-200">
-            {names[t.claim.kwant_id] || owner || 'A bot'} started {ago(t.claim.claimed_at, now)}. If nothing happens, it goes back to Ready {untilText(t.claim.expires_at, now)}.
+            {t('{name} started {when}. If nothing happens, it goes back to Ready {until}.', {
+              name: names[task.claim.kwant_id] || owner || t('A bot'),
+              when: ago(task.claim.claimed_at, now),
+              until: untilText(task.claim.expires_at, now),
+            })}
           </p>
         </section>
       )}
@@ -2265,44 +2286,46 @@ export const TaskDetailBody: React.FC<{
       {others.length > 0 && (
         <section aria-labelledby="ny-h" className="space-y-2" data-needs-you>
           <h4 id="ny-h" className="text-xs font-semibold text-amber-200">
-            Waiting for you
+            {t('Waiting for you')}
           </h4>
           <ul className="space-y-1.5">
             {others.map((n) => (
               <li key={n.id} className="flex flex-wrap items-center gap-2 px-3 py-2 rounded-lg border border-amber-500/30 bg-amber-500/10 text-xs text-amber-100">
                 <span className="flex-1 min-w-[10rem] break-words">
                   <span className="font-medium">
-                    {n.kind === 'fact_changed'
-                      ? 'A fact changed'
-                      : n.kind === 'rests_on_disputed_fact'
-                        ? 'Rests on a disputed fact'
-                        : n.kind === 'approval'
-                          ? 'Approval'
-                          : n.kind === 'human_step'
-                            ? 'Step in the browser'
-                            : n.kind === 'check_approval'
-                              ? 'Check to allow'
-                              : n.kind === ENGINE_CANT_SANDBOX
-                                ? 'Engine can’t be sandboxed'
-                                : 'Question'}
-                    :{' '}
+                    {t('{label}:', {
+                      label:
+                        n.kind === 'fact_changed'
+                          ? t('A fact changed')
+                          : n.kind === 'rests_on_disputed_fact'
+                            ? t('Rests on a disputed fact')
+                            : n.kind === 'approval'
+                              ? t('Approval')
+                              : n.kind === 'human_step'
+                                ? t('Step in the browser')
+                                : n.kind === 'check_approval'
+                                  ? t('Check to allow')
+                                  : n.kind === ENGINE_CANT_SANDBOX
+                                    ? t('Engine can’t be sandboxed')
+                                    : t('Question'),
+                    })}{' '}
                   </span>
                   {n.kind === ENGINE_CANT_SANDBOX ? <span data-engine-cant-sandbox>{engineCantSandboxText(owner ?? null)}</span> : n.text}
                 </span>
                 {isFactNeedsYou(n.kind) ? (
-                  <FactNeedsYouAction taskId={t.id} item={n} />
+                  <FactNeedsYouAction taskId={task.id} item={n} />
                 ) : n.kind === 'check_approval' ? (
                   (() => {
                     const c = detail.checks.find((x) => x.id === n.id);
                     return c && c.status === 'needs_approval' ? (
                       <button type="button" disabled={busy} onClick={() => onApproveCheck(c)} className="px-2 py-1 rounded border border-amber-500/40 hover:bg-amber-500/10 min-h-[32px] disabled:opacity-50">
-                        Allow this check
+                        {t('Allow this check')}
                       </button>
                     ) : null;
                   })()
-                ) : onOpenChat && answerChat(t, n) && (
-                  <button type="button" onClick={() => onOpenChat(t, answerChat(t, n))} className="px-2 py-1 rounded border border-amber-500/40 hover:bg-amber-500/10 min-h-[32px]" data-answer-in-chat>
-                    Answer in chat
+                ) : onOpenChat && answerChat(task, n) && (
+                  <button type="button" onClick={() => onOpenChat(task, answerChat(task, n))} className="px-2 py-1 rounded border border-amber-500/40 hover:bg-amber-500/10 min-h-[32px]" data-answer-in-chat>
+                    {t('Answer in chat')}
                   </button>
                 )}
               </li>
@@ -2321,13 +2344,13 @@ export const TaskDetailBody: React.FC<{
         onOpenWaiting={onOpenAuditCard}
       />
 
-      {t.waiting_on.length > 0 && (
+      {task.waiting_on.length > 0 && (
         <section aria-labelledby="wait-h" className="space-y-1">
           <h4 id="wait-h" className="text-xs font-semibold text-zinc-200">
-            Waiting on
+            {t('Waiting on')}
           </h4>
           <ul className="space-y-1">
-            {t.waiting_on.map((id) => {
+            {task.waiting_on.map((id) => {
               const dep = tasksById[id];
               return (
                 <li key={id} className="text-xs">
@@ -2336,7 +2359,7 @@ export const TaskDetailBody: React.FC<{
                       {dep.title}
                     </button>
                   ) : (
-                    <span className="text-zinc-400">{dep?.title ?? 'Another task'}</span>
+                    <span className="text-zinc-400">{dep?.title ?? t('Another task')}</span>
                   )}
                   {dep && <span className="text-zinc-500"> · {stateLabel(dep.state).label}</span>}
                 </li>
@@ -2348,12 +2371,12 @@ export const TaskDetailBody: React.FC<{
 
       <EvidenceReceipt receipt={receipt} names={names} busy={busy} onApproveCheck={onApproveCheck} />
 
-      <RestoreSection task={t} api={restoreApi} titleOf={(id) => tasksById[id]?.title} now={now} onRestored={onRestored} onError={onRestoreError} />
+      <RestoreSection task={task} api={restoreApi} titleOf={(id) => tasksById[id]?.title} now={now} onRestored={onRestored} onError={onRestoreError} />
 
       {detail.events.length > 0 && (
         <section aria-labelledby="ev-h" className="space-y-1.5">
           <h4 id="ev-h" className="text-xs font-semibold text-zinc-200">
-            Activity
+            {t('Activity')}
           </h4>
           <ol className="space-y-1 border-l border-zinc-800 pl-3">
             {events.map((e) => (
@@ -2364,7 +2387,7 @@ export const TaskDetailBody: React.FC<{
           </ol>
           {!showAll && detail.events.length > events.length && (
             <button type="button" onClick={() => setShowAll(true)} className={`text-[11px] text-sky-300 hover:underline rounded ${focusRing}`}>
-              Show all {detail.events.length}
+              {t('Show all {n}', { n: detail.events.length })}
             </button>
           )}
         </section>
@@ -2396,13 +2419,13 @@ export const TaskPanel: React.FC<{
   }, []);
   return (
     <div className="fixed inset-0 z-40 flex justify-end" data-task-panel>
-      <button type="button" aria-label="Close task" tabIndex={-1} onClick={onClose} className="absolute inset-0 bg-black/50 cursor-default" />
+      <button type="button" aria-label={t('Close task')} tabIndex={-1} onClick={onClose} className="absolute inset-0 bg-black/50 cursor-default" />
       <div role="dialog" aria-modal="true" aria-labelledby={headingId} className="relative w-full sm:max-w-xl h-full flex flex-col bg-zinc-950 sm:border-l border-zinc-800 shadow-2xl">
         <div className="min-h-14 py-2 px-3 sm:px-5 border-b border-zinc-800/80 flex items-start gap-2 bg-zinc-900/30">
           <h3 id={headingId} className="flex-1 min-w-0 pt-1.5 text-sm font-semibold text-zinc-100 break-words">
             {title}
           </h3>
-          <button ref={closeRef} type="button" onClick={onClose} aria-label="Close" className={`shrink-0 p-2 rounded-lg text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 ${focusRing}`}>
+          <button ref={closeRef} type="button" onClick={onClose} aria-label={t('Close')} className={`shrink-0 p-2 rounded-lg text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 ${focusRing}`}>
             <X size={18} aria-hidden="true" />
           </button>
         </div>
@@ -2434,46 +2457,55 @@ export const WorkGraphView: React.FC<{
       <div className="flex flex-wrap items-center gap-2">
         <div className="min-w-0 flex-1">
           <h3 id="graph-h" className="flex items-center gap-1.5 text-xs font-semibold text-zinc-200">
-            <GitBranch size={14} className="text-sky-400" aria-hidden="true" /> How the tasks connect
+            <GitBranch size={14} className="text-sky-400" aria-hidden="true" /> {t('How the tasks connect')}
           </h3>
           <p className="text-[11px] text-zinc-500">
-            {graph?.scanned_at ? `Files last checked for changes ${ago(graph.scanned_at, now)}` : 'Files haven’t been checked for changes yet'}
-            {flagged > 0 ? ` · ${flagged} may be invalid` : ''}
+            {graph?.scanned_at ? t('Files last checked for changes {when}', { when: ago(graph.scanned_at, now) }) : t('Files haven’t been checked for changes yet')}
+            {flagged > 0 ? ` · ${t('{n} may be invalid', { n: flagged })}` : ''}
           </p>
         </div>
         {onScan && (
           <button type="button" disabled={scanning || loading} onClick={onScan} className={quietBtn} data-scan>
             <RefreshCw size={12} className={scanning ? 'animate-spin motion-reduce:animate-none' : ''} aria-hidden="true" />
-            Check files now
+            {t('Check files now')}
           </button>
         )}
       </div>
       {error && (
         <div role="alert" className="px-3 py-2 rounded-lg border border-rose-500/20 bg-rose-500/5 flex items-center gap-2 text-xs text-rose-300">
-          <span className="flex-1 min-w-0 break-words">Couldn’t load how the tasks connect. {error}</span>
+          <span className="flex-1 min-w-0 break-words">{t('Couldn’t load how the tasks connect. {error}', { error })}</span>
           {onRetry && (
             <button type="button" onClick={onRetry} className="shrink-0 px-2 py-0.5 rounded border border-rose-500/30 hover:bg-rose-500/10 min-h-[32px]">
-              Retry
+              {t('Retry')}
             </button>
           )}
         </div>
       )}
       {!graph && loading && (
         <p className="flex items-center gap-2 text-xs text-zinc-400">
-          <Loader2 size={14} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> Loading…
+          <Loader2 size={14} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> {t('Loading…')}
         </p>
       )}
-      {graph && graph.nodes.length === 0 && <p className="px-3 py-6 rounded-xl border border-dashed border-zinc-800 text-center text-xs text-zinc-500" data-graph-empty>This mission has no tasks yet.</p>}
+      {graph && graph.nodes.length === 0 && (
+        <p className="px-3 py-6 rounded-xl border border-dashed border-zinc-800 text-center text-xs text-zinc-500" data-graph-empty>
+          {t('This mission has no tasks yet.')}
+        </p>
+      )}
       {graph && graph.scan_skipped.length > 0 && (
         <p className="text-[11px] text-zinc-500" data-scan-skipped>
-          {graph.scan_skipped.length === 1 ? '1 file wasn’t checked' : `${graph.scan_skipped.length} files weren’t checked`} (too big, too many, or outside the task folder). A file that isn’t checked never counts as changed.
+          {t(
+            graph.scan_skipped.length === 1
+              ? '{n} file wasn’t checked (too big, too many, or outside the task folder). A file that isn’t checked never counts as changed.'
+              : '{n} files weren’t checked (too big, too many, or outside the task folder). A file that isn’t checked never counts as changed.',
+            { n: graph.scan_skipped.length },
+          )}
         </p>
       )}
       {levels.length > 0 && (
         <ol className="grid gap-3 lg:grid-flow-col lg:auto-cols-[minmax(13rem,1fr)] lg:overflow-x-auto pb-1">
           {levels.map((lv) => (
             <li key={lv.step} className="min-w-0 space-y-2" data-graph-step={lv.step}>
-              <h4 className="px-1 text-[11px] font-medium text-zinc-500">{lv.step === 1 ? 'Step 1 · builds on nothing' : `Step ${lv.step}`}</h4>
+              <h4 className="px-1 text-[11px] font-medium text-zinc-500">{lv.step === 1 ? t('Step 1 · builds on nothing') : t('Step {n}', { n: lv.step })}</h4>
               <ul className="space-y-2">
                 {lv.rows.map(({ node: n, after, notFlaggedText }) => {
                   const st = stateLabel(n.state);
@@ -2487,17 +2519,17 @@ export const WorkGraphView: React.FC<{
                       >
                         <span className="flex flex-wrap items-center gap-1.5">
                           <Badge tone={st.tone}>{st.label}</Badge>
-                          {n.flags.length > 0 && <Badge tone="amber">May be invalid</Badge>}
+                          {n.flags.length > 0 && <Badge tone="amber">{t('May be invalid')}</Badge>}
                         </span>
                         <span className="block text-xs font-medium text-zinc-100 break-words">{n.title}</span>
                         {after.length > 0 && (
                           <span className="block text-[11px] text-zinc-400 break-words" data-graph-after>
-                            After {after.map((a) => `“${a.title}”`).join(', ')}
+                            {t('After {tasks}', { tasks: after.map((a) => `“${a.title}”`).join(t(', ')) })}
                           </span>
                         )}
                         {n.forked_from && (
                           <span className="block text-[11px] text-zinc-500 break-words" data-graph-forked>
-                            Copied from {titles[n.forked_from] ? `“${titles[n.forked_from]}”` : 'an earlier task'}
+                            {t('Copied from {task}', { task: titles[n.forked_from] ? `“${titles[n.forked_from]}”` : t('an earlier task') })}
                           </span>
                         )}
                         {n.flags.map((f) => (
@@ -2674,7 +2706,7 @@ export const MissionBoardView: React.FC<MissionBoardViewProps> = ({
     }
     for (const b of live ?? []) if (!counts.has(b.teamId)) counts.set(b.teamId, 0);
     const chips = teams.filter((t) => counts.has(t.id)).map((t) => ({ id: t.id, name: t.name, count: counts.get(t.id) ?? 0 }));
-    if (counts.has(NO_TEAM)) chips.push({ id: NO_TEAM, name: 'No team', count: counts.get(NO_TEAM) ?? 0 });
+    if (counts.has(NO_TEAM)) chips.push({ id: NO_TEAM, name: t('No team'), count: counts.get(NO_TEAM) ?? 0 });
     return chips;
   })();
   const oldReviews = oldAutoReviews(shown, now);
@@ -2683,23 +2715,23 @@ export const MissionBoardView: React.FC<MissionBoardViewProps> = ({
     <div className="flex-1 flex flex-col h-full bg-zinc-950 overflow-hidden">
       <div className={`h-14 shrink-0 border-b border-zinc-800/80 ${onBack ? 'px-2' : 'px-4'} sm:px-6 flex items-center justify-between gap-3 bg-zinc-900/30 backdrop-blur-sm select-none`}>
         {onBack && (
-          <button type="button" onClick={onBack} aria-label="Back to chats" className={`shrink-0 p-2 -ml-0.5 -mr-2 rounded-lg text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 ${focusRing}`}>
+          <button type="button" onClick={onBack} aria-label={t('Back to chats')} className={`shrink-0 p-2 -ml-0.5 -mr-2 rounded-lg text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 ${focusRing}`}>
             <ChevronLeft size={18} />
           </button>
         )}
         <div className="min-w-0 flex-1">
-          <h2 className="text-sm font-semibold text-zinc-100 truncate">Mission board</h2>
-          <p className="text-[11px] text-zinc-400 truncate mt-0.5">Your team’s work, and proof it’s done</p>
+          <h2 className="text-sm font-semibold text-zinc-100 truncate">{t('Mission board')}</h2>
+          <p className="text-[11px] text-zinc-400 truncate mt-0.5">{t('Your team’s work, and proof it’s done')}</p>
         </div>
         <button
           type="button"
           onClick={onRefresh}
           disabled={loading || needsToken}
-          aria-label="Refresh"
+          aria-label={t('Refresh')}
           className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs text-zinc-300 border border-zinc-700/60 hover:bg-zinc-800 disabled:opacity-60 ${focusRing}`}
         >
           <RefreshCw size={12} className={loading ? 'animate-spin motion-reduce:animate-none' : ''} aria-hidden="true" />
-          <span className="hidden sm:inline">Refresh</span>
+          <span className="hidden sm:inline">{t('Refresh')}</span>
         </button>
       </div>
 
@@ -2707,9 +2739,9 @@ export const MissionBoardView: React.FC<MissionBoardViewProps> = ({
         <div className="max-w-[1500px] mx-auto space-y-4">
           {needsToken && (
             <div role="alert" className="px-3 py-2 rounded-lg border border-amber-500/30 bg-amber-500/10 flex flex-wrap items-center gap-2 text-xs text-amber-100">
-              <span>Only you can change the board. Confirm it’s you to continue.</span>
+              <span>{t('Only you can change the board. Confirm it’s you to continue.')}</span>
               <button type="button" onClick={requestPersonToken} className="ml-auto px-2 py-0.5 rounded border border-amber-500/40 hover:bg-amber-500/10 min-h-[32px]">
-                Confirm it’s you
+                {t('Confirm it’s you')}
               </button>
             </div>
           )}
@@ -2717,13 +2749,13 @@ export const MissionBoardView: React.FC<MissionBoardViewProps> = ({
             <div role="alert" className="px-3 py-2 rounded-lg border border-rose-500/20 bg-rose-500/5 flex items-center gap-2 text-xs text-rose-300">
               <AlertTriangle size={14} className="shrink-0" aria-hidden="true" />
               <span className="flex-1 min-w-0">
-                <span className="block font-medium">Couldn’t load the board.</span>
+                <span className="block font-medium">{t('Couldn’t load the board.')}</span>
                 <span className="block mt-0.5 text-[11px] text-rose-300/70 break-words" data-error-detail>
                   {error}
                 </span>
               </span>
               <button type="button" onClick={onRefresh} className="shrink-0 px-2 py-0.5 rounded border border-rose-500/30 hover:bg-rose-500/10 min-h-[32px]">
-                Retry
+                {t('Retry')}
               </button>
             </div>
           )}
@@ -2731,7 +2763,7 @@ export const MissionBoardView: React.FC<MissionBoardViewProps> = ({
 
           {tasks === null && loading && (
             <p className="flex items-center gap-2 text-xs text-zinc-400">
-              <Loader2 size={14} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> Loading the board…
+              <Loader2 size={14} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> {t('Loading the board…')}
             </p>
           )}
 
@@ -2758,7 +2790,7 @@ export const MissionBoardView: React.FC<MissionBoardViewProps> = ({
               {visibleMissions.length > 0 && (
                 <div className="flex flex-wrap items-center gap-2">
                   <label htmlFor={selectId} className="text-[11px] font-medium text-zinc-400">
-                    Show
+                    {t('Show')}
                   </label>
                   <select
                     id={selectId}
@@ -2766,11 +2798,11 @@ export const MissionBoardView: React.FC<MissionBoardViewProps> = ({
                     onChange={(e) => onMission(e.target.value || null)}
                     className="min-h-[40px] sm:min-h-[32px] max-w-full bg-zinc-950 border border-zinc-800 rounded-lg px-2 py-1 text-xs text-zinc-100 focus:border-sky-500 focus:outline-none"
                   >
-                    <option value="">All work</option>
+                    <option value="">{t('All work')}</option>
                     {visibleMissions.map((m) => (
                       <option key={m.id} value={m.id}>
                         {m.title}
-                        {m.status === 'draft' ? ' (waiting for your OK)' : m.status === 'done' ? ' (done)' : ''}
+                        {m.status === 'draft' ? t(' (waiting for your OK)') : m.status === 'done' ? t(' (done)') : ''}
                       </option>
                     ))}
                   </select>
@@ -2787,7 +2819,7 @@ export const MissionBoardView: React.FC<MissionBoardViewProps> = ({
                 />
               )}
               {mission && onView && (
-                <div role="group" aria-label="Show as" className="inline-flex rounded-lg border border-zinc-800 p-0.5" data-view-toggle>
+                <div role="group" aria-label={t('Show as')} className="inline-flex rounded-lg border border-zinc-800 p-0.5" data-view-toggle>
                   {(['board', 'graph'] as const).map((v) => (
                     <button
                       key={v}
@@ -2796,7 +2828,7 @@ export const MissionBoardView: React.FC<MissionBoardViewProps> = ({
                       onClick={() => onView(v)}
                       className={`min-h-[40px] sm:min-h-[32px] px-3 rounded-md text-xs font-medium ${focusRing} ${view === v ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-400 hover:text-zinc-200'}`}
                     >
-                      {v === 'board' ? 'Board' : 'How tasks connect'}
+                      {v === 'board' ? t('Board') : t('How tasks connect')}
                     </button>
                   ))}
                 </div>
@@ -2826,7 +2858,12 @@ export const MissionBoardView: React.FC<MissionBoardViewProps> = ({
               {confirmClear && onClearOld && (
                 <div role="alertdialog" aria-labelledby="clear-old-title" className="px-3 py-2.5 rounded-xl border border-amber-500/30 bg-amber-500/5 flex flex-wrap items-center gap-2" data-clear-confirm={oldReviews.length}>
                   <p id="clear-old-title" className="flex-1 min-w-[200px] text-xs text-amber-100">
-                    {oldReviews.length === 1 ? 'Dismiss 1 automatic card' : `Dismiss ${oldReviews.length} automatic cards`} (routine runs, worked-ahead and loose ends) that have been in Review for more than 7 days? They leave the board; your other cards stay.
+                    {t(
+                      oldReviews.length === 1
+                        ? 'Dismiss {n} automatic card (routine runs, worked-ahead and loose ends) that have been in Review for more than 7 days? They leave the board; your other cards stay.'
+                        : 'Dismiss {n} automatic cards (routine runs, worked-ahead and loose ends) that have been in Review for more than 7 days? They leave the board; your other cards stay.',
+                      { n: oldReviews.length },
+                    )}
                   </p>
                   <button
                     type="button"
@@ -2838,10 +2875,10 @@ export const MissionBoardView: React.FC<MissionBoardViewProps> = ({
                     }}
                     className={`${cardBtn} ${cardGoodBtn}`}
                   >
-                    Dismiss {oldReviews.length}
+                    {t('Dismiss {n}', { n: oldReviews.length })}
                   </button>
                   <button type="button" onClick={() => setConfirmClear(false)} className={`${cardBtn} ${cardQuietBtn}`}>
-                    Keep them
+                    {t('Keep them')}
                   </button>
                 </div>
               )}
@@ -2864,9 +2901,9 @@ export const MissionBoardView: React.FC<MissionBoardViewProps> = ({
               ) : empty ? (
                 <div className="py-12 flex flex-col items-center text-center gap-2" data-empty>
                   <Target size={28} className="text-sky-400" aria-hidden="true" />
-                  <p className="text-sm font-medium text-zinc-200">No tasks yet</p>
+                  <p className="text-sm font-medium text-zinc-200">{t('No tasks yet')}</p>
                   <p className="text-xs text-zinc-500 max-w-sm">
-                    When a lead plans a mission, hands work to a teammate, or a routine runs, the task shows up here. It reaches Verified only when a check passes.
+                    {t('When a lead plans a mission, hands work to a teammate, or a routine runs, the task shows up here. It reaches Verified only when a check passes.')}
                   </p>
                 </div>
               ) : (
@@ -2889,9 +2926,9 @@ export const MissionBoardView: React.FC<MissionBoardViewProps> = ({
               )}
               {!showGraph && !empty && shown.length === 0 && teamFilter.length > 0 && (
                 <p className="text-xs text-zinc-500" data-filter-empty>
-                  No cards for the picked teams.{' '}
+                  {t('No cards for the picked teams.')}{' '}
                   <button type="button" onClick={() => onTeamFilter?.([])} className="underline underline-offset-2 hover:text-zinc-300">
-                    Show all teams
+                    {t('Show all teams')}
                   </button>
                 </p>
               )}
@@ -2965,7 +3002,7 @@ export const MissionBoardPage: React.FC<{
   const openIdRef = useRef<string | null>(null);
   openIdRef.current = openId;
 
-  const failMsg = (e: unknown) => (e instanceof Error ? e.message : 'Something went wrong.');
+  const failMsg = (e: unknown) => (e instanceof Error ? e.message : t('Something went wrong.'));
 
   // Never blocks the board; a server without the Auditor answers 404 and shows no badges.
   const loadRiskCounts = useCallback(() => {
@@ -2979,9 +3016,9 @@ export const MissionBoardPage: React.FC<{
     setLoading(true);
     loadRiskCounts();
     try {
-      const [t, m] = await Promise.all([missionsApi.tasks(), missionsApi.missions()]);
+      const [loaded, m] = await Promise.all([missionsApi.tasks(), missionsApi.missions()]);
       if (!alive.current) return;
-      setTasks(t.filter((x) => x.state !== 'cancelled'));
+      setTasks(loaded.filter((x) => x.state !== 'cancelled'));
       setMissions(m);
       setError(null);
       setNeedsToken(false);
@@ -3021,11 +3058,11 @@ export const MissionBoardPage: React.FC<{
       setDetail(d);
       setDetailError(null);
       // AutoFix extras: never block the panel on them.
-      const t = d.task;
-      if (t.last_failure || t.autofix) {
+      const x = d.task;
+      if (x.last_failure || x.autofix) {
         missionsApi.failures(id).then((f) => alive.current && openIdRef.current === id && setFailures(f), () => {});
       } else setFailures([]);
-      if (t.needs_you.some((n) => n.kind === 'workflow_change')) {
+      if (x.needs_you.some((n) => n.kind === 'workflow_change')) {
         missionsApi.workflowChanges('proposed', id).then((cs) => alive.current && openIdRef.current === id && setChanges(cs), () => {});
       } else setChanges([]);
       loadRisks(id);
@@ -3140,12 +3177,12 @@ export const MissionBoardPage: React.FC<{
     setBusy(true);
     setDetailNotice(null);
     try {
-      const t = await missionsApi.act(openId, a, reason);
+      const x = await missionsApi.act(openId, a, reason);
       if (!alive.current) return;
-      setTasks((list) => (list ? upsertTask(list, t) : list));
+      setTasks((list) => (list ? upsertTask(list, x) : list));
       setDetailNotice({ text: ACTION_DONE[a], error: false });
       playSfx(a === 'verify' ? 'coin' : 'click');
-      if (t.state === 'cancelled') closeTask();
+      if (x.state === 'cancelled') closeTask();
       else await loadDetail(openId);
     } catch (e) {
       if (!alive.current) return;
@@ -3161,10 +3198,10 @@ export const MissionBoardPage: React.FC<{
     setBusy(true);
     setDetailNotice(null);
     try {
-      const t = await missionsApi.setTaskClass(openId, taskClass);
+      const x = await missionsApi.setTaskClass(openId, taskClass);
       if (!alive.current) return;
-      setTasks((list) => (list ? upsertTask(list, t) : list));
-      setDetailNotice({ text: `Its kind of work is now ${taskClass}. Its bot’s tier for that applies from its next action.`, error: false });
+      setTasks((list) => (list ? upsertTask(list, x) : list));
+      setDetailNotice({ text: t('Its kind of work is now {work}. Its bot’s tier for that applies from its next action.', { work: taskClass }), error: false });
       await loadDetail(openId);
     } catch (e) {
       if (!alive.current) return;
@@ -3175,16 +3212,16 @@ export const MissionBoardPage: React.FC<{
     }
   };
 
-  const limitDone = (n: number) => (n > 0 ? `Its limit is now ${formatTokens(n)} tokens.` : 'No limit now. It can use as many tokens as it needs.');
+  const limitDone = (n: number) => (n > 0 ? t('Its limit is now {n} tokens.', { n: formatTokens(n) }) : t('No limit now. It can use as many tokens as it needs.'));
 
   const setTaskBudget = async (budget: number) => {
     if (!openId) return;
     setBusy(true);
     setDetailNotice(null);
     try {
-      const t = await missionsApi.setTaskBudget(openId, budget);
+      const x = await missionsApi.setTaskBudget(openId, budget);
       if (!alive.current) return;
-      setTasks((list) => (list ? upsertTask(list, t) : list));
+      setTasks((list) => (list ? upsertTask(list, x) : list));
       setDetailNotice({ text: limitDone(budget), error: false });
       await loadDetail(openId);
     } catch (e) {
@@ -3204,10 +3241,13 @@ export const MissionBoardPage: React.FC<{
     else setBusy(true);
     if (!fromCard) setDetailNotice(null);
     try {
-      const t = await missionsApi.continueWithLimit(taskId, budget);
+      const x = await missionsApi.continueWithLimit(taskId, budget);
       if (!alive.current) return;
-      setTasks((list) => (list ? upsertTask(list, t) : list));
-      const text = `${budget > 0 ? `Its limit is now ${formatTokens(budget)} tokens` : 'Limit removed'}. “${t.title}” is back in Ready.`;
+      setTasks((list) => (list ? upsertTask(list, x) : list));
+      const text =
+        budget > 0
+          ? t('Its limit is now {n} tokens. “{title}” is back in Ready.', { n: formatTokens(budget), title: x.title })
+          : t('Limit removed. “{title}” is back in Ready.', { title: x.title });
       if (fromCard) setNotice({ text, error: false });
       else setDetailNotice({ text, error: false });
       playSfx('click');
@@ -3233,7 +3273,10 @@ export const MissionBoardPage: React.FC<{
       const next = await missionsApi.setBudget(m.id, budget);
       if (!alive.current) return;
       setMissions((list) => upsertMission(list, next));
-      setNotice({ text: budget > 0 ? `“${m.title}” can use up to ${formatTokens(budget)} tokens.` : `“${m.title}” has no token limit now.`, error: false });
+      setNotice({
+        text: budget > 0 ? t('“{title}” can use up to {n} tokens.', { title: m.title, n: formatTokens(budget) }) : t('“{title}” has no token limit now.', { title: m.title }),
+        error: false,
+      });
     } catch (e) {
       if (!alive.current) return;
       if (e instanceof MissionError && e.status === 401) setNeedsToken(true);
@@ -3249,7 +3292,7 @@ export const MissionBoardPage: React.FC<{
     try {
       await missionsApi.approveCheck(c.id);
       if (!alive.current) return;
-      setDetailNotice({ text: 'Allowed. The check runs now.', error: false });
+      setDetailNotice({ text: t('Allowed. The check runs now.'), error: false });
       if (openId) await loadDetail(openId);
     } catch (e) {
       if (alive.current) setDetailNotice({ text: failMsg(e), error: true });
@@ -3304,7 +3347,7 @@ export const MissionBoardPage: React.FC<{
       const fork = await missionsApi.fork(taskId, reason, keyFor(`fork:${taskId}`));
       pendingKey.current = null;
       if (!alive.current) return;
-      setDetailNotice({ text: `Made a copy to redo it: “${fork.title}”. It starts running on its own; this task stays Verified.`, error: false });
+      setDetailNotice({ text: t('Made a copy to redo it: “{title}”. It starts running on its own; this task stays Verified.', { title: fork.title }), error: false });
       playSfx('click');
       await afterChange([fork], taskId);
     } catch (e) {
@@ -3351,9 +3394,9 @@ export const MissionBoardPage: React.FC<{
     return personAction(
       `run:${openId}`,
       async (id, key) => {
-        const t = await missionsApi.runHeld(id, key);
-        setTasks((list) => (list ? upsertTask(list, t) : list));
-        return 'Off hold. A bot picks it up next.';
+        const x = await missionsApi.runHeld(id, key);
+        setTasks((list) => (list ? upsertTask(list, x) : list));
+        return t('Off hold. A bot picks it up next.');
       },
       restoreErrorText,
       runKeys.current[hold],
@@ -3364,7 +3407,7 @@ export const MissionBoardPage: React.FC<{
       `autofix:${openId}:${failureId ?? ''}`,
       async (id, key) => {
         await missionsApi.runAutofix(id, key, failureId);
-        return 'AutoFix retries it now.';
+        return t('AutoFix retries it now.');
       },
       autofixErrorText,
     );
@@ -3373,7 +3416,7 @@ export const MissionBoardPage: React.FC<{
       `autofix-skip:${a.id}`,
       async (id) => {
         await missionsApi.cancelAutofix(id, a.id);
-        return 'AutoFix won’t retry it. It stays failed until you try again.';
+        return t('AutoFix won’t retry it. It stays failed until you try again.');
       },
       autofixErrorText,
     );
@@ -3393,7 +3436,12 @@ export const MissionBoardPage: React.FC<{
       if (e instanceof MissionError && e.status === 401) setNeedsToken(true);
       if (e instanceof MissionError && e.status === 403) setCanResolveRisks(false);
       setDetailNotice({
-        text: e instanceof MissionError && e.status === 403 ? 'Only you can close a risk.' : e instanceof MissionError && e.status === 409 ? 'This risk is already closed.' : failMsg(e),
+        text:
+          e instanceof MissionError && e.status === 403
+            ? t('Only you can close a risk.')
+            : e instanceof MissionError && e.status === 409
+              ? t('This risk is already closed.')
+              : failMsg(e),
         error: !(e instanceof MissionError && e.status === 409),
       });
     } finally {
@@ -3408,10 +3456,10 @@ export const MissionBoardPage: React.FC<{
       `change:${cid}:${approve}`,
       async () => {
         const c = await missionsApi.decideChange(cid, approve);
-        if (!approve) return 'Rejected. Nothing changed.';
-        return c.status === 'stale' ? 'This change no longer fits: what it changes was edited since. Nothing changed.' : 'Approved and applied.';
+        if (!approve) return t('Rejected. Nothing changed.');
+        return c.status === 'stale' ? t('This change no longer fits: what it changes was edited since. Nothing changed.') : t('Approved and applied.');
       },
-      (e) => (e instanceof MissionError && e.status === 409 ? 'Someone already decided on this change.' : failMsg(e)),
+      (e) => (e instanceof MissionError && e.status === 409 ? t('Someone already decided on this change.') : failMsg(e)),
     );
   const restored = async (r: RestoreResult, rerun: boolean) => {
     setDetailNotice({ text: restoredText(r, rerun), error: false });
@@ -3430,7 +3478,15 @@ export const MissionBoardPage: React.FC<{
       const r = await missionsApi.scan(missionId);
       if (!alive.current) return;
       const n = r.flagged.length;
-      setNotice({ text: n === 0 ? `Checked ${r.scanned === 1 ? '1 file' : `${r.scanned} files`}. Nothing changed.` : n === 1 ? 'A file changed: 1 new “May be invalid” flag.' : `Files changed: ${n} new “May be invalid” flags.`, error: false });
+      setNotice({
+        text:
+          n === 0
+            ? t(r.scanned === 1 ? 'Checked {n} file. Nothing changed.' : 'Checked {n} files. Nothing changed.', { n: r.scanned })
+            : n === 1
+              ? t('A file changed: 1 new “May be invalid” flag.')
+              : t('Files changed: {n} new “May be invalid” flags.', { n }),
+        error: false,
+      });
       await loadGraph(missionId);
       load();
     } catch (e) {
@@ -3449,7 +3505,7 @@ export const MissionBoardPage: React.FC<{
       const next = approve ? await missionsApi.approveMission(m.id) : await missionsApi.cancelMission(m.id);
       if (!alive.current) return;
       setMissions((list) => upsertMission(list, next));
-      setNotice({ text: approve ? `Approved “${m.title}”. Its tasks can start now.` : `“${m.title}” won’t run.`, error: false });
+      setNotice({ text: approve ? t('Approved “{title}”. Its tasks can start now.', { title: m.title }) : t('“{title}” won’t run.', { title: m.title }), error: false });
       if (!approve && missionId === m.id) setMissionId(null);
       load();
     } catch (e) {
@@ -3509,7 +3565,11 @@ export const MissionBoardPage: React.FC<{
     if (leaving) await Promise.all(list.map(one));
     else for (const t of list) await one(t);
     if (!alive.current) return;
-    if (failed) setNotice({ text: list.length === 1 ? `Couldn’t do that: ${lastError}` : `${failed} of ${list.length} didn’t go through: ${lastError}`, error: true });
+    if (failed)
+      setNotice({
+        text: list.length === 1 ? t('Couldn’t do that: {error}', { error: lastError }) : t('{failed} of {n} didn’t go through: {error}', { failed, n: list.length, error: lastError }),
+        error: true,
+      });
     else if (a === 'verify') playSfx('coin');
     missionsApi.insights().then((i) => alive.current && setInsights(i), () => {});
   }, []);
@@ -3623,7 +3683,7 @@ export const MissionBoardPage: React.FC<{
         onCloseUndo={() => commitPending()}
       />
       {openId && (
-        <TaskPanel title={detail?.task.title ?? listed?.title ?? 'Task'} onClose={closeTask}>
+        <TaskPanel title={detail?.task.title ?? listed?.title ?? t('Task')} onClose={closeTask}>
           {detail ? (
             <TaskDetailBody
               detail={detail}
@@ -3680,16 +3740,16 @@ export const MissionBoardPage: React.FC<{
           ) : detailError ? (
             <div role="alert" className="px-3 py-2 rounded-lg border border-rose-500/20 bg-rose-500/5 flex items-center gap-2 text-xs text-rose-300">
               <span className="flex-1 min-w-0">
-                <span className="block font-medium">Couldn’t load this task.</span>
+                <span className="block font-medium">{t('Couldn’t load this task.')}</span>
                 <span className="block mt-0.5 text-[11px] text-rose-300/70 break-words">{detailError}</span>
               </span>
               <button type="button" onClick={() => loadDetail(openId)} className="shrink-0 px-2 py-0.5 rounded border border-rose-500/30 hover:bg-rose-500/10 min-h-[32px]">
-                Retry
+                {t('Retry')}
               </button>
             </div>
           ) : (
             <p className="flex items-center gap-2 text-xs text-zinc-400">
-              <Loader2 size={14} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> Loading…
+              <Loader2 size={14} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> {t('Loading…')}
             </p>
           )}
         </TaskPanel>

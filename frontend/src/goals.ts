@@ -6,6 +6,7 @@
 // Wire shapes: /home/maus/shared/ship-software-safely/smart-results-goals/goals-ui-contract.md
 
 import { PersonCancelledError, personFetch } from './auth';
+import { t } from './i18n';
 import { MissionError, Tone, ago, checkKindLabel, checkTarget, formatTokens, humanize, missionStatusLabel, missionsApi, stateLabel, untilText } from './missions';
 
 export type GoalStatus = 'draft' | 'checking' | 'met' | 'not_met' | 'fixing' | 'unknown' | 'needs_you' | 'paused' | 'waiting';
@@ -255,15 +256,15 @@ function safeJson(t: string): unknown {
 }
 
 export function parseFixTask(v: unknown): GoalFixTask | null {
-  const t = rec(v);
-  const id = s(t.id) ?? s(t.task_id);
+  const r = rec(v);
+  const id = s(r.id) ?? s(r.task_id);
   if (!id) return null;
   return {
     id,
-    title: s(t.title) ?? 'Fix task',
-    state: s(t.state) ?? 'ready',
-    held: !!(t.held || t.held_at),
-    created_at: time(t.created_at),
+    title: s(r.title) ?? t('Fix task'),
+    state: s(r.state) ?? 'ready',
+    held: !!(r.held || r.held_at),
+    created_at: time(r.created_at),
   };
 }
 
@@ -284,7 +285,7 @@ export function parseGoalMission(v: unknown): GoalMission | null {
   if (!id) return null;
   return {
     id,
-    title: s(m.title) ?? s(m.mission_title) ?? 'Restore mission',
+    title: s(m.title) ?? s(m.mission_title) ?? t('Restore mission'),
     status: s(m.status) ?? s(m.mission_status),
     reason: s(m.reason),
     attempt: n(m.attempt, 1),
@@ -323,7 +324,7 @@ export function parseGoal(v: unknown): Goal | null {
   return {
     id,
     space_id: s(g.space_id),
-    title: s(g.title) ?? 'Untitled goal',
+    title: s(g.title) ?? t('Untitled goal'),
     description: s(g.description) ?? '',
     kwant_id: s(g.kwant_id),
     folder: s(g.folder),
@@ -413,42 +414,42 @@ export interface StatusLook {
 }
 
 export const GOAL_STATUS: Record<GoalStatus, StatusLook> = {
-  met: { label: 'OK', tone: 'emerald', icon: 'met', hint: 'Every required check passed.' },
-  not_met: { label: 'Failing', tone: 'rose', icon: 'not_met', hint: 'A required check kept failing.' },
-  fixing: { label: 'Fixing', tone: 'violet', icon: 'fixing', hint: 'A fix is open for it.' },
-  unknown: { label: 'Can’t check', tone: 'zinc', icon: 'unknown', hint: 'Can’t tell yet: a check couldn’t run, is out of date, or hasn’t run.' },
-  needs_you: { label: 'Needs you', tone: 'amber', icon: 'needs_you', hint: 'The bot stopped fixing it and waits for you.' },
-  paused: { label: 'Paused', tone: 'zinc', icon: 'paused', hint: 'Not checked until you resume it.' },
-  draft: { label: 'Draft', tone: 'sky', icon: 'draft', hint: 'A bot proposed it. Nothing runs until you approve it.' },
-  checking: { label: 'Checking', tone: 'sky', icon: 'checking', hint: 'Its checks are running now.' },
-  waiting: { label: 'Waiting', tone: 'zinc', icon: 'waiting', hint: 'Another goal’s fix in the same folder goes first.' },
+  met: { label: t('OK'), tone: 'emerald', icon: 'met', hint: t('Every required check passed.') },
+  not_met: { label: t('Failing'), tone: 'rose', icon: 'not_met', hint: t('A required check kept failing.') },
+  fixing: { label: t('Fixing'), tone: 'violet', icon: 'fixing', hint: t('A fix is open for it.') },
+  unknown: { label: t('Can’t check'), tone: 'zinc', icon: 'unknown', hint: t('Can’t tell yet: a check couldn’t run, is out of date, or hasn’t run.') },
+  needs_you: { label: t('Needs you'), tone: 'amber', icon: 'needs_you', hint: t('The bot stopped fixing it and waits for you.') },
+  paused: { label: t('Paused'), tone: 'zinc', icon: 'paused', hint: t('Not checked until you resume it.') },
+  draft: { label: t('Draft'), tone: 'sky', icon: 'draft', hint: t('A bot proposed it. Nothing runs until you approve it.') },
+  checking: { label: t('Checking'), tone: 'sky', icon: 'checking', hint: t('Its checks are running now.') },
+  waiting: { label: t('Waiting'), tone: 'zinc', icon: 'waiting', hint: t('Another goal’s fix in the same folder goes first.') },
 };
 
 /** Anything the server sends that this build doesn't know reads as Unknown, never as Met. */
 export const goalStatusLook = (status: string): StatusLook => GOAL_STATUS[status as GoalStatus] ?? GOAL_STATUS.unknown;
 
 export const MODE_OPTIONS: { value: GoalMode; label: string; hint: string }[] = [
-  { value: 'watch', label: 'Just tell me', hint: 'You hear about it. Nothing else runs.' },
-  { value: 'suggest', label: 'Suggest a fix', hint: 'A fix is planned and waits for your Run.' },
-  { value: 'fix', label: 'Fix it', hint: 'The bot looks into it and fixes it. The checks confirm the fix.' },
+  { value: 'watch', label: t('Just tell me'), hint: t('You hear about it. Nothing else runs.') },
+  { value: 'suggest', label: t('Suggest a fix'), hint: t('A fix is planned and waits for your Run.') },
+  { value: 'fix', label: t('Fix it'), hint: t('The bot looks into it and fixes it. The checks confirm the fix.') },
 ];
 export const modeLabel = (m: string) => MODE_OPTIONS.find((o) => o.value === m)?.label ?? humanize(m);
 
 export const PRIORITY_OPTIONS: { value: number; label: string }[] = [
-  { value: 1, label: 'High' },
-  { value: 2, label: 'Normal' },
-  { value: 3, label: 'Low' },
+  { value: 1, label: t('High') },
+  { value: 2, label: t('Normal') },
+  { value: 3, label: t('Low') },
 ];
-export const priorityLabel = (p: number) => PRIORITY_OPTIONS.find((o) => o.value === p)?.label ?? 'Normal';
+export const priorityLabel = (p: number) => PRIORITY_OPTIONS.find((o) => o.value === p)?.label ?? t('Normal');
 
 export const INTERVAL_MIN = 15;
 export const INTERVAL_MAX = 1440;
 export const INTERVALS = [15, 30, 60, 120, 240, 360, 720, 1440];
 
 export function intervalLabel(m: number): string {
-  if (m >= 1440 && m % 1440 === 0) return m === 1440 ? '1 day' : `${m / 1440} days`;
-  if (m >= 60 && m % 60 === 0) return m === 60 ? '1 hour' : `${m / 60} hours`;
-  return `${m} min`;
+  if (m >= 1440 && m % 1440 === 0) return m === 1440 ? t('1 day') : t('{n} days', { n: m / 1440 });
+  if (m >= 60 && m % 60 === 0) return m === 60 ? t('1 hour') : t('{n} hours', { n: m / 60 });
+  return t('{n} min', { n: m });
 }
 
 /** The options for "Check every", keeping a draft's own value even when it isn't a preset. */
@@ -467,21 +468,29 @@ export const goalCheckName = (c: Pick<GoalCheck, 'label' | 'kind' | 'spec'>) => 
 // The typed predicates (plan v2 B.1): which metrics each kind has, and the operators each metric takes.
 export const METRICS: Record<'http' | 'command', { value: string; label: string; operators: GoalOperator[]; unit?: string; textTarget?: boolean }[]> = {
   http: [
-    { value: 'status', label: 'HTTP status', operators: ['eq', 'ne'] },
-    { value: 'latency_ms', label: 'Response time', operators: ['lt', 'lte'], unit: 'ms' },
-    { value: 'body_contains', label: 'Page shows', operators: [], textTarget: true },
-    { value: 'json_value', label: 'JSON value', operators: ['eq', 'ne', 'lt', 'lte', 'gt', 'gte', 'contains'] },
+    { value: 'status', label: t('HTTP status'), operators: ['eq', 'ne'] },
+    { value: 'latency_ms', label: t('Response time'), operators: ['lt', 'lte'], unit: 'ms' },
+    { value: 'body_contains', label: t('Page shows'), operators: [], textTarget: true },
+    { value: 'json_value', label: t('JSON value'), operators: ['eq', 'ne', 'lt', 'lte', 'gt', 'gte', 'contains'] },
   ],
   command: [
-    { value: 'exit_code', label: 'Exit code', operators: ['eq'] },
-    { value: 'stdout_contains', label: 'Output shows', operators: [], textTarget: true },
-    { value: 'stdout_number', label: 'Number in output', operators: ['eq', 'ne', 'lt', 'lte', 'gt', 'gte'] },
+    { value: 'exit_code', label: t('Exit code'), operators: ['eq'] },
+    { value: 'stdout_contains', label: t('Output shows'), operators: [], textTarget: true },
+    { value: 'stdout_number', label: t('Number in output'), operators: ['eq', 'ne', 'lt', 'lte', 'gt', 'gte'] },
   ],
 };
 export const metricInfo = (kind: string, metric: string | null) => (kind === 'http' || kind === 'command' ? METRICS[kind].find((m) => m.value === metric) ?? null : null);
 
-export const OPERATOR_SIGN: Record<GoalOperator, string> = { eq: '=', ne: '≠', lt: '<', lte: '≤', gt: '>', gte: '≥', contains: 'contains' };
-export const OPERATOR_WORDS: Record<GoalOperator, string> = { eq: 'is', ne: 'is not', lt: 'is under', lte: 'is at most', gt: 'is over', gte: 'is at least', contains: 'contains' };
+export const OPERATOR_SIGN: Record<GoalOperator, string> = { eq: '=', ne: '≠', lt: '<', lte: '≤', gt: '>', gte: '≥', contains: t('contains') };
+export const OPERATOR_WORDS: Record<GoalOperator, string> = {
+  eq: t('is'),
+  ne: t('is not'),
+  lt: t('is under'),
+  lte: t('is at most'),
+  gt: t('is over'),
+  gte: t('is at least'),
+  contains: t('contains'),
+};
 
 /**
  * What the check wants, in one line: "HTTP status = 200", "Response time < 500 ms", "Page shows “ok”",
@@ -495,25 +504,25 @@ export function checkDesired(c: Pick<GoalCheck, 'kind' | 'spec' | 'metric' | 'op
   switch (c.kind) {
     case 'http': {
       const m = c.metric ?? 'status';
-      if (m === 'status') return `HTTP status ${sign(c.operator, 'eq')} ${c.target ?? (typeof sp.expect_status === 'number' ? sp.expect_status : 200)}`;
-      if (m === 'latency_ms') return `Response time ${sign(c.operator, 'lt')} ${target} ms`;
-      if (m === 'body_contains') return `Page shows “${c.target ?? str('contains') ?? ''}”`;
-      if (m === 'json_value') return `JSON ${str('pointer') ?? str('json_pointer') ?? 'value'} ${sign(c.operator, 'eq')} ${target}`;
+      if (m === 'status') return t('HTTP status {op} {value}', { op: sign(c.operator, 'eq'), value: c.target ?? (typeof sp.expect_status === 'number' ? (sp.expect_status as number) : 200) });
+      if (m === 'latency_ms') return t('Response time {op} {value} ms', { op: sign(c.operator, 'lt'), value: target });
+      if (m === 'body_contains') return t('Page shows “{text}”', { text: c.target ?? str('contains') ?? '' });
+      if (m === 'json_value') return t('JSON {pointer} {op} {value}', { pointer: str('pointer') ?? str('json_pointer') ?? t('value'), op: sign(c.operator, 'eq'), value: target });
       return `${humanize(m)} ${sign(c.operator, 'eq')} ${target}`.trim();
     }
     case 'command': {
       const m = c.metric ?? 'exit_code';
-      if (m === 'exit_code') return `Exit code ${sign(c.operator, 'eq')} ${c.target ?? 0}`;
-      if (m === 'stdout_contains') return `Output shows “${target}”`;
-      if (m === 'stdout_number') return `Number in output ${sign(c.operator, 'eq')} ${target}`;
+      if (m === 'exit_code') return t('Exit code {op} {value}', { op: sign(c.operator, 'eq'), value: c.target ?? 0 });
+      if (m === 'stdout_contains') return t('Output shows “{text}”', { text: target });
+      if (m === 'stdout_number') return t('Number in output {op} {value}', { op: sign(c.operator, 'eq'), value: target });
       return `${humanize(m)} ${sign(c.operator, 'eq')} ${target}`.trim();
     }
     case 'file_exists':
-      return 'File exists';
+      return t('File exists');
     case 'file_contains':
-      return `File has “${str('text') ?? ''}”`;
+      return t('File has “{text}”', { text: str('text') ?? '' });
     case 'file_sha256':
-      return 'File matches its fingerprint';
+      return t('File matches its fingerprint');
     default:
       return checkKindLabel(c.kind);
   }
@@ -539,14 +548,14 @@ export interface CheckLook {
  */
 export function checkLook(c: Pick<GoalCheck, 'latest' | 'freshness_minutes'>, intervalMinutes: number, now: number = Date.now()): CheckLook {
   const o = c.latest;
-  if (!o) return { label: 'Not checked yet', tone: 'zinc', verdict: 'unknown' };
+  if (!o) return { label: t('Not checked yet'), tone: 'zinc', verdict: 'unknown' };
   const fresh = (c.freshness_minutes ?? intervalMinutes * 2) * 60_000;
   const at = Date.parse(o.observed_at);
   const expires = o.expires_at ? Date.parse(o.expires_at) : NaN;
-  if ((!Number.isNaN(at) && now - at > fresh) || (!Number.isNaN(expires) && now > expires)) return { label: 'Out of date', tone: 'zinc', verdict: 'unknown' };
-  if (o.status === 'passed') return { label: 'Passed', tone: 'emerald', verdict: 'met' };
-  if (o.status === 'failed') return { label: 'Failed', tone: 'rose', verdict: 'not_met' };
-  return { label: 'Couldn’t run', tone: 'amber', verdict: 'unknown' };
+  if ((!Number.isNaN(at) && now - at > fresh) || (!Number.isNaN(expires) && now > expires)) return { label: t('Out of date'), tone: 'zinc', verdict: 'unknown' };
+  if (o.status === 'passed') return { label: t('Passed'), tone: 'emerald', verdict: 'met' };
+  if (o.status === 'failed') return { label: t('Failed'), tone: 'rose', verdict: 'not_met' };
+  return { label: t('Couldn’t run'), tone: 'amber', verdict: 'unknown' };
 }
 
 /**
@@ -562,46 +571,49 @@ export function shownStatus(g: Pick<Goal, 'status' | 'checks' | 'interval_minute
 /** "Checked 12 min ago · next in 48 min", or why there's no next check. */
 export function scheduleText(g: Pick<Goal, 'status' | 'last_checked_at' | 'next_check_at' | 'checking_since'>, now: number = Date.now()): string {
   const parts: string[] = [];
-  if (g.status === 'checking' || g.checking_since) parts.push('Checking now');
-  else if (g.last_checked_at) parts.push(`Checked ${ago(g.last_checked_at, now)}`);
-  else if (g.status !== 'draft') parts.push('Not checked yet');
-  if (g.status === 'draft') parts.push('Runs only after you approve it');
-  else if (g.status === 'paused') parts.push('Paused, no checks until you resume');
+  if (g.status === 'checking' || g.checking_since) parts.push(t('Checking now'));
+  else if (g.last_checked_at) parts.push(t('Checked {when}', { when: ago(g.last_checked_at, now) }));
+  else if (g.status !== 'draft') parts.push(t('Not checked yet'));
+  if (g.status === 'draft') parts.push(t('Runs only after you approve it'));
+  else if (g.status === 'paused') parts.push(t('Paused, no checks until you resume'));
   else if (g.next_check_at && !(g.status === 'checking' || g.checking_since)) {
-    const u = untilText(g.next_check_at, now);
-    parts.push(u === 'now' ? 'next check due now' : `next ${u}`);
+    // Due now is what untilText reads as "now"; worked out here so it doesn't hang on that word.
+    const at = Date.parse(g.next_check_at);
+    const due = !Number.isNaN(at) && Math.round((at - now) / 60000) <= 0;
+    parts.push(due ? t('next check due now') : t('next {when}', { when: untilText(g.next_check_at, now) }));
   }
   return parts.join(' · ');
 }
 
-export const spentText = (t: number | null | undefined): string | null => (typeof t === 'number' && t > 0 ? `${formatTokens(t)} tokens spent on fixes` : null);
+export const spentText = (tokens: number | null | undefined): string | null =>
+  typeof tokens === 'number' && tokens > 0 ? t('{tokens} tokens spent on fixes', { tokens: formatTokens(tokens) }) : null;
 
 const NEEDS_YOU_REASONS: Record<string, string> = {
-  budget: 'its token budget is spent',
-  budget_spent: 'its token budget is spent',
-  max_fixes: 'it hit its fixes for today',
-  max_fixes_per_day: 'it hit its fixes for today',
-  fix_failed: 'the fix didn’t work',
-  max_attempts: 'the fixes so far didn’t bring it back',
-  conflict: 'fixing another goal broke it, so nothing runs on its own',
-  declined: 'you chose Not now',
-  fix_ready: 'a fix is ready for your OK',
-  unknown_24h: 'it couldn’t be checked for a day',
+  budget: t('its token budget is spent'),
+  budget_spent: t('its token budget is spent'),
+  max_fixes: t('it hit its fixes for today'),
+  max_fixes_per_day: t('it hit its fixes for today'),
+  fix_failed: t('the fix didn’t work'),
+  max_attempts: t('the fixes so far didn’t bring it back'),
+  conflict: t('fixing another goal broke it, so nothing runs on its own'),
+  declined: t('you chose Not now'),
+  fix_ready: t('a fix is ready for your OK'),
+  unknown_24h: t('it couldn’t be checked for a day'),
 };
 
 /** "Needs you: <why>" from a reason code, or the server's own words when it sends text. */
 export function needsYouText(reason: string | null | undefined): string {
   const r = (reason ?? '').trim();
-  if (!r) return 'Needs you';
+  if (!r) return t('Needs you');
   const known = NEEDS_YOU_REASONS[r.toLowerCase()];
-  if (known) return `Needs you: ${known}`;
-  return /^[a-z0-9_]+$/.test(r) ? `Needs you: ${humanize(r).toLowerCase()}` : `Needs you: ${r}`;
+  if (known) return t('Needs you: {why}', { why: known });
+  return t('Needs you: {why}', { why: /^[a-z0-9_]+$/.test(r) ? humanize(r).toLowerCase() : r });
 }
 
 const who = (actor: string, names: Record<string, string>): string => {
-  if (actor === 'person') return 'You';
-  if (actor === 'kwant' || actor === 'system' || actor === 'scheduler') return 'The app';
-  return names[actor] ?? 'A bot';
+  if (actor === 'person') return t('You');
+  if (actor === 'kwant' || actor === 'system' || actor === 'scheduler') return t('The app');
+  return names[actor] ?? t('A bot');
 };
 
 /** One line of the goal's timeline, in plain words. Quoted bot reports come back separately from goalEventQuote. */
@@ -611,58 +623,64 @@ export function goalEventText(e: Pick<GoalEvent, 'kind' | 'actor' | 'detail'>, n
   const title = s(d.task_title) ?? s(d.title);
   switch (e.kind) {
     case 'created':
-      return e.actor === 'person' ? 'You created this goal' : `${who(e.actor, names)} proposed this goal`;
+      return e.actor === 'person' ? t('You created this goal') : t('{who} proposed this goal', { who: who(e.actor, names) });
     case 'approved':
-      return `${who(e.actor, names)} approved it`;
+      return t('{who} approved it', { who: who(e.actor, names) });
     case 'checked': {
       const v = s(d.verdict);
       const passed = typeof d.passed === 'number' ? d.passed : null;
       const total = typeof d.total === 'number' ? d.total : null;
-      const count = passed !== null && total !== null ? `, ${passed} of ${total} passed` : '';
-      return v === 'met' ? `Checked: OK${count}` : v === 'not_met' ? `Checked: failing${count}` : v ? `Checked: couldn’t tell${count}` : `Checked${count}`;
+      const count = passed !== null && total !== null ? t(', {passed} of {total} passed', { passed, total }) : '';
+      return v === 'met'
+        ? t('Checked: OK{count}', { count })
+        : v === 'not_met'
+          ? t('Checked: failing{count}', { count })
+          : v
+            ? t('Checked: couldn’t tell{count}', { count })
+            : t('Checked{count}', { count });
     }
     case 'not_met': {
-      const times = typeof d.fail_streak === 'number' && d.fail_streak > 1 ? ` ${d.fail_streak} times in a row` : '';
+      const times = typeof d.fail_streak === 'number' && d.fail_streak > 1 ? t(' {n} times in a row', { n: d.fail_streak }) : '';
       const seen = txt(d.observed_value);
-      return label ? `Broke: “${label}” failed${times}${seen ? ` (observed ${seen})` : ''}` : 'Broke';
+      return label ? t('Broke: “{label}” failed{times}{seen}', { label, times, seen: seen ? t(' (observed {value})', { value: seen }) : '' }) : t('Broke');
     }
     case 'met':
-      return 'OK again';
+      return t('OK again');
     case 'mission_opened':
-      return title ? `Fix work opened: ${title}` : 'Fix work opened';
+      return title ? t('Fix work opened: {title}', { title }) : t('Fix work opened');
     case 'investigated':
-      return `${actorOr(e.actor, names, 'The bot')} looked into it`;
+      return t('{who} looked into it', { who: actorOr(e.actor, names, t('The bot')) });
     case 'fix_approved':
-      return `${who(e.actor, names)} said fix it`;
+      return t('{who} said fix it', { who: who(e.actor, names) });
     case 'fix_opened':
-      return title ? `Fix task opened: ${title}` : 'Fix task opened';
+      return title ? t('Fix task opened: {title}', { title }) : t('Fix task opened');
     case 'fix_verified':
-      return 'Fix verified: the checks pass again';
+      return t('Fix verified: the checks pass again');
     case 'fix_failed':
-      return 'The fix didn’t work';
+      return t('The fix didn’t work');
     case 'replanned': {
       const n = typeof d.attempt === 'number' ? d.attempt : Number(txt(d.attempt));
-      return Number.isFinite(n) && n > 1 ? `Trying another fix (attempt ${n})` : 'Trying another fix';
+      return Number.isFinite(n) && n > 1 ? t('Trying another fix (attempt {n})', { n }) : t('Trying another fix');
     }
     case 'conflict': {
       const other = s(d.goal_title) ?? s(d.other_title);
-      return other ? `Fixing “${other}” broke this goal` : 'Fixing another goal broke this one';
+      return other ? t('Fixing “{other}” broke this goal', { other }) : t('Fixing another goal broke this one');
     }
     case 'waiting': {
       const other = s(d.waiting_title) ?? s(d.goal_title);
-      return other ? `Waiting for “${other}” to finish its fix` : 'Waiting for another fix in the same folder';
+      return other ? t('Waiting for “{other}” to finish its fix', { other }) : t('Waiting for another fix in the same folder');
     }
     case 'withdrawn':
     case 'not_needed':
-      return 'OK again before the fix ran, so the fix was withdrawn';
+      return t('OK again before the fix ran, so the fix was withdrawn');
     case 'needs_you':
       return needsYouText(s(d.reason));
     case 'paused':
-      return `${who(e.actor, names)} paused it`;
+      return t('{who} paused it', { who: who(e.actor, names) });
     case 'resumed':
-      return `${who(e.actor, names)} resumed it`;
+      return t('{who} resumed it', { who: who(e.actor, names) });
     case 'edited':
-      return `${who(e.actor, names)} edited it`;
+      return t('{who} edited it', { who: who(e.actor, names) });
     default:
       return humanize(e.kind);
   }
@@ -766,36 +784,36 @@ export function checkRowError(r: CheckFormRow): string | null {
   const target = r.target.trim();
   switch (r.kind) {
     case 'command': {
-      if (!r.command.trim()) return 'Type the command to run.';
-      if (r.metric === 'exit_code' && !/^-?\d+$/.test(target)) return 'The exit code is a whole number, like 0.';
-      if (r.metric === 'stdout_contains' && !target) return 'Type the text the output should show.';
-      if (r.metric === 'stdout_number' && !NUMBER.test(target)) return 'Type the number to compare with, like 10.';
+      if (!r.command.trim()) return t('Type the command to run.');
+      if (r.metric === 'exit_code' && !/^-?\d+$/.test(target)) return t('The exit code is a whole number, like 0.');
+      if (r.metric === 'stdout_contains' && !target) return t('Type the text the output should show.');
+      if (r.metric === 'stdout_number' && !NUMBER.test(target)) return t('Type the number to compare with, like 10.');
       return null;
     }
     case 'http': {
       const u = r.url.trim();
-      if (!u) return 'Type the web address to open.';
-      if (!/^https?:\/\/\S+$/i.test(u)) return 'The address should start with http:// or https://.';
-      if (r.metric === 'status' && !(/^\d{3}$/.test(target) && Number(target) >= 100 && Number(target) <= 599)) return 'The HTTP status is a number from 100 to 599, like 200.';
-      if (r.metric === 'latency_ms' && !(/^\d+$/.test(target) && Number(target) > 0)) return 'Type the time limit in milliseconds, like 500.';
-      if (r.metric === 'body_contains' && !target) return 'Type the text the page should show.';
+      if (!u) return t('Type the web address to open.');
+      if (!/^https?:\/\/\S+$/i.test(u)) return t('The address should start with http:// or https://.');
+      if (r.metric === 'status' && !(/^\d{3}$/.test(target) && Number(target) >= 100 && Number(target) <= 599)) return t('The HTTP status is a number from 100 to 599, like 200.');
+      if (r.metric === 'latency_ms' && !(/^\d+$/.test(target) && Number(target) > 0)) return t('Type the time limit in milliseconds, like 500.');
+      if (r.metric === 'body_contains' && !target) return t('Type the text the page should show.');
       if (r.metric === 'json_value') {
-        if (!/^\/\S*$/.test(r.pointer.trim())) return 'Say where the value is, starting with /, like /status.';
-        if (!target) return 'Type the value to compare with.';
-        if (['lt', 'lte', 'gt', 'gte'].includes(r.operator) && !NUMBER.test(target)) return 'Compare a number with a number, like 3.';
+        if (!/^\/\S*$/.test(r.pointer.trim())) return t('Say where the value is, starting with /, like /status.');
+        if (!target) return t('Type the value to compare with.');
+        if (['lt', 'lte', 'gt', 'gte'].includes(r.operator) && !NUMBER.test(target)) return t('Compare a number with a number, like 3.');
       }
       return null;
     }
     case 'file_exists':
-      return r.path.trim() ? null : 'Type the file’s path in the bot’s folder.';
+      return r.path.trim() ? null : t('Type the file’s path in the bot’s folder.');
     case 'file_contains':
-      if (!r.path.trim()) return 'Type the file’s path in the bot’s folder.';
-      return r.text.trim() ? null : 'Type the text the file should contain.';
+      if (!r.path.trim()) return t('Type the file’s path in the bot’s folder.');
+      return r.text.trim() ? null : t('Type the text the file should contain.');
     case 'file_sha256':
-      if (!r.path.trim()) return 'Type the file’s path in the bot’s folder.';
-      return /^[0-9a-f]{64}$/i.test(r.sha256.trim()) ? null : 'A fingerprint is 64 letters and digits (0–9 and a–f).';
+      if (!r.path.trim()) return t('Type the file’s path in the bot’s folder.');
+      return /^[0-9a-f]{64}$/i.test(r.sha256.trim()) ? null : t('A fingerprint is 64 letters and digits (0–9 and a–f).');
     default:
-      return 'Pick what kind of check this is.';
+      return t('Pick what kind of check this is.');
   }
 }
 
@@ -862,14 +880,14 @@ export type GoalFormErrors = Partial<Record<'title' | 'kwantId' | 'checks' | 'bu
 /** Every problem in the form, in plain words; empty when it can be saved. */
 export function goalFormErrors(f: GoalFormState): GoalFormErrors {
   const e: GoalFormErrors = {};
-  const t = f.title.trim();
-  if (!t) e.title = 'Give the goal a short name.';
-  else if (t.length > MAX_TITLE) e.title = `Keep the name under ${MAX_TITLE} characters.`;
-  if (f.mode !== 'watch' && !f.kwantId) e.kwantId = 'Pick the bot that fixes it, or choose Just tell me.';
-  if (f.checks.length === 0) e.checks = 'Add at least one check, so there’s something to look at.';
-  else if (f.checks.length > MAX_CHECKS) e.checks = `A goal can have up to ${MAX_CHECKS} checks.`;
-  else if (!f.checks.some((c) => c.required)) e.checks = 'Keep at least one check required: OK needs one.';
-  if (f.budget.trim() && !/^\d+$/.test(f.budget.trim())) e.budget = 'Type a whole number of tokens, or leave it blank for no limit.';
+  const title = f.title.trim();
+  if (!title) e.title = t('Give the goal a short name.');
+  else if (title.length > MAX_TITLE) e.title = t('Keep the name under {n} characters.', { n: MAX_TITLE });
+  if (f.mode !== 'watch' && !f.kwantId) e.kwantId = t('Pick the bot that fixes it, or choose Just tell me.');
+  if (f.checks.length === 0) e.checks = t('Add at least one check, so there’s something to look at.');
+  else if (f.checks.length > MAX_CHECKS) e.checks = t('A goal can have up to {n} checks.', { n: MAX_CHECKS });
+  else if (!f.checks.some((c) => c.required)) e.checks = t('Keep at least one check required: OK needs one.');
+  if (f.budget.trim() && !/^\d+$/.test(f.budget.trim())) e.budget = t('Type a whole number of tokens, or leave it blank for no limit.');
   const rows: Record<string, string> = {};
   for (const r of f.checks) {
     const err = checkRowError(r);
@@ -926,7 +944,7 @@ export function missionGoalLink(m: { goal_link?: unknown; goal?: unknown }): { i
     if (v && typeof v === 'object') {
       const r = rec(v);
       const id = s(r.id) ?? s(r.goal_id);
-      if (id) return { id, title: s(r.title) ?? 'Goal' };
+      if (id) return { id, title: s(r.title) ?? t('Goal') };
     }
   }
   return null;
@@ -938,7 +956,7 @@ export function clockText(iso: string | null, now: number = Date.now()): string 
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return null;
   const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  return now - d.getTime() > 20 * 3600_000 ? `${d.toLocaleDateString([], { month: 'short', day: 'numeric' })}, ${time}` : time;
+  return now - d.getTime() > 20 * 3600_000 ? t('{date}, {time}', { date: d.toLocaleDateString([], { month: 'short', day: 'numeric' }), time }) : time;
 }
 
 // ---------------------------------------------------------------------------
@@ -979,7 +997,7 @@ export function brokenCheck(g: Pick<Goal, 'checks' | 'interval_minutes'>, now: n
 /** Desired vs observed in one line: "HTTP status = 200 · observed 503". */
 export function desiredVsObserved(c: GoalCheck): string {
   const seen = checkObserved(c);
-  return seen ? `${checkDesired(c)} · observed ${seen}` : checkDesired(c);
+  return seen ? t('{desired} · observed {seen}', { desired: checkDesired(c), seen }) : checkDesired(c);
 }
 
 export function goalDiagnosis(g: Goal, events: GoalEvent[] = [], now: number = Date.now()): Diagnosis {
@@ -992,7 +1010,7 @@ export function goalDiagnosis(g: Goal, events: GoalEvent[] = [], now: number = D
   // goal.diagnosis, then open_mission.diagnosis, then the `investigated` event (D4).
   const pick = (k: 'summary' | 'cause' | 'proposed_fix', ...alt: string[]) => own?.[k] ?? m?.[k] ?? alt.map((a) => s(d[a])).find(Boolean) ?? null;
   return {
-    observed: c ? `${goalCheckName(c)}: ${desiredVsObserved(c)}` : null,
+    observed: c ? t('{name}: {detail}', { name: goalCheckName(c), detail: desiredVsObserved(c) }) : null,
     // When it broke, not when it was last seen: no time at all beats a wrong "since 4 min ago".
     since: broke?.created_at ?? m?.opened_at ?? g.open_fix_task?.created_at ?? null,
     cause: pick('cause', 'cause', 'likely_cause'),
@@ -1100,16 +1118,16 @@ export function displayStatus(g: Goal, events: GoalEvent[] = [], now: number = D
 export function currentWorkText(g: Pick<Goal, 'open_mission' | 'open_fix_task' | 'status' | 'waiting_title' | 'waiting_for'>, titles: Record<string, string> = {}): string | null {
   if (g.status === 'waiting') {
     const other = g.waiting_title ?? (g.waiting_for ? titles[g.waiting_for] : null);
-    return other ? `Waiting for “${other}” to finish its fix` : 'Waiting for another fix in the same folder';
+    return other ? t('Waiting for “{other}” to finish its fix', { other }) : t('Waiting for another fix in the same folder');
   }
   const m = g.open_mission && isOpenMission(g.open_mission) ? g.open_mission : null;
   if (m) {
-    if (m.run_task_id) return `${m.title} · fix ready, waiting for your OK`;
-    const try_ = m.attempt > 1 ? ` · attempt ${m.attempt}` : '';
+    if (m.run_task_id) return t('{title} · fix ready, waiting for your OK', { title: m.title });
+    const try_ = m.attempt > 1 ? t(' · attempt {n}', { n: m.attempt }) : '';
     return `${m.title}${m.status ? ` · ${missionStatusLabel(m.status).label}` : ''}${try_}`;
   }
-  const t = g.open_fix_task;
-  if (t) return t.held ? `${t.title} · fix ready, waiting for your OK` : `${t.title} · ${stateLabel(t.state).label}`;
+  const task = g.open_fix_task;
+  if (task) return task.held ? t('{title} · fix ready, waiting for your OK', { title: task.title }) : `${task.title} · ${stateLabel(task.state).label}`;
   return null;
 }
 
@@ -1126,18 +1144,20 @@ export function stripSummary(goals: Goal[], now: number = Date.now()): string {
   }
   const n = (k: string) => count[k] ?? 0;
   const parts: string[] = [];
-  const add = (k: string, one: string, many = one) => n(k) && parts.push(`${n(k)} ${n(k) === 1 ? one : many}`);
-  add('needs_you', 'needs you', 'need you');
-  add('not_met', 'failing');
-  add('fixing', 'fixing');
-  add('waiting', 'waiting');
-  add('draft', 'draft to approve', 'drafts to approve');
-  add('unknown', 'can’t check', 'can’t check');
+  const add = (k: string, text: (n: number) => string) => n(k) && parts.push(text(n(k)));
+  add('needs_you', (n) => t(n === 1 ? '{n} needs you' : '{n} need you', { n }));
+  add('not_met', (n) => t('{n} failing', { n }));
+  add('fixing', (n) => t('{n} fixing', { n }));
+  add('waiting', (n) => t('{n} waiting', { n }));
+  add('draft', (n) => t(n === 1 ? '{n} draft to approve' : '{n} drafts to approve', { n }));
+  add('unknown', (n) => t('{n} can’t check', { n }));
   const ok = n('met');
-  if (ok) parts.push(parts.length ? `${ok} OK` : `${ok} ${ok === 1 ? 'goal' : 'goals'} OK`);
-  add('checking', 'checking');
-  add('paused', 'paused');
-  if (last && !parts.some((p) => /fail|need|fix|draft/.test(p))) parts.push(`checked ${ago(new Date(last).toISOString(), now)}`);
+  if (ok) parts.push(parts.length ? t('{n} OK', { n: ok }) : t(ok === 1 ? '{n} goal OK' : '{n} goals OK', { n: ok }));
+  add('checking', (n) => t('{n} checking', { n }));
+  add('paused', (n) => t('{n} paused', { n }));
+  // The last check time only when nothing wants the person (needs you, failing, fixing, a draft).
+  const wants = n('needs_you') + n('not_met') + n('fixing') + n('draft') > 0;
+  if (last && !wants) parts.push(t('checked {when}', { when: ago(new Date(last).toISOString(), now) }));
   return parts.join(' · ');
 }
 
@@ -1176,10 +1196,10 @@ function goalError(status: number, answer: unknown): GoalError {
   const a = rec(answer);
   const err = s(a.error);
   const code = s(a.code);
-  if (status === 403) return new GoalError(err && !/person/i.test(err) ? err : 'Only you can change goals.', 403, code);
-  if (status === 404 && !err) return new GoalError('This server doesn’t have Goals yet. Update the app and try again.', 404, code);
-  if (status === 409 && !err) return new GoalError('Someone changed this goal just now. It has been reloaded; try again.', 409, code ?? 'conflict');
-  return new GoalError(err ? err.replace(/^\w/, (c) => c.toUpperCase()) : `Something went wrong (HTTP ${status}).`, status, code);
+  if (status === 403) return new GoalError(err && !/person/i.test(err) ? err : t('Only you can change goals.'), 403, code);
+  if (status === 404 && !err) return new GoalError(t('This server doesn’t have Goals yet. Update the app and try again.'), 404, code);
+  if (status === 409 && !err) return new GoalError(t('Someone changed this goal just now. It has been reloaded; try again.'), 409, code ?? 'conflict');
+  return new GoalError(err ? err.replace(/^\w/, (c) => c.toUpperCase()) : t('Something went wrong (HTTP {status}).', { status }), status, code);
 }
 
 async function call(url: string, method = 'GET', body?: unknown, key?: string): Promise<unknown> {
@@ -1196,7 +1216,7 @@ async function call(url: string, method = 'GET', body?: unknown, key?: string): 
     });
   } catch (e) {
     if (e instanceof PersonCancelledError) throw new GoalError(e.message, 401);
-    throw new GoalError('Couldn’t reach the server. Check your connection and try again.', 0);
+    throw new GoalError(t('Couldn’t reach the server. Check your connection and try again.'), 0);
   }
   const answer = await res.json().catch(() => null);
   if (res.ok) return answer;
@@ -1206,12 +1226,12 @@ async function call(url: string, method = 'GET', body?: unknown, key?: string): 
 const enc = encodeURIComponent;
 const needGoal = (v: unknown): Goal => {
   const g = parseGoal(rec(v).goal ?? v);
-  if (!g) throw new GoalError('The server sent a goal this app can’t read. Reload and try again.', 500);
+  if (!g) throw new GoalError(t('The server sent a goal this app can’t read. Reload and try again.'), 500);
   return g;
 };
 const needDetail = (v: unknown): GoalDetail => {
   const d = parseGoalDetail(v);
-  if (!d) throw new GoalError('The server sent a goal this app can’t read. Reload and try again.', 500);
+  if (!d) throw new GoalError(t('The server sent a goal this app can’t read. Reload and try again.'), 500);
   return d;
 };
 
@@ -1239,16 +1259,16 @@ export const goalsApi = {
 export type GoalsApi = typeof goalsApi;
 
 const SPEC_NAMES: Record<string, string> = {
-  pointer: 'Value at',
-  json_pointer: 'Value at',
-  command: 'Command',
-  url: 'Address',
-  expect_status: 'Answer code',
-  contains: 'Page shows',
-  path: 'File',
-  text: 'Contains',
-  sha256: 'Fingerprint',
-  timeout_secs: 'Time limit (seconds)',
+  pointer: t('Value at'),
+  json_pointer: t('Value at'),
+  command: t('Command'),
+  url: t('Address'),
+  expect_status: t('Answer code'),
+  contains: t('Page shows'),
+  path: t('File'),
+  text: t('Contains'),
+  sha256: t('Fingerprint'),
+  timeout_secs: t('Time limit (seconds)'),
 };
 
 /** Every field of a check's spec, verbatim, for a draft the person approves: nothing summarised away. */

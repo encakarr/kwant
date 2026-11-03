@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { AlertTriangle, Loader2, RefreshCw, UserPlus } from 'lucide-react';
 import { HirePolicy, decisionError, hiresApi, parseHirePolicy } from '../botActions';
 import { formatWhen } from '../continuity';
+import { t, tj } from '../i18n';
 
 const smallBtn =
   'inline-flex items-center gap-1.5 min-h-[36px] sm:min-h-[30px] px-2.5 rounded-lg text-xs font-medium border transition-colors disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500';
@@ -21,11 +22,11 @@ export const HirePolicyPanel: React.FC<{ spaceId: string; spaceName: string }> =
   const load = useCallback(async () => {
     try {
       const p = parseHirePolicy(await hiresApi.policy(spaceId));
-      if (!p) throw new Error('The answer made no sense.');
+      if (!p) throw new Error(t('The answer made no sense.'));
       setPolicy(p);
       setLoadError(null);
     } catch (e) {
-      setLoadError(`Couldn’t load the hiring setting: ${e instanceof Error ? e.message : 'something went wrong.'}`);
+      setLoadError(t('Couldn’t load the hiring setting: {why}', { why: e instanceof Error ? e.message : t('something went wrong.') }));
     }
   }, [spaceId]);
 
@@ -44,7 +45,7 @@ export const HirePolicyPanel: React.FC<{ spaceId: string; spaceName: string }> =
     try {
       const p = parseHirePolicy(await hiresApi.setPolicy(spaceId, body));
       if (p) setPolicy(p);
-      setNotice(what === 'clear' ? 'Cleared. Bots may suggest those kinds of bot again.' : 'Saved.');
+      setNotice(what === 'clear' ? t('Cleared. Bots may suggest those kinds of bot again.') : t('Saved.'));
     } catch (e) {
       setError(decisionError(e, what === 'clear' ? 'clear the list' : 'save it'));
     } finally {
@@ -61,11 +62,12 @@ export const HirePolicyPanel: React.FC<{ spaceId: string; spaceName: string }> =
         <UserPlus size={15} className="mt-0.5 text-violet-300 shrink-0" aria-hidden="true" />
         <div className="min-w-0">
           <h4 id={`${name}-title`} className="text-sm font-semibold text-zinc-100">
-            Hiring new bots
+            {t('Hiring new bots')}
           </h4>
           <p className="text-[11px] text-zinc-500 leading-relaxed">
-            A bot here may propose a new bot when a specialist would clearly do better, or when you keep asking for the same kind of work. Bots
-            can read this setting but can't change it.
+            {t(
+              "A bot here may propose a new bot when a specialist would clearly do better, or when you keep asking for the same kind of work. Bots can read this setting but can't change it.",
+            )}
           </p>
         </div>
       </div>
@@ -74,27 +76,27 @@ export const HirePolicyPanel: React.FC<{ spaceId: string; spaceName: string }> =
         <div className="flex flex-wrap items-center justify-between gap-2 bg-rose-500/10 border border-rose-500/20 text-rose-300 px-3 py-2 rounded-lg text-xs" role="alert">
           <span className="min-w-0 break-words">{loadError}</span>
           <button type="button" onClick={load} className={quietBtn}>
-            <RefreshCw size={12} aria-hidden="true" /> Try again
+            <RefreshCw size={12} aria-hidden="true" /> {t('Try again')}
           </button>
         </div>
       )}
       {!policy && !loadError && (
         <p className="flex items-center gap-2 text-xs text-zinc-400" role="status">
-          <Loader2 size={14} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> Loading…
+          <Loader2 size={14} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> {t('Loading…')}
         </p>
       )}
 
       {policy && (
         <>
           <fieldset className="space-y-1.5" disabled={busy !== null}>
-            <legend className="sr-only">When a bot proposes a new bot in {spaceName}</legend>
+            <legend className="sr-only">{t('When a bot proposes a new bot in {space}', { space: spaceName })}</legend>
             {(
               [
-                { id: 'ask', label: 'Ask me each time', hint: 'You choose Deny, Accept once or Always accept on each proposal.' },
+                { id: 'ask', label: t('Ask me each time'), hint: t('You choose Deny, Accept once or Always accept on each proposal.') },
                 {
                   id: 'auto',
-                  label: 'Hire at once',
-                  hint: `Proposals are hired straight away, each with Undo, up to ${policy.auto_hires_per_day} in 24 hours. After that it asks you again.`,
+                  label: t('Hire at once'),
+                  hint: t('Proposals are hired straight away, each with Undo, up to {n} in 24 hours. After that it asks you again.', { n: policy.auto_hires_per_day }),
                 },
               ] as const
             ).map((o) => (
@@ -121,30 +123,35 @@ export const HirePolicyPanel: React.FC<{ spaceId: string; spaceName: string }> =
           </fieldset>
 
           <p className="text-[11px] text-zinc-400">
-            Hired automatically in the last 24 hours:{' '}
-            <span className="text-zinc-100 font-medium">
-              {policy.auto_hires_last_24h} of {policy.auto_hires_per_day}
-            </span>
-            {policy.policy === 'auto' && <span className="text-zinc-500"> · {left === 0 ? 'the next one will ask you' : `${left} left`}</span>}
+            {tj('Hired automatically in the last 24 hours: {count}', {
+              count: (
+                <span className="text-zinc-100 font-medium">
+                  {t('{used} of {max}', { used: policy.auto_hires_last_24h, max: policy.auto_hires_per_day })}
+                </span>
+              ),
+            })}
+            {policy.policy === 'auto' && (
+              <span className="text-zinc-500"> · {left === 0 ? t('the next one will ask you') : t('{n} left', { n: left })}</span>
+            )}
           </p>
 
           <div className="space-y-1.5">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h5 className="text-xs font-medium text-zinc-300">You said no to</h5>
+              <h5 className="text-xs font-medium text-zinc-300">{t('You said no to')}</h5>
               {policy.denied.length > 0 && (
                 <button type="button" onClick={() => save({ clear_denials: true }, 'clear')} disabled={busy !== null} className={quietBtn}>
                   {busy === 'clear' && <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />}
-                  Clear denials
+                  {t('Clear denials')}
                 </button>
               )}
             </div>
             {policy.denied.length === 0 ? (
-              <p className="text-[11px] text-zinc-500">Nothing. Bots here may propose any kind of bot.</p>
+              <p className="text-[11px] text-zinc-500">{t('Nothing. Bots here may propose any kind of bot.')}</p>
             ) : (
-              <ul className="space-y-1" aria-label="Denied bots">
+              <ul className="space-y-1" aria-label={t('Denied bots')}>
                 {policy.denied.map((d) => (
                   <li key={d.hire_id || `${d.name}-${d.denied_at}`} className="flex flex-wrap items-baseline gap-x-2 text-[11px] rounded-lg border border-zinc-800 px-2.5 py-1.5">
-                    <span className="text-zinc-100 font-medium break-words">{d.name || 'A bot'}</span>
+                    <span className="text-zinc-100 font-medium break-words">{d.name || t('A bot')}</span>
                     {d.role && <span className="text-zinc-400 break-words">{d.role}</span>}
                     {d.denied_at && <span className="text-zinc-600 ml-auto">{formatWhen(d.denied_at)}</span>}
                   </li>
@@ -152,7 +159,7 @@ export const HirePolicyPanel: React.FC<{ spaceId: string; spaceName: string }> =
               </ul>
             )}
             {policy.denied.length > 0 && (
-              <p className="text-[11px] text-zinc-500">Bots here won't propose these kinds of bot again unless you ask for one.</p>
+              <p className="text-[11px] text-zinc-500">{t("Bots here won't propose these kinds of bot again unless you ask for one.")}</p>
             )}
           </div>
 

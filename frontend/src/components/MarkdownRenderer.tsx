@@ -7,6 +7,7 @@ import { HastNode, blockAt, hastText, rehypeSmartIndex, resultBlocks } from '../
 import type { ReplyPart, ReplySource } from './results/registry';
 import { SmartResult } from './results/SmartResult';
 import { ReplyText } from './results/ReplyText';
+import { t } from '../i18n';
 
 interface CodeBlockProps {
   language?: string;
@@ -34,17 +35,17 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language, value }) => {
           type="button"
           onClick={handleCopy}
           className="flex items-center gap-1 px-2 py-0.5 rounded text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer"
-          title="Copy code"
+          title={t('Copy code')}
         >
           {copied ? (
             <>
               <Check size={12} className="text-emerald-400" />
-              <span className="text-emerald-400">Copied</span>
+              <span className="text-emerald-400">{t('Copied')}</span>
             </>
           ) : (
             <>
               <Copy size={12} />
-              <span>Copy</span>
+              <span>{t('Copy')}</span>
             </>
           )}
         </button>

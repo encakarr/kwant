@@ -179,5 +179,5 @@ test('wiring: meaningful actions buzz, typing and scrolling do not', () => {
   const settings = src('components/SettingsModal.tsx');
   assert.match(settings, /hapticsAvailable\(\) && \(/, 'the switch only shows where the phone can vibrate');
   assert.match(settings, /role="switch"[\s\S]*?aria-checked=\{vibration\}/);
-  assert.match(settings, />Vibration</);
+  assert.match(settings, />\{t\('Vibration'\)\}</);
 });

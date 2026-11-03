@@ -4,6 +4,7 @@
 import { parseMetaObject } from './questions';
 import { Schedule, WEEKDAYS, describeSchedule, formatWhen } from './continuity';
 import { PersonCancelledError, personFetch } from './auth';
+import { t } from './i18n';
 
 // ---------------------------------------------------------------------------
 // Bot actions
@@ -81,28 +82,28 @@ export function applyBotAction(map: Record<string, BotActionMeta>, a: BotAction 
 }
 
 const VERBS: Record<string, string> = {
-  routine_create: 'set up a routine',
-  routine_update: 'changed a routine',
-  routine_pause: 'paused a routine',
-  routine_resume: 'turned a routine back on',
-  routine_run_now: 'ran a routine',
-  routine_delete: 'deleted a routine',
-  follow_up_create: 'scheduled a check-in',
-  bot_create: 'created a bot',
-  bot_update: 'changed a bot',
-  bot_delete: 'wants to delete a bot',
-  bot_hire: 'hired a bot',
-  settings_update: 'changed a setting',
-  space_create: 'created a space',
-  space_update: 'changed this space',
-  space_archive: 'wants to archive this space',
-  channel_create: 'created a channel',
-  channel_update: 'changed a channel',
-  profile_delete: 'wants to remove an account',
+  routine_create: t('set up a routine'),
+  routine_update: t('changed a routine'),
+  routine_pause: t('paused a routine'),
+  routine_resume: t('turned a routine back on'),
+  routine_run_now: t('ran a routine'),
+  routine_delete: t('deleted a routine'),
+  follow_up_create: t('scheduled a check-in'),
+  bot_create: t('created a bot'),
+  bot_update: t('changed a bot'),
+  bot_delete: t('wants to delete a bot'),
+  bot_hire: t('hired a bot'),
+  settings_update: t('changed a setting'),
+  space_create: t('created a space'),
+  space_update: t('changed this space'),
+  space_archive: t('wants to archive this space'),
+  channel_create: t('created a channel'),
+  channel_update: t('changed a channel'),
+  profile_delete: t('wants to remove an account'),
 };
 
 /** "set up a routine": what the bot did, after its name. */
-export const actionVerb = (action: string) => VERBS[action] ?? 'changed something';
+export const actionVerb = (action: string) => VERBS[action] ?? t('changed something');
 
 /** "Coach set up a routine": the card's heading. */
 export const actionHeading = (botName: string, action: string) => `${botName} ${actionVerb(action)}`;
@@ -129,21 +130,21 @@ export function hiredBotGone(h: Pick<HireMeta, 'status' | 'hired_kwant_id'> & Pa
 export function actionStateText(m: Pick<BotActionMeta, 'status' | 'action'> & Partial<Pick<BotActionMeta, 'details'>>, gone = false): { label: string; tone: 'ok' | 'wait' | 'off' } {
   if (gone) {
     const name = str(m.details?.name);
-    if (m.action === 'bot_create') return { label: name ? `Created ${name}. It’s since been deleted.` : 'Created. The bot has since been deleted.', tone: 'off' };
-    if (m.action === 'bot_hire') return { label: name ? `Hired ${name}. It’s since been deleted.` : 'Hired. The bot has since been deleted.', tone: 'off' };
-    return { label: name ? `Done. ${name} has since been deleted.` : 'Done. The bot has since been deleted.', tone: 'off' };
+    if (m.action === 'bot_create') return { label: name ? t('Created {name}. It’s since been deleted.', { name }) : t('Created. The bot has since been deleted.'), tone: 'off' };
+    if (m.action === 'bot_hire') return { label: name ? t('Hired {name}. It’s since been deleted.', { name }) : t('Hired. The bot has since been deleted.'), tone: 'off' };
+    return { label: name ? t('Done. {name} has since been deleted.', { name }) : t('Done. The bot has since been deleted.'), tone: 'off' };
   }
   switch (m.status) {
     case 'pending':
-      return { label: 'Needs your OK. Nothing changes until you confirm.', tone: 'wait' };
+      return { label: t('Needs your OK. Nothing changes until you confirm.'), tone: 'wait' };
     case 'undone':
-      return { label: 'Undone. It’s back the way it was.', tone: 'off' };
+      return { label: t('Undone. It’s back the way it was.'), tone: 'off' };
     case 'confirmed':
-      return { label: 'Confirmed. It’s done.', tone: 'ok' };
+      return { label: t('Confirmed. It’s done.'), tone: 'ok' };
     case 'declined':
-      return { label: 'Declined. Nothing changed.', tone: 'off' };
+      return { label: t('Declined. Nothing changed.'), tone: 'off' };
     default:
-      return { label: m.action === 'routine_run_now' ? 'Done. This can’t be undone.' : 'Done.', tone: 'ok' };
+      return { label: m.action === 'routine_run_now' ? t('Done. This can’t be undone.') : t('Done.'), tone: 'ok' };
   }
 }
 
@@ -183,7 +184,7 @@ export function asSchedule(v: unknown): Schedule | null {
 export function scheduleWords(schedule: unknown, scheduleText?: unknown): string {
   const s = asSchedule(schedule);
   if (s) return describeSchedule(s);
-  return typeof scheduleText === 'string' && scheduleText ? sentence(scheduleText) : 'Unknown schedule';
+  return typeof scheduleText === 'string' && scheduleText ? sentence(scheduleText) : t('Unknown schedule');
 }
 
 /** The facts a routine card lists: when, as whom, where, and the next run. */
@@ -191,19 +192,24 @@ export function routineFacts(m: BotActionMeta): Array<{ label: string; value: st
   if (m.target_kind !== 'routine') return [];
   const d = m.details;
   const rows: Array<{ label: string; value: string }> = [];
-  if (d.schedule || d.schedule_text) rows.push({ label: 'When', value: scheduleWords(d.schedule, d.schedule_text) });
-  if (str(d.bot_name)) rows.push({ label: 'Runs as', value: d.bot_name as string });
-  if (str(d.delivers_to)) rows.push({ label: 'Posts in', value: d.delivers_to as string });
+  if (d.schedule || d.schedule_text) rows.push({ label: t('When'), value: scheduleWords(d.schedule, d.schedule_text) });
+  if (str(d.bot_name)) rows.push({ label: t('Runs as'), value: d.bot_name as string });
+  if (str(d.delivers_to)) rows.push({ label: t('Posts in'), value: d.delivers_to as string });
   if (m.action === 'routine_run_now') {
-    if (str(d.run_status)) rows.push({ label: 'This run', value: RUN_WORDS[d.run_status as string] ?? (d.run_status as string) });
+    if (str(d.run_status)) rows.push({ label: t('This run'), value: RUN_WORDS[d.run_status as string] ?? (d.run_status as string) });
   } else if (m.status === 'applied' && m.action !== 'routine_delete') {
-    const next = d.enabled === false ? 'Paused' : str(d.next_run_at) ? formatWhen(d.next_run_at as string) : null;
-    if (next) rows.push({ label: 'Next run', value: next });
+    const next = d.enabled === false ? t('Paused') : str(d.next_run_at) ? formatWhen(d.next_run_at as string) : null;
+    if (next) rows.push({ label: t('Next run'), value: next });
   }
   return rows;
 }
 
-const RUN_WORDS: Record<string, string> = { running: 'Running', ok: 'Finished', error: 'Failed', skipped: 'Skipped, it was already running' };
+const RUN_WORDS: Record<string, string> = {
+  running: t('Running'),
+  ok: t('Finished'),
+  error: t('Failed'),
+  skipped: t('Skipped, it was already running'),
+};
 
 /** Edit and Pause make sense while the routine the card made or changed still exists. */
 export function routineButtons(m: BotActionMeta): { edit: boolean; pause: boolean } {
@@ -308,7 +314,7 @@ function parseEvidence(raw: unknown): HireEvidence | null {
 
 function parseTools(raw: unknown): Array<{ id: string; name: string | null }> {
   return Array.isArray(raw)
-    ? raw.flatMap((t) => (t && typeof t === 'object' && str((t as Record<string, unknown>).id) ? [{ id: (t as Record<string, string>).id, name: str((t as Record<string, unknown>).name) }] : []))
+    ? raw.flatMap((x) => (x && typeof x === 'object' && str((x as Record<string, unknown>).id) ? [{ id: (x as Record<string, string>).id, name: str((x as Record<string, unknown>).name) }] : []))
     : [];
 }
 
@@ -340,7 +346,7 @@ export function parseHireMeta(raw: unknown): HireMeta | null {
     instructions: str(m.instructions) ?? '',
     model: str(m.model),
     tools: parseTools(m.tools),
-    team: team && str(team.id) ? { id: team.id as string, name: str(team.name) ?? 'a team' } : null,
+    team: team && str(team.id) ? { id: team.id as string, name: str(team.name) ?? t('a team') } : null,
     reason: str(m.reason) ?? '',
     evidence: parseEvidence(m.evidence),
     requested_by_person: m.requested_by_person === true,
@@ -360,9 +366,9 @@ export function parseHireMeta(raw: unknown): HireMeta | null {
       return listed.length ? listed : [top];
     })(),
     new_team: (() => {
-      const t = m.new_team && typeof m.new_team === 'object' ? (m.new_team as Record<string, unknown>) : null;
-      const teamName = t && str(t.name);
-      return teamName ? { name: teamName, lead: str(t.lead)?.replace(/^@/, '') ?? null } : null;
+      const nt = m.new_team && typeof m.new_team === 'object' ? (m.new_team as Record<string, unknown>) : null;
+      const teamName = nt && str(nt.name);
+      return teamName ? { name: teamName, lead: str(nt.lead)?.replace(/^@/, '') ?? null } : null;
     })(),
     hired_kwant_ids: strs(m.hired_kwant_ids),
   };
@@ -394,7 +400,12 @@ export function applyHire(map: Record<string, HireMeta>, h: Hire | null | undefi
   return { ...map, [card.hire_id]: card };
 }
 
-const NEEDS: Record<string, string> = { instructions: 'its own instructions', tools: 'its own tools', schedule: 'a schedule', model: 'a different model' };
+const NEEDS: Record<string, string> = {
+  instructions: t('its own instructions'),
+  tools: t('its own tools'),
+  schedule: t('a schedule'),
+  model: t('a different model'),
+};
 
 /** What the proposal rests on, in one sentence. */
 /** "Oct 28": when a past request was asked, short. */
@@ -406,26 +417,27 @@ export function shortDate(at: string | null, now: Date = new Date()): string {
 }
 
 export function evidenceText(e: HireEvidence | null, requestedByPerson: boolean): string {
-  if (requestedByPerson) return 'You asked for this kind of bot.';
+  if (requestedByPerson) return t('You asked for this kind of bot.');
   if (!e) return '';
   if (e.basis === 'repeated') {
     const n = e.similar_requests.length;
-    return `You asked for this kind of work ${n} ${n === 1 ? 'time' : 'times'} in this space.`;
+    return t(n === 1 ? 'You asked for this kind of work {n} time in this space.' : 'You asked for this kind of work {n} times in this space.', { n });
   }
   if (e.basis === 'specialist') {
     const needs = e.needs.map((n) => NEEDS[n] ?? n);
-    const list = needs.length > 1 ? `${needs.slice(0, -1).join(', ')} and ${needs[needs.length - 1]}` : needs[0];
-    const lead = list ? `This work needs ${list}.` : '';
+    const list = andList(needs);
+    const lead = list ? t('This work needs {list}.', { list }) : '';
     return [lead, e.gap ? sentence(e.gap.trim()).replace(/([^.!?])$/, '$1.') : ''].filter(Boolean).join(' ');
   }
   return e.text;
 }
 
 /** "auto" or empty means the app picks; anything else is shown as is. */
-export const modelText = (model: string | null) => (!model || model === 'auto' ? 'Picked automatically' : model);
+export const modelText = (model: string | null) => (!model || model === 'auto' ? t('Picked automatically') : model);
 
 /** "Ana, Ben and Cy". */
-export const andList = (xs: string[]) => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}` : xs[0] ?? '');
+export const andList = (xs: string[]) =>
+  xs.length > 1 ? t('{items} and {last}', { items: xs.slice(0, -1).join(t(', ')), last: xs[xs.length - 1] }) : xs[0] ?? '';
 
 export function hireStateText(
   h: Pick<HireMeta, 'status' | 'name' | 'team' | 'proposer_name'> & Partial<Pick<HireMeta, 'members' | 'new_team'>>,
@@ -435,19 +447,22 @@ export function hireStateText(
   const many = names.length > 1;
   const who = andList(names);
   const team = h.new_team?.name ?? h.team?.name;
-  const joined = team ? `joined ${team}` : many ? 'are ready' : 'is ready';
-  if (gone) return { label: many ? `Hired ${who}. They’ve since been deleted.` : `Hired ${h.name}. It’s since been deleted.`, tone: 'off' };
+  const joined = team ? t('{who} joined {team}.', { who, team }) : many ? t('{who} are ready.', { who }) : t('{who} is ready.', { who });
+  if (gone) return { label: many ? t('Hired {who}. They’ve since been deleted.', { who }) : t('Hired {name}. It’s since been deleted.', { name: h.name }), tone: 'off' };
   switch (h.status) {
     case 'accepted':
-      return { label: `Hired. ${who} ${joined}.`, tone: 'ok' };
+      return { label: t('Hired. {joined}', { joined }), tone: 'ok' };
     case 'auto_accepted':
-      return { label: `Hired at once, because you chose Always accept. ${who} ${joined}.`, tone: 'ok' };
+      return { label: t('Hired at once, because you chose Always accept. {joined}', { joined }), tone: 'ok' };
     case 'denied':
-      return { label: many ? 'Not hired. Bots here won’t suggest this team again unless you ask.' : `Not hired. Bots here won’t suggest this kind of bot again unless you ask.`, tone: 'off' };
+      return {
+        label: many ? t('Not hired. Bots here won’t suggest this team again unless you ask.') : t('Not hired. Bots here won’t suggest this kind of bot again unless you ask.'),
+        tone: 'off',
+      };
     case 'undone':
-      return { label: many ? `Hire undone. ${who} were removed.` : `Hire undone. ${h.name} was removed.`, tone: 'off' };
+      return { label: many ? t('Hire undone. {who} were removed.', { who }) : t('Hire undone. {name} was removed.', { name: h.name }), tone: 'off' };
     default:
-      return { label: `Waiting for you. ${h.proposer_name || 'The bot'} carries on with your request meanwhile.`, tone: 'wait' };
+      return { label: t('Waiting for you. {name} carries on with your request meanwhile.', { name: h.proposer_name || t('The bot') }), tone: 'wait' };
   }
 }
 
@@ -504,7 +519,7 @@ async function call<T>(method: string, url: string, body?: unknown): Promise<T> 
   });
   const data = await res.json().catch(() => null);
   if (!res.ok) {
-    const fallback = res.status === 404 ? 'It no longer exists.' : `Request failed (HTTP ${res.status}).`;
+    const fallback = res.status === 404 ? t('It no longer exists.') : t('Request failed (HTTP {status}).', { status: res.status });
     throw new ApiError(typeof data?.error === 'string' && data.error ? data.error : fallback, res.status);
   }
   return data as T;
@@ -512,14 +527,32 @@ async function call<T>(method: string, url: string, body?: unknown): Promise<T> 
 
 /** A failed button in plain words; a 409 means someone (or another tab) got there first. */
 export function decisionError(err: unknown, what: string): string {
+  // Callers pass the English phrase ("undo it"); shown in the interface language.
+  const doing = WHAT_WORDS[what] ?? what;
   if (err instanceof ApiError && err.status === 409) {
-    const why = err.message && !/^Request failed/.test(err.message) ? ` (${err.message.replace(/\.$/, '')})` : '';
-    return `Couldn’t ${what}: it was already decided or changed${why}.`;
+    // The fallback message from call() (in either language) carries no reason worth repeating.
+    const bare = /^Request failed/.test(err.message) || err.message === t('Request failed (HTTP {status}).', { status: err.status });
+    const why = err.message && !bare ? err.message.replace(/\.$/, '') : '';
+    return why
+      ? t('Couldn’t {what}: it was already decided or changed ({why}).', { what: doing, why })
+      : t('Couldn’t {what}: it was already decided or changed.', { what: doing });
   }
   if (err instanceof PersonCancelledError) return err.message;
-  if (err instanceof ApiError && err.status === 403) return `Couldn’t ${what}: only you can do this, from your own browser.`;
-  return `Couldn’t ${what}: ${err instanceof Error ? err.message : 'something went wrong.'}`;
+  if (err instanceof ApiError && err.status === 403) return t('Couldn’t {what}: only you can do this, from your own browser.', { what: doing });
+  return t('Couldn’t {what}: {why}', { what: doing, why: err instanceof Error ? err.message : t('something went wrong.') });
 }
+
+/** The phrases callers pass to decisionError, in the interface language. */
+const WHAT_WORDS: Record<string, string> = {
+  'undo it': t('undo it'),
+  'confirm it': t('confirm it'),
+  'decline it': t('decline it'),
+  'say no': t('say no'),
+  'undo the hire': t('undo the hire'),
+  'hire it': t('hire it'),
+  'clear the list': t('clear the list'),
+  'save it': t('save it'),
+};
 
 const enc = encodeURIComponent;
 

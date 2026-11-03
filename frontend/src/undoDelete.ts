@@ -4,6 +4,7 @@
 // Leaving the screen sends the delete straight away; closing the page before it goes keeps the item.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { t } from './i18n';
 
 export const UNDO_MS = 6000;
 
@@ -63,7 +64,7 @@ export class DeferredDelete {
       await run();
       this.onCommitted(null);
     } catch (e) {
-      this.onCommitted(e instanceof Error ? e.message : 'That failed.');
+      this.onCommitted(e instanceof Error ? e.message : t('That failed.'));
     }
   }
 

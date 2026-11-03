@@ -7,6 +7,7 @@
 import { parseMetaObject } from './questions';
 import { ConnectionsError, connectionsApi } from './connections';
 import { inDesktopApp, pollUntil } from './externalLinks';
+import { t } from './i18n';
 
 /** Whether the space's Composio connector could start a sign-in when the bot posted the card. */
 export type ComposioReady = 'ready' | 'off' | 'needs_key' | 'not_added';
@@ -42,11 +43,11 @@ export function parseConnectionMeta(raw: unknown): ConnectionSuggestionMeta | nu
 export function composioMissingText(r: ComposioReady): string | null {
   switch (r) {
     case 'not_added':
-      return 'Connecting apps goes through Composio, which isn’t added yet. Add it in Connections first (free account at composio.dev).';
+      return t('Connecting apps goes through Composio, which isn’t added yet. Add it in Connections first (free account at composio.dev).');
     case 'needs_key':
-      return 'Composio is added but has no API key yet. Add your Composio API key in Connections first.';
+      return t('Composio is added but has no API key yet. Add your Composio API key in Connections first.');
     case 'off':
-      return 'The Composio connector is switched off. Switch it on in Connections first.';
+      return t('The Composio connector is switched off. Switch it on in Connections first.');
     default:
       return null;
   }
@@ -136,8 +137,8 @@ export function startConnect(
       if (cancelled) return;
       onState(
         composioRefused(e)
-          ? { phase: 'missing', message: e instanceof Error ? e.message : 'Composio can’t start this sign-in. Check it in Connections.' }
-          : { phase: 'error', message: e instanceof Error ? e.message : 'The sign-in didn’t start. Try again.' },
+          ? { phase: 'missing', message: e instanceof Error ? e.message : t('Composio can’t start this sign-in. Check it in Connections.') }
+          : { phase: 'error', message: e instanceof Error ? e.message : t('The sign-in didn’t start. Try again.') },
       );
       return;
     }

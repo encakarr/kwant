@@ -4,6 +4,8 @@
 // anything renders it (each renderer's `validate`, in results/registry.ts). Anything off, and the reply
 // renders as markdown. Contract: plan.md §A.3 (version 1).
 
+import { t } from './i18n';
+
 // ---------------------------------------------------------------------------------------------------
 // Contract (plan §A.3)
 
@@ -205,17 +207,19 @@ export function formatTotal(n: number): string {
 
 export function previewNote(preview: FilePreview): string | null {
   if (!preview || preview.kind === 'image') return null;
-  const parts: string[] = [];
   if (preview.kind === 'table') {
-    if (preview.total_rows !== undefined && preview.total_rows > preview.rows.length) parts.push(`${preview.rows.length} of ${formatTotal(preview.total_rows)} rows`);
-    if (preview.total_cols !== undefined && preview.total_cols > preview.columns.length) parts.push(`${preview.columns.length} of ${formatTotal(preview.total_cols)} columns`);
+    const rows = preview.total_rows !== undefined && preview.total_rows > preview.rows.length ? { shown: preview.rows.length, total: formatTotal(preview.total_rows) } : null;
+    const cols = preview.total_cols !== undefined && preview.total_cols > preview.columns.length ? { shown: preview.columns.length, total: formatTotal(preview.total_cols) } : null;
+    if (rows && cols)
+      return t('Showing {shown} of {total} rows, {shownCols} of {totalCols} columns', { shown: rows.shown, total: rows.total, shownCols: cols.shown, totalCols: cols.total });
+    if (rows) return t('Showing {shown} of {total} rows', rows);
+    if (cols) return t('Showing {shown} of {total} columns', cols);
   } else if (preview.total_lines !== undefined) {
     const shown = preview.excerpt.replace(/\n$/, '').split('\n').length;
-    if (preview.total_lines > shown) parts.push(`${shown} of ${formatTotal(preview.total_lines)} lines`);
+    if (preview.total_lines > shown) return t('Showing {shown} of {total} lines', { shown, total: formatTotal(preview.total_lines) });
   }
-  if (parts.length) return `Showing ${parts.join(', ')}`;
   // A total that is not larger than what is drawn (the server may send totals for every file) is not a cut.
-  return preview.truncated ? 'Preview, file is longer' : null;
+  return preview.truncated ? t('Preview, file is longer') : null;
 }
 
 /** 1–10 files; source is always slot. */

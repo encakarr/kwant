@@ -3,6 +3,7 @@ import { AlertTriangle, ArrowUpCircle, CheckCircle2, ExternalLink, Info, Loader2
 import { BannerView, UpdateController, UpdateModel, aboutLine, appUpdateController, bannerView, dismissVersion, dismissedVersion } from '../appUpdate';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { desktopAppOs } from '../externalLinks';
+import { t } from '../i18n';
 
 const PHONE_QUERY = '(max-width: 767px)';
 const UPDATED_NOTE_MS = 10000;
@@ -36,7 +37,7 @@ export const AppUpdateBannerView: React.FC<ViewProps> = ({ view, onUpdate, onDis
         : 'border-sky-500/30 bg-sky-500/10';
 
   return (
-    <aside aria-label="App update" data-update-banner={view.kind} className={`shrink-0 border-b ${tone} text-xs text-zinc-100`}>
+    <aside aria-label={t('App update')} data-update-banner={view.kind} className={`shrink-0 border-b ${tone} text-xs text-zinc-100`}>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2">
         <p className="flex min-w-0 flex-1 items-center gap-2" role="status" aria-live="polite">
           {view.kind === 'available' && <ArrowUpCircle size={15} className="shrink-0 text-sky-300" aria-hidden="true" />}
@@ -48,23 +49,24 @@ export const AppUpdateBannerView: React.FC<ViewProps> = ({ view, onUpdate, onDis
           <span className="min-w-0">
             {view.kind === 'available' && (
               <>
-                <span className="font-medium">kwant bots {view.version} is ready.</span>
-                <span className="text-zinc-400"> Your chats and bots stay as they are.</span>
+                <span className="font-medium">{t('kwant bots {version} is ready.', { version: view.version })}</span>
+                <span className="text-zinc-400"> {t('Your chats and bots stay as they are.')}</span>
               </>
             )}
             {view.kind === 'downloading' && (
               <span className="font-medium">
-                Downloading kwant bots {view.version}…{view.progress != null && ` ${Math.round(view.progress * 100)}%`}
+                {t('Downloading kwant bots {version}…', { version: view.version })}
+                {view.progress != null && ` ${Math.round(view.progress * 100)}%`}
               </span>
             )}
-            {view.kind === 'restarting' && <span className="font-medium">Restarting the app to finish the update…</span>}
+            {view.kind === 'restarting' && <span className="font-medium">{t('Restarting the app to finish the update…')}</span>}
             {view.kind === 'error' && (
               <>
-                <span className="font-medium">kwant bots {view.version} didn’t install.</span>
-                <span className="text-zinc-300"> {view.error} This version keeps working.</span>
+                <span className="font-medium">{t('kwant bots {version} didn’t install.', { version: view.version })}</span>
+                <span className="text-zinc-300"> {view.error} {t('This version keeps working.')}</span>
               </>
             )}
-            {view.kind === 'updated' && <span className="font-medium">Updated to kwant bots {view.version}.</span>}
+            {view.kind === 'updated' && <span className="font-medium">{t('Updated to kwant bots {version}.', { version: view.version })}</span>}
           </span>
         </p>
 
@@ -78,17 +80,17 @@ export const AppUpdateBannerView: React.FC<ViewProps> = ({ view, onUpdate, onDis
                 onClick={() => setNotesOpen((v) => !v)}
                 className={`${btn} text-sky-200 hover:bg-sky-500/15`}
               >
-                What’s new
+                {t('What’s new')}
               </button>
             )}
             {view.kind === 'error' && (
               <a href={view.url} target="_blank" rel="noreferrer" className={`${btn} text-zinc-200 hover:bg-zinc-800`}>
-                <ExternalLink size={13} aria-hidden="true" /> Download manually
+                <ExternalLink size={13} aria-hidden="true" /> {t('Download manually')}
               </a>
             )}
             <button type="button" onClick={onUpdate} className={`${btn} bg-sky-600 text-white hover:bg-sky-500`}>
               {view.kind === 'error' ? <RotateCw size={13} aria-hidden="true" /> : <ArrowUpCircle size={13} aria-hidden="true" />}
-              {view.kind === 'error' ? 'Try again' : 'Update and restart'}
+              {view.kind === 'error' ? t('Try again') : t('Update and restart')}
             </button>
           </div>
         )}
@@ -96,7 +98,7 @@ export const AppUpdateBannerView: React.FC<ViewProps> = ({ view, onUpdate, onDis
         {view.kind === 'downloading' && (
           <div
             role="progressbar"
-            aria-label={`Downloading kwant bots ${view.version}`}
+            aria-label={t('Downloading kwant bots {version}', { version: view.version })}
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={view.progress == null ? undefined : Math.round(view.progress * 100)}
@@ -113,8 +115,8 @@ export const AppUpdateBannerView: React.FC<ViewProps> = ({ view, onUpdate, onDis
           <button
             type="button"
             onClick={onDismiss}
-            aria-label={view.kind === 'available' ? `Hide until the next version` : 'Close'}
-            title={view.kind === 'available' ? 'Hide until the next version' : undefined}
+            aria-label={view.kind === 'available' ? t('Hide until the next version') : t('Close')}
+            title={view.kind === 'available' ? t('Hide until the next version') : undefined}
             className="-my-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400"
           >
             <X size={15} />
@@ -147,8 +149,8 @@ export const AppUpdateBanner: React.FC = () => {
   const updated = model.phase === 'updated';
   useEffect(() => {
     if (!updated) return;
-    const t = window.setTimeout(() => ctrl.clearUpdated(), UPDATED_NOTE_MS);
-    return () => window.clearTimeout(t);
+    const timer = window.setTimeout(() => ctrl.clearUpdated(), UPDATED_NOTE_MS);
+    return () => window.clearTimeout(timer);
   }, [updated, ctrl]);
 
   const view = bannerView(model, dismissed);
@@ -187,10 +189,10 @@ export const AppUpdateAboutView: React.FC<AboutProps> = ({ model, onCheck, onUpd
         <div className="flex-1 min-w-0">
           <h3 id="about-title" className="flex items-center gap-2 text-xs font-medium text-zinc-300">
             <Info size={15} className="text-sky-400" aria-hidden="true" />
-            <span>About</span>
+            <span>{t('About')}</span>
           </h3>
           <p className="mt-1 text-xs text-zinc-200">
-            kwant bots for {desktopAppOs()} <span className="font-mono text-zinc-300">{s.current || 'unknown version'}</span>
+            {t('kwant bots for {os}', { os: desktopAppOs() })} <span className="font-mono text-zinc-300">{s.current || t('unknown version')}</span>
           </p>
         </div>
         <button
@@ -200,7 +202,7 @@ export const AppUpdateAboutView: React.FC<AboutProps> = ({ model, onCheck, onUpd
           className="inline-flex min-h-[32px] items-center gap-1.5 rounded-lg border border-zinc-700 px-3 text-xs font-medium text-zinc-200 hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400"
         >
           {s.state === 'checking' ? <Loader2 size={13} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <RotateCw size={13} aria-hidden="true" />}
-          Check for updates
+          {t('Check for updates')}
         </button>
       </div>
       <div role="status" aria-live="polite" className="flex flex-wrap items-center gap-2 text-[11px]">
@@ -212,12 +214,12 @@ export const AppUpdateAboutView: React.FC<AboutProps> = ({ model, onCheck, onUpd
             className="inline-flex min-h-[28px] items-center gap-1.5 rounded-lg bg-sky-600 px-2.5 text-[11px] font-medium text-white hover:bg-sky-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
           >
             <ArrowUpCircle size={12} aria-hidden="true" />
-            {s.state === 'error' ? 'Try again' : `Update to ${s.available!.version} and restart`}
+            {s.state === 'error' ? t('Try again') : t('Update to {version} and restart', { version: s.available!.version })}
           </button>
         )}
         {offer && s.state === 'error' && (
           <a href={s.available!.url} target="_blank" rel="noreferrer" className="text-sky-300 underline-offset-2 hover:underline">
-            Download manually
+            {t('Download manually')}
           </a>
         )}
       </div>

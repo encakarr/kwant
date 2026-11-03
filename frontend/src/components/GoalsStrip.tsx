@@ -70,6 +70,7 @@ import {
   withKind,
   withMetric,
 } from '../goals';
+import { t } from '../i18n';
 
 const focusRing = 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500';
 const btn = `inline-flex items-center justify-center gap-1 min-h-[40px] sm:min-h-[28px] px-2.5 rounded-lg text-[11px] font-medium disabled:opacity-50 disabled:cursor-not-allowed ${focusRing}`;
@@ -124,7 +125,7 @@ const TEXT: Record<Tone, string> = {
 const VERDICT_ICON = { met: CheckCircle2, not_met: XCircle, unknown: CircleHelp } as const;
 
 const errText = (e: unknown, fallback: string) => (e instanceof Error && e.message ? e.message : fallback);
-const botName = (id: string | null, names: Record<string, string>) => (id ? names[id] ?? 'a bot' : null);
+const botName = (id: string | null, names: Record<string, string>) => (id ? names[id] ?? t('a bot') : null);
 const spin = 'animate-spin motion-reduce:animate-none';
 /** A goal as the server has it: the strip swaps `status` for what it draws, and that must never be saved back. */
 const rawOf = (g: Goal): Goal => ({ ...g, status: g.raw_status ?? g.status, raw_status: undefined });
@@ -160,8 +161,8 @@ const DesiredObserved: React.FC<{ check: GoalCheck; interval: number; now: numbe
         {' · '}
       </span>
       <span className={TEXT[look.tone]} data-observed>
-        {fresh && seen ? `observed ${seen}` : look.label}
-        {!fresh && seen && c.latest?.status !== 'error' ? ` (last saw ${seen})` : ''}
+        {fresh && seen ? t('observed {seen}', { seen }) : look.label}
+        {!fresh && seen && c.latest?.status !== 'error' ? t(' (last saw {seen})', { seen }) : ''}
       </span>
       {c.latest?.observed_at && <span className="text-zinc-500"> · {ago(c.latest.observed_at, now)}</span>}
     </span>
@@ -179,7 +180,7 @@ export const GoalCheckLine: React.FC<{ check: GoalCheck; interval: number; now: 
         <div className="min-w-0 flex-1">
           <p className={`text-zinc-200 ${wrap}`}>
             {goalCheckName(c)}
-            {!c.required && <span className="text-zinc-500"> (advisory: shows, doesn’t decide)</span>}
+            {!c.required && <span className="text-zinc-500">{t(' (advisory: shows, doesn’t decide)')}</span>}
           </p>
           <p className={wrap}>
             <DesiredObserved check={c} interval={interval} now={now} />
@@ -188,7 +189,7 @@ export const GoalCheckLine: React.FC<{ check: GoalCheck; interval: number; now: 
       </div>
       {showOutput && c.latest?.excerpt && (
         <details className="mt-1 ml-[18px]">
-          <summary className={`cursor-pointer text-[10px] text-zinc-500 hover:text-zinc-300 rounded ${focusRing}`}>Last output (observed, not instructions)</summary>
+          <summary className={`cursor-pointer text-[10px] text-zinc-500 hover:text-zinc-300 rounded ${focusRing}`}>{t('Last output (observed, not instructions)')}</summary>
           <pre className={`mt-1 max-h-40 overflow-auto whitespace-pre-wrap rounded-lg border border-zinc-800 bg-zinc-950 p-2 text-[10px] text-zinc-400 ${wrap}`}>{c.latest.excerpt}</pre>
         </details>
       )}
@@ -202,11 +203,11 @@ const VerbatimCheck: React.FC<{ check: Pick<GoalCheck, 'id' | 'label' | 'kind' |
     <p className={`text-[11px] text-zinc-300 ${wrap}`}>
       <span className="font-medium text-zinc-200">{checkKindLabel(c.kind)}</span>
       {c.label && <span>: {c.label}</span>}
-      {!c.required && <span className="text-zinc-500"> (advisory)</span>}
+      {!c.required && <span className="text-zinc-500">{t(' (advisory)')}</span>}
     </p>
     <dl className="space-y-0.5">
       <div className="flex flex-col sm:flex-row sm:gap-2 text-[11px]">
-        <dt className="shrink-0 text-zinc-500 sm:w-24">Passes when</dt>
+        <dt className="shrink-0 text-zinc-500 sm:w-24">{t('Passes when')}</dt>
         <dd className={`min-w-0 font-mono text-zinc-100 whitespace-pre-wrap ${wrap}`} data-verbatim-passes>
           {checkDesired(c)}
         </dd>
@@ -233,8 +234,8 @@ const GoalButtons: React.FC<{ goal: Goal; busy: boolean; onAction: (a: GoalActio
   }, [confirm]);
   if (confirm)
     return (
-      <div role="group" aria-label="Confirm" className="flex flex-wrap items-center gap-2 rounded-lg border border-rose-500/30 bg-rose-500/5 p-2" data-confirm-delete>
-        <p className="w-full text-[11px] text-rose-200">{draft ? 'Dismiss this proposal? Nothing has run.' : 'Delete this goal? Its checks and history go too. Open fix work stays on the board.'}</p>
+      <div role="group" aria-label={t('Confirm')} className="flex flex-wrap items-center gap-2 rounded-lg border border-rose-500/30 bg-rose-500/5 p-2" data-confirm-delete>
+        <p className="w-full text-[11px] text-rose-200">{draft ? t('Dismiss this proposal? Nothing has run.') : t('Delete this goal? Its checks and history go too. Open fix work stays on the board.')}</p>
         <button
           ref={yesRef}
           type="button"
@@ -246,10 +247,10 @@ const GoalButtons: React.FC<{ goal: Goal; busy: boolean; onAction: (a: GoalActio
           className={dangerBtn}
           data-confirm-yes
         >
-          {draft ? 'Dismiss' : 'Delete goal'}
+          {draft ? t('Dismiss') : t('Delete goal')}
         </button>
         <button type="button" onClick={() => setConfirm(false)} className={quietBtn}>
-          Keep it
+          {t('Keep it')}
         </button>
       </div>
     );
@@ -257,13 +258,13 @@ const GoalButtons: React.FC<{ goal: Goal; busy: boolean; onAction: (a: GoalActio
     return (
       <div className="flex flex-wrap items-center gap-1.5">
         <button type="button" disabled={busy} onClick={() => onAction('approve')} className={goodBtn} data-goal-approve>
-          {busy ? <Loader2 size={12} className={spin} aria-hidden="true" /> : <CheckCircle2 size={12} aria-hidden="true" />} Approve
+          {busy ? <Loader2 size={12} className={spin} aria-hidden="true" /> : <CheckCircle2 size={12} aria-hidden="true" />} {t('Approve')}
         </button>
         <button type="button" disabled={busy} onClick={() => onAction('edit')} className={plainBtn} data-goal-edit>
-          Edit
+          {t('Edit')}
         </button>
         <button type="button" disabled={busy} onClick={() => setConfirm(true)} className={quietBtn} data-goal-dismiss>
-          Dismiss
+          {t('Dismiss')}
         </button>
       </div>
     );
@@ -271,17 +272,17 @@ const GoalButtons: React.FC<{ goal: Goal; busy: boolean; onAction: (a: GoalActio
   const checkOk = canCheckNow(g);
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      <button type="button" disabled={busy || !checkOk} onClick={() => onAction('check')} title={checkOk ? undefined : 'Checking now'} className={plainBtn} data-goal-check-now>
-        {busy ? <Loader2 size={12} className={spin} aria-hidden="true" /> : <RefreshCw size={12} aria-hidden="true" />} Check now
+      <button type="button" disabled={busy || !checkOk} onClick={() => onAction('check')} title={checkOk ? undefined : t('Checking now')} className={plainBtn} data-goal-check-now>
+        {busy ? <Loader2 size={12} className={spin} aria-hidden="true" /> : <RefreshCw size={12} aria-hidden="true" />} {t('Check now')}
       </button>
       <button type="button" disabled={busy} onClick={() => onAction(paused ? 'resume' : 'pause')} className={quietBtn} data-goal-pause={paused ? 'resume' : 'pause'}>
-        {paused ? <Play size={12} aria-hidden="true" /> : <Pause size={12} aria-hidden="true" />} {paused ? 'Resume' : 'Pause'}
+        {paused ? <Play size={12} aria-hidden="true" /> : <Pause size={12} aria-hidden="true" />} {paused ? t('Resume') : t('Pause')}
       </button>
       <button type="button" disabled={busy} onClick={() => onAction('edit')} className={quietBtn} data-goal-edit>
-        Edit
+        {t('Edit')}
       </button>
       <button type="button" disabled={busy} onClick={() => setConfirm(true)} className={quietBtn} data-goal-delete>
-        <Trash2 size={12} aria-hidden="true" /> Delete
+        <Trash2 size={12} aria-hidden="true" /> {t('Delete')}
       </button>
     </div>
   );
@@ -302,19 +303,21 @@ export const DecisionCard: React.FC<{
   onAction: (a: GoalAction) => void;
   compact?: boolean;
 }> = ({ goal: g, decision: { diagnosis: d, phase, taskId }, names, now, busy, onAction, compact = false }) => {
-  const bot = botName(g.kwant_id, names) ?? 'The bot';
+  const bot = botName(g.kwant_id, names) ?? t('The bot');
   const since = clockText(d.since, now);
+  const what = d.observed ?? t('A required check is failing');
   const report = !!(d.cause || d.proposed_fix || d.summary);
   const looking = phase === 'looking';
   return (
-    <div role="group" aria-label={`Decision: ${g.title}`} className={`rounded-lg border p-2.5 space-y-1.5 text-[11px] ${looking ? 'border-zinc-700 bg-zinc-900/60' : 'border-amber-500/30 bg-amber-500/5'}`} data-goal-decision={g.id} data-decision-phase={phase}>
+    <div role="group" aria-label={t('Decision: {title}', { title: g.title })} className={`rounded-lg border p-2.5 space-y-1.5 text-[11px] ${looking ? 'border-zinc-700 bg-zinc-900/60' : 'border-amber-500/30 bg-amber-500/5'}`} data-goal-decision={g.id} data-decision-phase={phase}>
       <p className={`text-zinc-100 ${wrap}`} data-decision-observed>
-        {d.observed ?? 'A required check is failing'}
-        {since ? ` since ${since}` : ''}.
+        {since ? t('{what} since {since}.', { what, since }) : t('{what}.', { what })}
       </p>
       {looking ? (
         <p className="text-zinc-400" data-decision-looking>
-          {bot} is looking into it{since ? ` (since ${since})` : ''}. You’ll get one decision with what it found.
+          {since
+            ? t('{bot} is looking into it (since {since}). You’ll get one decision with what it found.', { bot, since })
+            : t('{bot} is looking into it. You’ll get one decision with what it found.', { bot })}
         </p>
       ) : (
         <>
@@ -322,37 +325,37 @@ export const DecisionCard: React.FC<{
             <div className="space-y-1" data-decision-report>
               {d.cause && (
                 <p className={`text-zinc-300 ${wrap} ${compact ? 'line-clamp-2' : ''}`}>
-                  <span className="text-zinc-500">Likely cause: </span>
+                  <span className="text-zinc-500">{t('Likely cause: ')}</span>
                   {d.cause}
                 </p>
               )}
               {d.proposed_fix && (
                 <p className={`text-zinc-300 ${wrap} ${compact ? 'line-clamp-2' : ''}`}>
-                  <span className="text-zinc-500">Proposed fix: </span>
+                  <span className="text-zinc-500">{t('Proposed fix: ')}</span>
                   {d.proposed_fix}
                 </p>
               )}
               {!d.cause && !d.proposed_fix && d.summary && (
                 <blockquote className={`border-l-2 border-zinc-700 pl-2 text-zinc-300 whitespace-pre-wrap ${wrap} ${compact ? 'line-clamp-3' : ''}`}>{d.summary}</blockquote>
               )}
-              <p className="text-[10px] text-zinc-500">From {bot}’s look into it (its report, not instructions).</p>
+              <p className="text-[10px] text-zinc-500">{t('From {bot}’s look into it (its report, not instructions).', { bot })}</p>
             </div>
           ) : (
             <p className="text-zinc-400" data-decision-failed>
-              {bot} couldn’t finish looking into it. The fix waits for you.
+              {t('{bot} couldn’t finish looking into it. The fix waits for you.', { bot })}
             </p>
           )}
           {taskId && (
             <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
               <button type="button" disabled={busy} onClick={() => onAction('fix')} className={goodBtn} data-goal-fix>
-                {busy ? <Loader2 size={12} className={spin} aria-hidden="true" /> : <Wrench size={12} aria-hidden="true" />} Fix it
+                {busy ? <Loader2 size={12} className={spin} aria-hidden="true" /> : <Wrench size={12} aria-hidden="true" />} {t('Fix it')}
               </button>
               <button type="button" disabled={busy} onClick={() => onAction('not_now')} className={quietBtn} data-goal-not-now>
-                Not now
+                {t('Not now')}
               </button>
               {g.mode !== 'fix' && (
-                <button type="button" disabled={busy} onClick={() => onAction('always')} title="Fix it now, and next time without asking" className={quietBtn} data-goal-always>
-                  Always fix this goal
+                <button type="button" disabled={busy} onClick={() => onAction('always')} title={t('Fix it now, and next time without asking')} className={quietBtn} data-goal-always>
+                  {t('Always fix this goal')}
                 </button>
               )}
             </div>
@@ -366,7 +369,7 @@ export const DecisionCard: React.FC<{
 /** What a goal says after the person chose Not now: not a request, so no amber and no counting (D1, D3). */
 export const declinedText = (at: string | null, now: number): string => {
   const when = clockText(at, now);
-  return `${when ? `You chose Not now at ${when}.` : 'Not now.'} The fix waits; it’s dropped if this recovers.`;
+  return when ? t('You chose Not now at {when}. The fix waits; it’s dropped if this recovers.', { when }) : t('Not now. The fix waits; it’s dropped if this recovers.');
 };
 
 /**
@@ -423,7 +426,7 @@ export const GoalRow: React.FC<{
         </div>
         {wide ? null : draft ? (
           <p className="mt-0.5 truncate text-[11px] text-zinc-400" data-goal-line="draft">
-            {proposer ? `${proposer} proposed this.` : 'A bot proposed this.'} Nothing runs until you approve it.
+            {proposer ? t('{name} proposed this. Nothing runs until you approve it.', { name: proposer }) : t('A bot proposed this. Nothing runs until you approve it.')}
           </p>
         ) : declined ? (
           <p className={`mt-0.5 text-[11px] text-zinc-400 ${wrap}`} data-goal-line="declined">
@@ -439,7 +442,7 @@ export const GoalRow: React.FC<{
             <button type="button" onClick={() => onOpenTask(fixTask.id)} className={`relative z-10 min-w-0 truncate text-left text-sky-300 underline underline-offset-2 hover:text-sky-200 rounded ${focusRing}`} data-open-fix>
               {fixTask.title}
             </button>
-            <span className="shrink-0 text-zinc-500">· {fixTask.held ? 'fix ready, waiting for your OK' : stateLabel(fixTask.state).label}</span>
+            <span className="shrink-0 text-zinc-500">· {fixTask.held ? t('fix ready, waiting for your OK') : stateLabel(fixTask.state).label}</span>
           </p>
         ) : work ? (
           <p className="mt-0.5 flex min-w-0 items-center gap-1 text-[11px] text-zinc-400" data-goal-line="work">
@@ -459,7 +462,7 @@ export const GoalRow: React.FC<{
       {wide && run && onAction && <DecisionCard goal={g} decision={run} names={names} now={now} busy={busy} onAction={onAction} compact />}
       {declined?.taskId && onAction && (
         <button type="button" disabled={busy} onClick={() => onAction('fix')} className={`${quietBtn} relative z-10 shrink-0`} data-goal-fix data-goal-fix-quiet>
-          {busy && <Loader2 size={12} className={spin} aria-hidden="true" />} Fix it
+          {busy && <Loader2 size={12} className={spin} aria-hidden="true" />} {t('Fix it')}
         </button>
       )}
       {error && (
@@ -469,7 +472,7 @@ export const GoalRow: React.FC<{
       )}
       {draft && !wide && (
         <span className={`${plainBtn} relative z-10 pointer-events-none shrink-0`} aria-hidden="true" data-goal-review>
-          Review
+          {t('Review')}
         </span>
       )}
     </li>
@@ -520,8 +523,8 @@ export const GoalDescribe: React.FC<{
   const [bot, setBot] = useState(() => defaultBot(bots));
   const [tried, setTried] = useState(false);
   const textRef = useRef<HTMLTextAreaElement>(null);
-  const textErr = text.trim().length < 3 ? 'Say in a sentence what should stay true.' : null;
-  const botErr = !bot ? 'Pick the bot that drafts the checks.' : null;
+  const textErr = text.trim().length < 3 ? t('Say in a sentence what should stay true.') : null;
+  const botErr = !bot ? t('Pick the bot that drafts the checks.') : null;
   const full = drafts >= MAX_DRAFTS;
   useEffect(() => {
     textRef.current?.focus();
@@ -543,7 +546,7 @@ export const GoalDescribe: React.FC<{
     >
       <div className="space-y-1">
         <label htmlFor={`${id}-text`} className="block text-xs font-medium text-zinc-200">
-          What should stay true?
+          {t('What should stay true?')}
         </label>
         <textarea
           ref={textRef}
@@ -552,7 +555,7 @@ export const GoalDescribe: React.FC<{
           maxLength={1000}
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="kwant.si answers in under a second, and sign-up still works."
+          placeholder={t('kwant.si answers in under a second, and sign-up still works.')}
           aria-invalid={tried && !!textErr}
           aria-describedby={tried && textErr ? `${id}-text-err` : `${id}-text-hint`}
           className={`${field} resize-y`}
@@ -564,28 +567,28 @@ export const GoalDescribe: React.FC<{
           </p>
         ) : (
           <p id={`${id}-text-hint`} className="text-[10px] text-zinc-500">
-            One sentence is enough. The bot looks at the project and proposes checks that prove it.
+            {t('One sentence is enough. The bot looks at the project and proposes checks that prove it.')}
           </p>
         )}
       </div>
       <div className="space-y-1">
         <label htmlFor={`${id}-bot`} className="block text-xs font-medium text-zinc-200">
-          Which bot drafts the checks
+          {t('Which bot drafts the checks')}
         </label>
         <select id={`${id}-bot`} value={bot} onChange={(e) => setBot(e.target.value)} aria-invalid={tried && !!botErr} className={field} data-field="bot">
-          {bots.length === 0 && <option value="">No bots on this board yet</option>}
+          {bots.length === 0 && <option value="">{t('No bots on this board yet')}</option>}
           {sortedBots(bots).map((b) => (
             <option key={b.id} value={b.id}>
               {b.name}
             </option>
           ))}
         </select>
-        <p className="text-[10px] text-zinc-500">It changes nothing now. If the goal breaks later, this bot looks into it and suggests the fix.</p>
+        <p className="text-[10px] text-zinc-500">{t('It changes nothing now. If the goal breaks later, this bot looks into it and suggests the fix.')}</p>
         {tried && botErr && <p className="text-[11px] text-rose-300">{botErr}</p>}
       </div>
       {full && (
         <p className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-[11px] text-amber-200" data-drafts-full>
-          {MAX_DRAFTS} drafts are waiting for you. Approve or dismiss one first, or add the checks yourself.
+          {t('{n} drafts are waiting for you. Approve or dismiss one first, or add the checks yourself.', { n: MAX_DRAFTS })}
         </p>
       )}
       {error && (
@@ -596,15 +599,15 @@ export const GoalDescribe: React.FC<{
       <div className="flex flex-wrap items-center gap-2">
         <button type="submit" disabled={busy || full} className={mainBtn} data-goal-draft>
           {busy && <Loader2 size={12} className={spin} aria-hidden="true" />}
-          Draft checks
+          {t('Draft checks')}
         </button>
         <button type="button" onClick={() => onManual(text.trim())} className={quietBtn} data-goal-manual>
-          Add checks myself
+          {t('Add checks myself')}
         </button>
         <button type="button" onClick={onCancel} className={quietBtn}>
-          Cancel
+          {t('Cancel')}
         </button>
-        <p className="w-full text-[10px] text-zinc-500">The draft shows on the board. Nothing is checked until you approve it.</p>
+        <p className="w-full text-[10px] text-zinc-500">{t('The draft shows on the board. Nothing is checked until you approve it.')}</p>
       </div>
     </form>
   );
@@ -613,13 +616,13 @@ export const GoalDescribe: React.FC<{
 // ---------- Add checks myself / Edit ----------
 
 const TARGET_LABEL: Record<string, { label: string; placeholder: string }> = {
-  status: { label: 'Status', placeholder: '200' },
-  latency_ms: { label: 'Milliseconds', placeholder: '500' },
-  body_contains: { label: 'Text', placeholder: 'ok' },
-  json_value: { label: 'Value', placeholder: 'ok' },
-  exit_code: { label: 'Code', placeholder: '0' },
-  stdout_contains: { label: 'Text', placeholder: 'passed' },
-  stdout_number: { label: 'Number', placeholder: '10' },
+  status: { label: t('Status'), placeholder: '200' },
+  latency_ms: { label: t('Milliseconds'), placeholder: '500' },
+  body_contains: { label: t('Text'), placeholder: 'ok' },
+  json_value: { label: t('Value'), placeholder: 'ok' },
+  exit_code: { label: t('Code'), placeholder: '0' },
+  stdout_contains: { label: t('Text'), placeholder: 'passed' },
+  stdout_number: { label: t('Number'), placeholder: '10' },
 };
 
 const CheckRowFields: React.FC<{
@@ -657,13 +660,13 @@ const CheckRowFields: React.FC<{
   );
   const typed = r.kind === 'http' || r.kind === 'command';
   const info = typed ? metricInfo(r.kind, r.metric) : null;
-  const target = TARGET_LABEL[r.metric] ?? { label: 'Value', placeholder: '' };
+  const target = TARGET_LABEL[r.metric] ?? { label: t('Value'), placeholder: '' };
   return (
     <li className="rounded-lg border border-zinc-800 bg-zinc-950/40 p-2.5 space-y-2" data-check-row={r.key}>
       <div className="flex items-end gap-2">
         <div className="min-w-0 flex-1 space-y-1">
           <label htmlFor={`${id}-kind`} className="block text-[11px] text-zinc-400">
-            Check {index + 1}
+            {t('Check {n}', { n: index + 1 })}
           </label>
           <select id={`${id}-kind`} value={r.kind} onChange={(e) => onChange(withKind(r, e.target.value as CheckFormRow['kind']))} className={field} data-row-field="kind">
             {GOAL_CHECK_KINDS.map((k) => (
@@ -674,18 +677,18 @@ const CheckRowFields: React.FC<{
           </select>
         </div>
         {canRemove && (
-          <button type="button" onClick={onRemove} aria-label={`Remove check ${index + 1}`} className={`${quietBtn} shrink-0`}>
+          <button type="button" onClick={onRemove} aria-label={t('Remove check {n}', { n: index + 1 })} className={`${quietBtn} shrink-0`}>
             <X size={14} aria-hidden="true" />
           </button>
         )}
       </div>
-      {r.kind === 'command' && input('command', 'Command to run in the bot’s folder', 'npm test', true)}
-      {r.kind === 'http' && input('url', 'Web address', 'https://example.com/health')}
+      {r.kind === 'command' && input('command', t('Command to run in the bot’s folder'), 'npm test', true)}
+      {r.kind === 'http' && input('url', t('Web address'), 'https://example.com/health')}
       {typed && info && (
         <fieldset className="space-y-1" data-predicate>
-          <legend className="text-[11px] text-zinc-400">Passes when</legend>
+          <legend className="text-[11px] text-zinc-400">{t('Passes when')}</legend>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1fr)]">
-            <select aria-label="What to look at" value={r.metric} onChange={(e) => onChange(withMetric(r, e.target.value))} className={`${field} col-span-2 sm:col-span-1`} data-row-field="metric">
+            <select aria-label={t('What to look at')} value={r.metric} onChange={(e) => onChange(withMetric(r, e.target.value))} className={`${field} col-span-2 sm:col-span-1`} data-row-field="metric">
               {METRICS[r.kind as 'http' | 'command'].map((m) => (
                 <option key={m.value} value={m.value}>
                   {m.label}
@@ -693,7 +696,7 @@ const CheckRowFields: React.FC<{
               ))}
             </select>
             {info.operators.length > 1 ? (
-              <select aria-label="How to compare" value={r.operator} onChange={(e) => set({ operator: e.target.value as GoalOperator })} className={field} data-row-field="operator">
+              <select aria-label={t('How to compare')} value={r.operator} onChange={(e) => set({ operator: e.target.value as GoalOperator })} className={field} data-row-field="operator">
                 {info.operators.map((o) => (
                   <option key={o} value={o}>
                     {OPERATOR_WORDS[o]}
@@ -701,7 +704,7 @@ const CheckRowFields: React.FC<{
                 ))}
               </select>
             ) : (
-              <span className="flex min-h-[40px] sm:min-h-[36px] items-center px-1 text-xs text-zinc-400">{info.operators.length === 1 ? OPERATOR_WORDS[info.operators[0]] : 'has'}</span>
+              <span className="flex min-h-[40px] sm:min-h-[36px] items-center px-1 text-xs text-zinc-400">{info.operators.length === 1 ? OPERATOR_WORDS[info.operators[0]] : t('has')}</span>
             )}
             <input
               aria-label={target.label}
@@ -716,18 +719,18 @@ const CheckRowFields: React.FC<{
               data-row-field="target"
             />
           </div>
-          {r.metric === 'json_value' && input('pointer', 'Where the value is in the answer', '/status', true)}
-          {r.metric === 'stdout_number' && <p className="text-[10px] text-zinc-500">Uses the first number the command prints.</p>}
+          {r.metric === 'json_value' && input('pointer', t('Where the value is in the answer'), '/status', true)}
+          {r.metric === 'stdout_number' && <p className="text-[10px] text-zinc-500">{t('Uses the first number the command prints.')}</p>}
         </fieldset>
       )}
-      {(r.kind === 'file_exists' || r.kind === 'file_contains' || r.kind === 'file_sha256') && input('path', 'File, in the bot’s folder', 'dist/index.html', true)}
-      {r.kind === 'file_contains' && input('text', 'Text it should contain', 'Version 2')}
-      {r.kind === 'file_sha256' && input('sha256', 'Fingerprint (SHA-256)', '64 letters and digits', true)}
+      {(r.kind === 'file_exists' || r.kind === 'file_contains' || r.kind === 'file_sha256') && input('path', t('File, in the bot’s folder'), 'dist/index.html', true)}
+      {r.kind === 'file_contains' && input('text', t('Text it should contain'), 'Version 2')}
+      {r.kind === 'file_sha256' && input('sha256', t('Fingerprint (SHA-256)'), t('64 letters and digits'), true)}
       <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-end">
-        {input('label', 'Name (optional)', 'Site answers')}
-        <label className="inline-flex items-center gap-2 min-h-[40px] sm:min-h-[36px] text-[11px] text-zinc-300" title="An advisory check shows on the card but doesn’t decide OK">
+        {input('label', t('Name (optional)'), t('Site answers'))}
+        <label className="inline-flex items-center gap-2 min-h-[40px] sm:min-h-[36px] text-[11px] text-zinc-300" title={t('An advisory check shows on the card but doesn’t decide OK')}>
           <input type="checkbox" checked={r.required} onChange={(e) => set({ required: e.target.checked })} className="h-4 w-4 accent-sky-500" data-row-field="required" />
-          Required for OK
+          {t('Required for OK')}
         </label>
       </div>
       {error && (
@@ -766,7 +769,7 @@ export const GoalForm: React.FC<{
   // A bot this person can't see any more still shows, so editing doesn't silently move the goal.
   const botOptions = useMemo(() => {
     const list = sortedBots(bots);
-    if (f.kwantId && !list.some((b) => b.id === f.kwantId)) list.unshift({ id: f.kwantId, name: 'A bot not on this board' });
+    if (f.kwantId && !list.some((b) => b.id === f.kwantId)) list.unshift({ id: f.kwantId, name: t('A bot not on this board') });
     return list;
   }, [bots, f.kwantId]);
 
@@ -787,13 +790,13 @@ export const GoalForm: React.FC<{
     <form ref={formRef} onSubmit={submit} noValidate className="space-y-4" data-goal-form>
       <div className="space-y-1">
         <label htmlFor={`${id}-title`} className="block text-xs font-medium text-zinc-200">
-          Name
+          {t('Name')}
         </label>
         <input
           id={`${id}-title`}
           value={f.title}
           onChange={(e) => set({ title: e.target.value })}
-          placeholder="The site stays up"
+          placeholder={t('The site stays up')}
           aria-invalid={!!show.title}
           aria-describedby={show.title ? `${id}-title-err` : undefined}
           className={field}
@@ -807,23 +810,23 @@ export const GoalForm: React.FC<{
       </div>
       <div className="space-y-1">
         <label htmlFor={`${id}-desc`} className="block text-xs font-medium text-zinc-200">
-          What should stay true <span className="font-normal text-zinc-500">(optional)</span>
+          {t('What should stay true')} <span className="font-normal text-zinc-500">{t('(optional)')}</span>
         </label>
         <textarea
           id={`${id}-desc`}
           value={f.description}
           onChange={(e) => set({ description: e.target.value })}
           rows={2}
-          placeholder="kwant.si answers, and the sign-up page loads."
+          placeholder={t('kwant.si answers, and the sign-up page loads.')}
           className={`${field} resize-y`}
           data-field="description"
         />
-        <p className="text-[10px] text-zinc-500">If it breaks, the fix starts from this and the failing check’s output.</p>
+        <p className="text-[10px] text-zinc-500">{t('If it breaks, the fix starts from this and the failing check’s output.')}</p>
       </div>
 
       <fieldset className="space-y-2" data-field="checks">
-        <legend className="text-xs font-medium text-zinc-200">Checks</legend>
-        <p className="text-[10px] text-zinc-500">These run on their own, without a bot. OK needs every required check to pass.</p>
+        <legend className="text-xs font-medium text-zinc-200">{t('Checks')}</legend>
+        <p className="text-[10px] text-zinc-500">{t('These run on their own, without a bot. OK needs every required check to pass.')}</p>
         <ul className="space-y-2">
           {f.checks.map((r, i) => (
             <CheckRowFields
@@ -844,14 +847,14 @@ export const GoalForm: React.FC<{
         )}
         {f.checks.length < MAX_CHECKS && (
           <button type="button" onClick={() => set({ checks: [...f.checks, emptyCheckRow()] })} className={plainBtn} data-add-check>
-            <Plus size={12} aria-hidden="true" /> Add a check
+            <Plus size={12} aria-hidden="true" /> {t('Add a check')}
           </button>
         )}
       </fieldset>
 
       <div className="space-y-1">
         <label htmlFor={`${id}-bot`} className="block text-xs font-medium text-zinc-200">
-          Which bot fixes it
+          {t('Which bot fixes it')}
         </label>
         <select
           id={`${id}-bot`}
@@ -862,7 +865,7 @@ export const GoalForm: React.FC<{
           className={field}
           data-field="bot"
         >
-          <option value="">{f.mode === 'watch' ? 'No bot: just tell me' : 'Pick a bot'}</option>
+          <option value="">{f.mode === 'watch' ? t('No bot: just tell me') : t('Pick a bot')}</option>
           {botOptions.map((b) => (
             <option key={b.id} value={b.id}>
               {b.name}
@@ -874,7 +877,7 @@ export const GoalForm: React.FC<{
             {show.kwantId}
           </p>
         )}
-        {!show.kwantId && f.mode !== 'watch' && <p className="text-[10px] text-zinc-500">If it breaks: {MODE_OPTIONS.find((o) => o.value === f.mode)?.hint}</p>}
+        {!show.kwantId && f.mode !== 'watch' && <p className="text-[10px] text-zinc-500">{t('If it breaks: {hint}', { hint: MODE_OPTIONS.find((o) => o.value === f.mode)?.hint ?? '' })}</p>}
       </div>
 
       {/* Everything with a default sits behind More options (B.0 rule 6). */}
@@ -888,10 +891,14 @@ export const GoalForm: React.FC<{
           data-more-toggle
         >
           <span>
-            More options
+            {t('More options')}
             <span className="text-zinc-500">
               {' '}
-              · every {intervalLabel(f.interval)}, {modeLabel(f.mode).toLowerCase()}, {priorityLabel(f.priority).toLowerCase()} priority
+              {t('· every {interval}, {mode}, {priority} priority', {
+                interval: intervalLabel(f.interval),
+                mode: modeLabel(f.mode).toLowerCase(),
+                priority: priorityLabel(f.priority).toLowerCase(),
+              })}
             </span>
           </span>
           <ChevronDown size={14} className={`shrink-0 ${more ? 'rotate-180' : ''}`} aria-hidden="true" />
@@ -901,7 +908,7 @@ export const GoalForm: React.FC<{
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="min-w-0 space-y-1">
                 <label htmlFor={`${id}-every`} className="block text-xs font-medium text-zinc-200">
-                  Check every
+                  {t('Check every')}
                 </label>
                 <select id={`${id}-every`} value={f.interval} onChange={(e) => set({ interval: Number(e.target.value) })} className={field} data-field="interval">
                   {intervalOptions(f.interval).map((m) => (
@@ -913,28 +920,28 @@ export const GoalForm: React.FC<{
               </div>
               <div className="min-w-0 space-y-1">
                 <label htmlFor={`${id}-prio`} className="block text-xs font-medium text-zinc-200">
-                  Priority
+                  {t('Priority')}
                 </label>
                 <select id={`${id}-prio`} value={f.priority} onChange={(e) => set({ priority: Number(e.target.value) })} className={field} data-field="priority">
                   {PRIORITY_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>
                       {o.label}
-                      {o.value === 2 ? ' (default)' : ''}
+                      {o.value === 2 ? t(' (default)') : ''}
                     </option>
                   ))}
                 </select>
-                <p className="text-[10px] text-zinc-500">When two goals in one folder break, the higher one is fixed first.</p>
+                <p className="text-[10px] text-zinc-500">{t('When two goals in one folder break, the higher one is fixed first.')}</p>
               </div>
             </div>
             <fieldset className="space-y-1.5" data-field="mode">
-              <legend className="text-xs font-medium text-zinc-200">When it breaks</legend>
+              <legend className="text-xs font-medium text-zinc-200">{t('When it breaks')}</legend>
               {MODE_OPTIONS.map((o) => (
                 <label key={o.value} className={`flex items-start gap-2 rounded-lg border px-2.5 py-2 min-h-[40px] cursor-pointer ${f.mode === o.value ? 'border-sky-500/50 bg-sky-500/10' : 'border-zinc-800 hover:border-zinc-700'}`}>
                   <input type="radio" name={`${id}-mode`} value={o.value} checked={f.mode === o.value} onChange={() => set({ mode: o.value })} className="mt-0.5 h-4 w-4 accent-sky-500" />
                   <span className="min-w-0">
                     <span className="block text-xs text-zinc-100">
                       {o.label}
-                      {o.value === 'suggest' && <span className="text-zinc-500"> (default)</span>}
+                      {o.value === 'suggest' && <span className="text-zinc-500">{t(' (default)')}</span>}
                     </span>
                     <span className="block text-[11px] text-zinc-500">{o.hint}</span>
                   </span>
@@ -944,27 +951,27 @@ export const GoalForm: React.FC<{
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="min-w-0 space-y-1">
                 <label htmlFor={`${id}-confirm`} className="block text-xs font-medium text-zinc-200">
-                  Counts as broken after
+                  {t('Counts as broken after')}
                 </label>
                 <select id={`${id}-confirm`} value={f.confirmFailures} onChange={(e) => set({ confirmFailures: Number(e.target.value) })} className={field} data-field="confirm">
                   {[1, 2, 3, 4, 5].map((n) => (
                     <option key={n} value={n}>
-                      {n === 1 ? '1 failed check' : `${n} failed checks in a row`}
-                      {n === 2 ? ' (default)' : ''}
+                      {t(n === 1 ? '{n} failed check' : '{n} failed checks in a row', { n })}
+                      {n === 2 ? t(' (default)') : ''}
                     </option>
                   ))}
                 </select>
               </div>
               <div className="min-w-0 space-y-1">
                 <label htmlFor={`${id}-budget`} className="block text-xs font-medium text-zinc-200">
-                  Token limit for fixes
+                  {t('Token limit for fixes')}
                 </label>
                 <input
                   id={`${id}-budget`}
                   value={f.budget}
                   onChange={(e) => set({ budget: e.target.value })}
                   inputMode="numeric"
-                  placeholder="No limit"
+                  placeholder={t('No limit')}
                   aria-invalid={!!show.budget}
                   aria-describedby={show.budget ? `${id}-budget-err` : undefined}
                   className={field}
@@ -989,13 +996,17 @@ export const GoalForm: React.FC<{
       <div className="flex flex-wrap items-center gap-2 pt-1">
         <button type="submit" disabled={saving} className={mainBtn} data-goal-save>
           {saving && <Loader2 size={12} className={spin} aria-hidden="true" />}
-          {goal ? 'Save changes' : 'Create goal'}
+          {goal ? t('Save changes') : t('Create goal')}
         </button>
         <button type="button" onClick={onCancel} className={quietBtn}>
-          Cancel
+          {t('Cancel')}
         </button>
-        {!goal && <p className="w-full text-[10px] text-zinc-500">It’s checked right away, then every {intervalLabel(f.interval)}. You hear about it only when it breaks or recovers.</p>}
-        {draft && <p className="w-full text-[10px] text-zinc-500">It stays a draft until you approve it.</p>}
+        {!goal && (
+          <p className="w-full text-[10px] text-zinc-500">
+            {t('It’s checked right away, then every {interval}. You hear about it only when it breaks or recovers.', { interval: intervalLabel(f.interval) })}
+          </p>
+        )}
+        {draft && <p className="w-full text-[10px] text-zinc-500">{t('It stays a draft until you approve it.')}</p>}
       </div>
     </form>
   );
@@ -1025,13 +1036,13 @@ export const GoalPanel: React.FC<{ title: string; onClose: () => void; children:
   }, []);
   return (
     <div className="fixed inset-0 z-50 flex justify-end" data-goal-panel>
-      <button type="button" aria-label="Close" tabIndex={-1} onClick={onClose} className="absolute inset-0 bg-black/50 cursor-default" />
+      <button type="button" aria-label={t('Close')} tabIndex={-1} onClick={onClose} className="absolute inset-0 bg-black/50 cursor-default" />
       <div role="dialog" aria-modal="true" aria-labelledby={headingId} className="relative w-full sm:max-w-xl h-full flex flex-col bg-zinc-950 sm:border-l border-zinc-800 shadow-2xl">
         <div className="min-h-14 py-2 px-3 sm:px-5 border-b border-zinc-800/80 flex items-start gap-2 bg-zinc-900/30">
           <h3 id={headingId} className={`flex-1 min-w-0 pt-1.5 text-sm font-semibold text-zinc-100 ${wrap}`}>
             {title}
           </h3>
-          <button ref={closeRef} type="button" onClick={onClose} aria-label="Close" className={`shrink-0 p-2 rounded-lg text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 ${focusRing}`}>
+          <button ref={closeRef} type="button" onClick={onClose} aria-label={t('Close')} className={`shrink-0 p-2 rounded-lg text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 ${focusRing}`}>
             <X size={18} aria-hidden="true" />
           </button>
         </div>
@@ -1050,7 +1061,7 @@ const DOT: Record<ReturnType<typeof goalEventTone>, string> = {
 
 /** Oldest first, as the story went: broke → looked into → approved → fixed → verified. */
 export const GoalTimeline: React.FC<{ events: GoalEvent[]; names: Record<string, string>; now: number; onOpenTask?: (id: string) => void }> = ({ events, names, now, onOpenTask }) => {
-  if (events.length === 0) return <p className="text-[11px] text-zinc-500">Nothing has happened yet.</p>;
+  if (events.length === 0) return <p className="text-[11px] text-zinc-500">{t('Nothing has happened yet.')}</p>;
   return (
     <ol className="space-y-2 border-l border-zinc-800 pl-3" data-goal-timeline>
       {events.map((e) => {
@@ -1064,7 +1075,7 @@ export const GoalTimeline: React.FC<{ events: GoalEvent[]; names: Record<string,
               <>
                 {' '}
                 <button type="button" onClick={() => onOpenTask(task)} className={`text-sky-300 underline underline-offset-2 hover:text-sky-200 rounded ${focusRing}`}>
-                  Open task
+                  {t('Open task')}
                 </button>
               </>
             )}
@@ -1085,7 +1096,7 @@ export const GoalTimeline: React.FC<{ events: GoalEvent[]; names: Record<string,
 };
 
 const missionLine = (m: GoalMission) =>
-  [m.status ? missionStatusLabel(m.status).label : null, m.attempt > 1 ? `attempt ${m.attempt}` : null, m.outcome ? m.outcome.replace(/_/g, ' ') : null].filter(Boolean).join(' · ');
+  [m.status ? missionStatusLabel(m.status).label : null, m.attempt > 1 ? t('attempt {n}', { n: m.attempt }) : null, m.outcome ? m.outcome.replace(/_/g, ' ') : null].filter(Boolean).join(' · ');
 
 export const GoalDetailBody: React.FC<{
   detail: GoalDetail;
@@ -1124,33 +1135,35 @@ export const GoalDetailBody: React.FC<{
           <p className={`min-w-0 flex-1 text-zinc-300 ${wrap}`}>{declinedText(decision.at, now)}</p>
           {decision.taskId && (
             <button type="button" disabled={busy} onClick={() => onAction('fix')} className={quietBtn} data-goal-fix data-goal-fix-quiet>
-              Fix it
+              {t('Fix it')}
             </button>
           )}
         </div>
       )}
       {decision?.kind === 'needs_you' && (
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-[11px] space-y-1" data-goal-needs-you>
-          <p className={`text-amber-200 ${wrap}`}>{decision.text}.</p>
-          <p className="text-zinc-400">Nothing runs on its own until you act: look at the checks below, then Check now, or edit the goal.</p>
+          <p className={`text-amber-200 ${wrap}`}>{t('{what}.', { what: decision.text })}</p>
+          <p className="text-zinc-400">{t('Nothing runs on its own until you act: look at the checks below, then Check now, or edit the goal.')}</p>
         </div>
       )}
       {draft && (
         <p className="rounded-lg border border-sky-500/30 bg-sky-500/5 px-3 py-2 text-[11px] text-sky-100" data-goal-draft-note>
-          {(g.created_by && g.created_by !== 'person' && names[g.created_by]) || 'A bot'} proposed this. Read the checks below: they run exactly as shown, and only after you approve.
+          {t('{name} proposed this. Read the checks below: they run exactly as shown, and only after you approve.', {
+            name: (g.created_by && g.created_by !== 'person' && names[g.created_by]) || t('A bot'),
+          })}
         </p>
       )}
 
       {g.description && (
         <section className="space-y-1">
-          <h4 className={heading}>What should stay true</h4>
+          <h4 className={heading}>{t('What should stay true')}</h4>
           <p className={`text-xs text-zinc-200 whitespace-pre-wrap ${wrap}`}>{g.description}</p>
         </section>
       )}
       <section className="space-y-1.5">
-        <h4 className={heading}>{draft ? 'Checks it would run' : 'Checks'}</h4>
+        <h4 className={heading}>{draft ? t('Checks it would run') : t('Checks')}</h4>
         {g.checks.length === 0 ? (
-          <p className="text-[11px] text-zinc-500">No checks.</p>
+          <p className="text-[11px] text-zinc-500">{t('No checks.')}</p>
         ) : draft ? (
           <ul className="space-y-1.5">
             {g.checks.map((c) => (
@@ -1168,7 +1181,7 @@ export const GoalDetailBody: React.FC<{
 
       {(missions.length > 0 || d.fix_tasks.length > 0 || work) && (
         <section className="space-y-1.5" data-goal-work>
-          <h4 className={heading}>Current work</h4>
+          <h4 className={heading}>{t('Current work')}</h4>
           {g.status === 'waiting' && work && <p className="text-[11px] text-zinc-300">{work}</p>}
           {missions.length > 0 && (
             <ul className="space-y-1">
@@ -1184,7 +1197,7 @@ export const GoalDetailBody: React.FC<{
                       <span className={`text-zinc-200 ${wrap}`}>{m.title}</span>
                     )}
                     {missionLine(m) && <span className="text-zinc-500"> · {missionLine(m)}</span>}
-                    {isOpenMission(m) && m.run_task_id && <span className="text-amber-200"> · fix ready, waiting for your OK</span>}
+                    {isOpenMission(m) && m.run_task_id && <span className="text-amber-200"> · {t('fix ready, waiting for your OK')}</span>}
                   </span>
                 </li>
               ))}
@@ -1192,18 +1205,18 @@ export const GoalDetailBody: React.FC<{
           )}
           {missions.length === 0 && d.fix_tasks.length > 0 && (
             <ul className="space-y-1">
-              {d.fix_tasks.map((t) => (
-                <li key={t.id} className="flex items-start gap-1.5 text-[11px]" data-goal-fix-task={t.id}>
+              {d.fix_tasks.map((ft) => (
+                <li key={ft.id} className="flex items-start gap-1.5 text-[11px]" data-goal-fix-task={ft.id}>
                   <Wrench size={12} className="mt-0.5 shrink-0 text-zinc-500" aria-hidden="true" />
                   <span className="min-w-0">
                     {onOpenTask ? (
-                      <button type="button" onClick={() => onOpenTask(t.id)} className={`text-left text-sky-300 underline underline-offset-2 hover:text-sky-200 rounded ${wrap} ${focusRing}`}>
-                        {t.title}
+                      <button type="button" onClick={() => onOpenTask(ft.id)} className={`text-left text-sky-300 underline underline-offset-2 hover:text-sky-200 rounded ${wrap} ${focusRing}`}>
+                        {ft.title}
                       </button>
                     ) : (
-                      <span className={`text-zinc-200 ${wrap}`}>{t.title}</span>
+                      <span className={`text-zinc-200 ${wrap}`}>{ft.title}</span>
                     )}
-                    <span className="text-zinc-500"> · {t.held ? 'fix ready, waiting for your OK' : stateLabel(t.state).label}</span>
+                    <span className="text-zinc-500"> · {ft.held ? t('fix ready, waiting for your OK') : stateLabel(ft.state).label}</span>
                   </span>
                 </li>
               ))}
@@ -1215,24 +1228,24 @@ export const GoalDetailBody: React.FC<{
       <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[11px]">
         {draft && (
           <>
-            <dt className="text-zinc-500">Proposed by</dt>
-            <dd className={`text-zinc-200 ${wrap}`}>{(g.created_by && names[g.created_by]) ?? 'A bot'}</dd>
+            <dt className="text-zinc-500">{t('Proposed by')}</dt>
+            <dd className={`text-zinc-200 ${wrap}`}>{(g.created_by && names[g.created_by]) ?? t('A bot')}</dd>
           </>
         )}
-        <dt className="text-zinc-500">Fixed by</dt>
-        <dd className={`text-zinc-200 ${wrap}`}>{botName(g.kwant_id, names) ?? 'No bot: you just hear about it'}</dd>
-        <dt className="text-zinc-500">When it breaks</dt>
+        <dt className="text-zinc-500">{t('Fixed by')}</dt>
+        <dd className={`text-zinc-200 ${wrap}`}>{botName(g.kwant_id, names) ?? t('No bot: you just hear about it')}</dd>
+        <dt className="text-zinc-500">{t('When it breaks')}</dt>
         <dd className="text-zinc-200">{modeLabel(g.mode)}</dd>
-        <dt className="text-zinc-500">Check every</dt>
+        <dt className="text-zinc-500">{t('Check every')}</dt>
         <dd className="text-zinc-200">{intervalLabel(g.interval_minutes)}</dd>
-        <dt className="text-zinc-500">Priority</dt>
+        <dt className="text-zinc-500">{t('Priority')}</dt>
         <dd className="text-zinc-200">{priorityLabel(g.priority)}</dd>
-        <dt className="text-zinc-500">Spent on fixes</dt>
-        <dd className="text-zinc-200">{spentText(d.spent_tokens) ?? 'Nothing yet'}</dd>
+        <dt className="text-zinc-500">{t('Spent on fixes')}</dt>
+        <dd className="text-zinc-200">{spentText(d.spent_tokens) ?? t('Nothing yet')}</dd>
       </dl>
 
       <section className="space-y-1.5">
-        <h4 className={heading}>What happened</h4>
+        <h4 className={heading}>{t('What happened')}</h4>
         <GoalTimeline events={d.events} names={names} now={now} onOpenTask={onOpenTask} />
       </section>
       {error && (
@@ -1291,7 +1304,7 @@ export const KeepTrueBox: React.FC<{
       setMade(g);
       setOpen(false);
     } catch (e) {
-      setError(errText(e, 'Couldn’t make the goal. Try again.'));
+      setError(errText(e, t('Couldn’t make the goal. Try again.')));
     } finally {
       busyRef.current = false;
       setBusy(false);
@@ -1301,23 +1314,27 @@ export const KeepTrueBox: React.FC<{
     return (
       <p role="status" className={`flex flex-wrap items-center gap-x-2 text-[11px] text-emerald-300 ${wrap}`} data-keep-true-done>
         <CheckCircle2 size={13} aria-hidden="true" />{' '}
-        {already ? `Already kept true: “${made.title}”.` : `Goal added: “${made.title}”. It’s checked every ${intervalLabel(made.interval_minutes)}.`}
+        {already
+          ? t('Already kept true: “{title}”.', { title: made.title })
+          : t('Goal added: “{title}”. It’s checked every {interval}.', { title: made.title, interval: intervalLabel(made.interval_minutes) })}
         <button type="button" onClick={() => onOpenGoal(made.id)} className={linkBtn} data-keep-true-open>
-          Open goal
+          {t('Open goal')}
         </button>
       </p>
     );
   if (!open)
     return (
       <button type="button" onClick={() => setOpen(true)} className={quietBtn} data-keep-true>
-        <Target size={13} aria-hidden="true" /> Keep this true
+        <Target size={13} aria-hidden="true" /> {t('Keep this true')}
       </button>
     );
   return (
-    <div role="group" aria-label="Keep this true" className="rounded-lg border border-sky-500/30 bg-sky-500/5 p-3 space-y-2 text-[11px]" data-keep-true-sheet>
-      <p className="text-xs font-medium text-zinc-100">Keep this true</p>
+    <div role="group" aria-label={t('Keep this true')} className="rounded-lg border border-sky-500/30 bg-sky-500/5 p-3 space-y-2 text-[11px]" data-keep-true-sheet>
+      <p className="text-xs font-medium text-zinc-100">{t('Keep this true')}</p>
       <p className="text-zinc-300">
-        These checks keep running every hour.{bot ? ` If one breaks, ${bot} looks into it and suggests a fix for your OK.` : ' If one breaks, you hear about it.'}
+        {bot
+          ? t('These checks keep running every hour. If one breaks, {bot} looks into it and suggests a fix for your OK.', { bot })
+          : t('These checks keep running every hour. If one breaks, you hear about it.')}
       </p>
       <ul className="space-y-1">
         {passing.map((c) => (
@@ -1335,10 +1352,10 @@ export const KeepTrueBox: React.FC<{
       <div className="flex flex-wrap gap-2">
         <button ref={yesRef} type="button" disabled={busy} onClick={() => void confirm()} className={mainBtn} data-keep-true-yes>
           {busy && <Loader2 size={12} className={spin} aria-hidden="true" />}
-          Keep it true
+          {t('Keep it true')}
         </button>
         <button type="button" disabled={busy} onClick={() => setOpen(false)} className={quietBtn}>
-          Never mind
+          {t('Never mind')}
         </button>
       </div>
     </div>
@@ -1350,12 +1367,12 @@ export const GoalChip: React.FC<{ goal: { id: string; title: string }; onOpen?: 
   <button
     type="button"
     onClick={() => onOpen(goal.id)}
-    title={`Open the goal “${goal.title}”`}
+    title={t('Open the goal “{title}”', { title: goal.title })}
     className={`inline-flex max-w-full items-center gap-1 min-h-[32px] sm:min-h-[24px] rounded-full border border-sky-500/30 bg-sky-500/10 px-2 text-[11px] text-sky-200 hover:bg-sky-500/20 ${focusRing}`}
     data-goal-chip={goal.id}
   >
     <Target size={11} className="shrink-0" aria-hidden="true" />
-    <span className="truncate">Goal: {goal.title}</span>
+    <span className="truncate">{t('Goal: {title}', { title: goal.title })}</span>
   </button>
 );
 
@@ -1480,7 +1497,7 @@ export const GoalsStrip: React.FC<{
         setReloading(false);
         // An older server: show nothing, as in 0.6.4.
         if (e instanceof GoalError && (e.status === 404 || e.status === 405)) setUnsupported(true);
-        else setLoadError(errText(e, 'Couldn’t load your goals.'));
+        else setLoadError(errText(e, t('Couldn’t load your goals.')));
       },
     );
   }, [api]);
@@ -1500,8 +1517,8 @@ export const GoalsStrip: React.FC<{
           if (e instanceof GoalError && e.status === 404) {
             setPanel(null);
             setGoals((cur) => (cur ? cur.filter((x) => x.id !== id) : cur));
-            setNotice('That goal was deleted.');
-          } else setDetailError(errText(e, 'Couldn’t load this goal.'));
+            setNotice(t('That goal was deleted.'));
+          } else setDetailError(errText(e, t('Couldn’t load this goal.')));
         },
       );
     },
@@ -1629,7 +1646,7 @@ export const GoalsStrip: React.FC<{
     } catch (e) {
       if (e instanceof GoalError && (e.status === 404 || e.status === 405 || e.status === 0)) return;
       setHidden(g.id, null);
-      setErrors((x) => ({ ...x, [g.id]: errText(e, 'Couldn’t save that. Try again.') }));
+      setErrors((x) => ({ ...x, [g.id]: errText(e, t('Couldn’t save that. Try again.')) }));
     }
   };
 
@@ -1644,7 +1661,7 @@ export const GoalsStrip: React.FC<{
           if (!alive.current) return;
           setPanel({ kind: 'edit', goal: { ...d.goal, checks: d.checks.length ? d.checks : d.goal.checks } });
         } catch (e) {
-          setErrors((x) => ({ ...x, [g.id]: errText(e, 'Couldn’t open it for editing.') }));
+          setErrors((x) => ({ ...x, [g.id]: errText(e, t('Couldn’t open it for editing.')) }));
         }
       } else setPanel({ kind: 'edit', goal: g });
       return;
@@ -1664,7 +1681,7 @@ export const GoalsStrip: React.FC<{
     try {
       if (a === 'approve') {
         upsert(await api.approve(g.id, key));
-        setNotice(`Approved: “${g.title}” is being checked now.`);
+        setNotice(t('Approved: “{title}” is being checked now.', { title: g.title }));
       } else if (a === 'check') {
         const after = await api.check(g.id, key);
         if (after) upsert(after);
@@ -1697,13 +1714,13 @@ export const GoalsStrip: React.FC<{
           });
         } else if (a === 'always') upsert(after);
         setHidden(g.id, null);
-        setNotice(a === 'always' ? `“${g.title}” now gets fixed without asking. Fixing it now.` : `Fixing “${g.title}”. Its checks confirm the fix.`);
+        setNotice(a === 'always' ? t('“{title}” now gets fixed without asking. Fixing it now.', { title: g.title }) : t('Fixing “{title}”. Its checks confirm the fix.', { title: g.title }));
         reload();
       } else if (a === 'delete' || a === 'dismiss') {
         await api.remove(g.id);
         setGoals((cur) => (cur ? cur.filter((x) => x.id !== g.id) : cur));
         if (panelRef.current?.kind === 'goal' && panelRef.current.id === g.id) setPanel(null);
-        setNotice(a === 'dismiss' ? `Dismissed “${g.title}”.` : `Deleted “${g.title}”.`);
+        setNotice(a === 'dismiss' ? t('Dismissed “{title}”.', { title: g.title }) : t('Deleted “{title}”.', { title: g.title }));
       }
       delete keys.current[k];
       if (panelRef.current?.kind === 'goal' && panelRef.current.id === g.id && a !== 'delete' && a !== 'dismiss') loadDetail(g.id);
@@ -1711,16 +1728,16 @@ export const GoalsStrip: React.FC<{
       if (e instanceof GoalError && e.status === 404) {
         setGoals((cur) => (cur ? cur.filter((x) => x.id !== g.id) : cur));
         if (panelRef.current?.kind === 'goal' && panelRef.current.id === g.id) setPanel(null);
-        setNotice('That goal was already deleted.');
+        setNotice(t('That goal was already deleted.'));
         delete keys.current[k];
       } else if ((a === 'fix' || a === 'always') && e instanceof MissionError && e.code === 'not_held') {
         // Run was pressed somewhere else first: it is already being fixed. Read the goal again instead of the raw refusal.
-        setNotice(`“${g.title}” is already being fixed.`);
+        setNotice(t('“{title}” is already being fixed.', { title: g.title }));
         delete keys.current[k];
         reload();
         if (panelRef.current?.kind === 'goal' && panelRef.current.id === g.id) loadDetail(g.id);
       } else {
-        setErrors((x) => ({ ...x, [g.id]: errText(e, 'Couldn’t save that. Try again.') }));
+        setErrors((x) => ({ ...x, [g.id]: errText(e, t('Couldn’t save that. Try again.')) }));
         if (e instanceof GoalError && e.status === 409) reload();
       }
     } finally {
@@ -1741,17 +1758,17 @@ export const GoalsStrip: React.FC<{
         const g = await api.update(panel.goal.id, d);
         if (!alive.current) return;
         upsert(g);
-        setNotice(`Saved “${g.title}”.`);
+        setNotice(t('Saved “{title}”.', { title: g.title }));
       } else {
         const g = await api.create(d, key);
         if (!alive.current) return;
         upsert(g);
-        setNotice(`Created “${g.title}”. Checking it now.`);
+        setNotice(t('Created “{title}”. Checking it now.', { title: g.title }));
       }
       delete keys.current[k];
       setPanel(null);
     } catch (e) {
-      setFormError(errText(e, 'Couldn’t save the goal. Try again.'));
+      setFormError(errText(e, t('Couldn’t save the goal. Try again.')));
     } finally {
       savingRef.current = false;
       if (alive.current) setSaving(false);
@@ -1774,11 +1791,11 @@ export const GoalsStrip: React.FC<{
         upsert(g);
         setPanel(g.status === 'draft' ? { kind: 'goal', id: g.id } : null);
       } else {
-        setDrafting({ bot: names[kwantId] ?? 'The bot', text, at: Date.now(), known: (goals ?? []).map((x) => x.id) });
+        setDrafting({ bot: names[kwantId] ?? t('The bot'), text, at: Date.now(), known: (goals ?? []).map((x) => x.id) });
         setPanel(null);
       }
     } catch (e) {
-      setFormError(errText(e, 'Couldn’t ask for a draft. Try again.'));
+      setFormError(errText(e, t('Couldn’t ask for a draft. Try again.')));
     } finally {
       savingRef.current = false;
       if (alive.current) setSaving(false);
@@ -1808,12 +1825,12 @@ export const GoalsStrip: React.FC<{
   const drafts = sorted.filter((g) => g.status === 'draft').length;
   const panelTitle =
     panel?.kind === 'new'
-      ? 'New goal'
+      ? t('New goal')
       : panel?.kind === 'form'
-        ? 'New goal: add checks yourself'
+        ? t('New goal: add checks yourself')
         : panel?.kind === 'edit'
-          ? `Edit: ${panel.goal.title}`
-          : detail?.goal.title ?? sorted.find((g) => panel?.kind === 'goal' && g.id === panel.id)?.title ?? 'Goal';
+          ? t('Edit: {title}', { title: panel.goal.title })
+          : detail?.goal.title ?? sorted.find((g) => panel?.kind === 'goal' && g.id === panel.id)?.title ?? t('Goal');
 
   const drawer = panel && (
     <GoalPanel title={panelTitle} onClose={() => setPanel(null)}>
@@ -1857,12 +1874,12 @@ export const GoalsStrip: React.FC<{
         <div role="alert" className="flex items-center gap-2 rounded-lg border border-rose-500/20 bg-rose-500/5 px-3 py-2 text-xs text-rose-300">
           <span className={`min-w-0 flex-1 ${wrap}`}>{detailError}</span>
           <button type="button" onClick={() => loadDetail(panel.id)} className={`${dangerBtn} shrink-0`}>
-            Retry
+            {t('Retry')}
           </button>
         </div>
       ) : (
         <p className="flex items-center gap-2 text-xs text-zinc-400">
-          <Loader2 size={14} className={spin} aria-hidden="true" /> Loading…
+          <Loader2 size={14} className={spin} aria-hidden="true" /> {t('Loading…')}
         </p>
       )}
     </GoalPanel>
@@ -1879,7 +1896,10 @@ export const GoalsStrip: React.FC<{
   const draftingLine = drafting && (
     <p role="status" className={`flex min-w-0 items-center gap-1.5 text-[11px] text-sky-200 ${wrap}`} data-goals-drafting>
       <Loader2 size={11} className={`shrink-0 ${spin}`} aria-hidden="true" />
-      {drafting.bot} is drafting checks for “{drafting.text.length > 80 ? `${drafting.text.slice(0, 79)}…` : drafting.text}”. The draft shows here.
+      {t('{bot} is drafting checks for “{text}”. The draft shows here.', {
+        bot: drafting.bot,
+        text: drafting.text.length > 80 ? `${drafting.text.slice(0, 79)}…` : drafting.text,
+      })}
     </p>
   );
 
@@ -1888,13 +1908,14 @@ export const GoalsStrip: React.FC<{
     return (
       <section aria-labelledby={headId} className="flex flex-wrap items-center gap-x-2 gap-y-0.5 px-1 text-[11px]" data-goals-strip data-count={0}>
         <h3 id={headId} className="flex items-center gap-1.5 font-medium text-zinc-300">
-          <Target size={13} className="text-sky-300" aria-hidden="true" /> Goals
+          <Target size={13} className="text-sky-300" aria-hidden="true" /> {t('Goals')}
         </h3>
         <p className="min-w-0 text-zinc-500" data-goals-empty>
-          What should stay true?<span className="hidden sm:inline"> Say it in a sentence and a bot drafts the checks.</span>
+          {t('What should stay true?')}
+          <span className="hidden sm:inline">{t(' Say it in a sentence and a bot drafts the checks.')}</span>
         </p>
         <button type="button" onClick={newGoal} className={linkBtn} data-new-goal>
-          New goal
+          {t('New goal')}
         </button>
         {draftingLine && <div className="basis-full">{draftingLine}</div>}
         {notice && (
@@ -1923,23 +1944,23 @@ export const GoalsStrip: React.FC<{
     <section aria-labelledby={headId} className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-3 py-1.5 space-y-2" data-goals-strip data-count={goals?.length ?? -1}>
       <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
         <h3 id={headId} className="flex items-center gap-1.5 text-xs font-medium text-zinc-200">
-          <Target size={14} className="text-sky-300" aria-hidden="true" /> Goals
+          <Target size={14} className="text-sky-300" aria-hidden="true" /> {t('Goals')}
         </h3>
         {sorted.length > 0 && (
           <p className="order-last basis-full sm:order-none sm:basis-auto min-w-0 text-[11px] text-zinc-400" data-goal-counts>
             {stripSummary(sorted, now)}
           </p>
         )}
-        {reloading && <Loader2 size={11} className={`${spin} text-zinc-500`} aria-label="Updating" />}
+        {reloading && <Loader2 size={11} className={`${spin} text-zinc-500`} aria-label={t('Updating')} />}
         <div className="ml-auto flex items-center gap-1">
           {(open || hiddenCount > 0) && (
             <button type="button" aria-expanded={open} aria-controls={listId} onClick={toggle} className={`${quietBtn} text-sky-300 hover:text-sky-200`} data-goals-toggle>
-              {open ? 'Show less' : `Show all ${sorted.length}`}
+              {open ? t('Show less') : t('Show all {n}', { n: sorted.length })}
               <ChevronDown size={12} className={open ? 'rotate-180' : ''} aria-hidden="true" />
             </button>
           )}
           <button type="button" onClick={newGoal} className={plainBtn} data-new-goal>
-            <Plus size={12} aria-hidden="true" /> New goal
+            <Plus size={12} aria-hidden="true" /> {t('New goal')}
           </button>
         </div>
       </div>
@@ -1948,7 +1969,7 @@ export const GoalsStrip: React.FC<{
         <p role="alert" className="flex flex-wrap items-center gap-2 text-[11px] text-rose-300" data-goals-error>
           <AlertTriangle size={12} aria-hidden="true" /> {loadError}
           <button type="button" onClick={reload} className={`underline hover:text-rose-200 rounded min-h-[40px] sm:min-h-0 ${focusRing}`}>
-            Try again
+            {t('Try again')}
           </button>
         </p>
       )}
@@ -1960,7 +1981,7 @@ export const GoalsStrip: React.FC<{
       )}
 
       {visible.length > 0 && (
-        <ul id={listId} className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-3" aria-label="Goals">
+        <ul id={listId} className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-3" aria-label={t('Goals')}>
           {visible.map((g, i) => {
             const decision = decisionFor(g);
             return (

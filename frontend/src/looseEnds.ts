@@ -7,6 +7,7 @@
 
 import { PersonCancelledError, personFetch } from './auth';
 import { needsBitwardenFrom } from './passwordStore';
+import { t, tc } from './i18n';
 
 export interface Evidence {
   quote: string;
@@ -74,22 +75,22 @@ export interface LooseSource {
 export type Tone = 'amber' | 'emerald' | 'rose' | 'sky' | 'zinc';
 
 const KINDS: Record<string, { label: string; tone: Tone }> = {
-  awaiting_reply: { label: 'No reply yet', tone: 'amber' },
-  promise_lapsed: { label: 'Promise passed', tone: 'rose' },
-  you_promised: { label: 'You promised', tone: 'sky' },
-  you_owe_reply: { label: 'You owe a reply', tone: 'sky' },
-  stale_issue: { label: 'Gone quiet', tone: 'zinc' },
-  failed_task: { label: 'Task failed', tone: 'rose' },
-  unanswered_question: { label: 'Question open', tone: 'amber' },
-  document_request: { label: 'Letter to deal with', tone: 'sky' },
+  awaiting_reply: { label: t('No reply yet'), tone: 'amber' },
+  promise_lapsed: { label: t('Promise passed'), tone: 'rose' },
+  you_promised: { label: t('You promised'), tone: 'sky' },
+  you_owe_reply: { label: t('You owe a reply'), tone: 'sky' },
+  stale_issue: { label: t('Gone quiet'), tone: 'zinc' },
+  failed_task: { label: t('Task failed'), tone: 'rose' },
+  unanswered_question: { label: t('Question open'), tone: 'amber' },
+  document_request: { label: t('Letter to deal with'), tone: 'sky' },
 };
 
-const SOURCES: Record<string, string> = { imap: 'Email', github: 'GitHub', kwant: 'Bot chats', document: 'Letter' };
+const SOURCES: Record<string, string> = { imap: t('Email'), github: 'GitHub', kwant: t('Bot chats'), document: t('Letter') };
 
 /** `bank_statement` → `Bank statement`: how an unknown kind or source still reads. */
 export function humanize(s: string): string {
-  const t = s.replace(/[_-]+/g, ' ').trim();
-  return t ? t[0].toUpperCase() + t.slice(1) : 'Other';
+  const words = s.replace(/[_-]+/g, ' ').trim();
+  return words ? words[0].toUpperCase() + words.slice(1) : t('Other');
 }
 
 export const kindLabel = (kind: string): { label: string; tone: Tone } => KINDS[kind] ?? { label: humanize(kind), tone: 'zinc' };
@@ -98,10 +99,10 @@ export const sourceLabel = (source: string): string => SOURCES[source] ?? humani
 /** Which list a status belongs in. */
 export type CaseTab = 'open' | 'snoozed' | 'waiting' | 'done';
 export const CASE_TABS: Array<{ key: CaseTab; label: string; empty: string }> = [
-  { key: 'open', label: 'Open', empty: 'Nothing is stalled. Loose ends show up here when something goes quiet.' },
-  { key: 'waiting', label: 'Waiting', empty: 'Nothing you followed up on is waiting for an answer.' },
-  { key: 'snoozed', label: 'Snoozed', empty: 'Nothing is snoozed.' },
-  { key: 'done', label: 'Done', empty: 'Nothing marked done or dismissed yet.' },
+  { key: 'open', label: tc('status', 'Open'), empty: t('Nothing is stalled. Loose ends show up here when something goes quiet.') },
+  { key: 'waiting', label: t('Waiting'), empty: t('Nothing you followed up on is waiting for an answer.') },
+  { key: 'snoozed', label: t('Snoozed'), empty: t('Nothing is snoozed.') },
+  { key: 'done', label: t('Done'), empty: t('Nothing marked done or dismissed yet.') },
 ];
 export function tabOf(status: string): CaseTab {
   if (status === 'snoozed') return 'snoozed';
@@ -126,30 +127,30 @@ export function actionsFor(c: Pick<LooseCase, 'status' | 'draft'>): CaseAction[]
 }
 
 export const ACTION_LABELS: Record<CaseAction, string> = {
-  draft: 'Draft again',
-  snooze: 'Snooze',
-  dismiss: 'Dismiss',
-  done: 'Mark done',
-  'followed-up': 'I followed up',
-  reopen: 'Reopen',
+  draft: t('Draft again'),
+  snooze: t('Snooze'),
+  dismiss: t('Dismiss'),
+  done: t('Mark done'),
+  'followed-up': t('I followed up'),
+  reopen: t('Reopen'),
 };
 
 /** What changed, for the status line after an action. */
 export function actionDoneText(a: CaseAction, c: LooseCase): string {
-  const t = `“${c.title}”`;
+  const title = c.title;
   switch (a) {
     case 'draft':
-      return `New draft for ${t}.`;
+      return t('New draft for “{title}”.', { title });
     case 'snooze':
-      return `Snoozed ${t}${c.snoozed_until ? ` until ${shortDate(c.snoozed_until)}` : ''}.`;
+      return c.snoozed_until ? t('Snoozed “{title}” until {date}.', { title, date: shortDate(c.snoozed_until) }) : t('Snoozed “{title}”.', { title });
     case 'dismiss':
-      return `Dismissed ${t}. It won’t come back.`;
+      return t('Dismissed “{title}”. It won’t come back.', { title });
     case 'done':
-      return `Marked ${t} done.`;
+      return t('Marked “{title}” done.', { title });
     case 'followed-up':
-      return `${t} is waiting for an answer. It comes back if nobody replies.`;
+      return t('“{title}” is waiting for an answer. It comes back if nobody replies.', { title });
     case 'reopen':
-      return `Reopened ${t}.`;
+      return t('Reopened “{title}”.', { title });
   }
 }
 
@@ -158,13 +159,13 @@ export const shortDate = (iso: string): string => {
   return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
 };
 
-export const ageText = (days: number): string => (days <= 0 ? 'today' : days === 1 ? '1 day quiet' : `${days} days quiet`);
+export const ageText = (days: number): string => (days <= 0 ? t('today') : t(days === 1 ? '{n} day quiet' : '{n} days quiet', { n: days }));
 
 /** A promised date: "was due 3 Oct 2026" once passed, else "due …". */
 export function deadlineText(deadline: string, now = Date.now()): { text: string; passed: boolean } {
   const end = new Date(`${deadline}T23:59:59`).getTime();
   const passed = !Number.isNaN(end) && end < now;
-  return { text: `${passed ? 'Was due' : 'Due'} ${shortDate(deadline)}`, passed };
+  return { text: passed ? t('Was due {date}', { date: shortDate(deadline) }) : t('Due {date}', { date: shortDate(deadline) }), passed };
 }
 
 /** Only web links open from a card; anything else (kwant://, javascript:) is shown, not linked. */
@@ -185,9 +186,9 @@ export const draftCopyText = (d: CaseDraft): string => (d.subject ? `Subject: ${
 /** Where the person sends a draft themselves. */
 export function draftOpen(d: CaseDraft): { href: string; label: string } | null {
   const mail = safeHref(d.mailto, 'mailto');
-  if (mail) return { href: mail, label: 'Open in my mail app' };
+  if (mail) return { href: mail, label: t('Open in my mail app') };
   const web = safeHref(d.open_url);
-  if (web) return { href: web, label: d.channel === 'github' ? 'Open on GitHub' : 'Open' };
+  if (web) return { href: web, label: d.channel === 'github' ? t('Open on GitHub') : t('Open') };
   return null;
 }
 
@@ -225,7 +226,7 @@ export async function call<T>(url: string, method = 'GET', body?: unknown): Prom
     });
   } catch (e) {
     if (e instanceof PersonCancelledError) throw new LooseEndsError(e.message, 401);
-    throw new LooseEndsError('Couldn’t reach the server. Check your connection and try again.', 0);
+    throw new LooseEndsError(t('Couldn’t reach the server. Check your connection and try again.'), 0);
   }
   const answer = await res.json().catch(() => null);
   if (res.ok) return answer as T;
@@ -233,10 +234,10 @@ export async function call<T>(url: string, method = 'GET', body?: unknown): Prom
   if (needs) throw new LooseEndsError(needs.message, 409, true);
   const err = answer && typeof answer === 'object' ? (answer as Record<string, unknown>).error : null;
   const code = answer && typeof answer === 'object' && typeof (answer as Record<string, unknown>).code === 'string' ? ((answer as Record<string, unknown>).code as string) : null;
-  const msg = typeof err === 'string' && err.trim() ? sentence(err) : `Something went wrong (HTTP ${res.status}).`;
+  const msg = typeof err === 'string' && err.trim() ? sentence(err) : t('Something went wrong (HTTP {status}).', { status: res.status });
   if (res.status === 423) throw new LooseEndsError(msg, 423, false, true);
-  if (res.status === 403) throw new LooseEndsError('Only you can see and change loose ends.', 403);
-  if (res.status === 404 && !err) throw new LooseEndsError('This server doesn’t have loose ends yet. Update the app and try again.', 404);
+  if (res.status === 403) throw new LooseEndsError(t('Only you can see and change loose ends.'), 403);
+  if (res.status === 404 && !err) throw new LooseEndsError(t('This server doesn’t have loose ends yet. Update the app and try again.'), 404);
   throw new LooseEndsError(msg, res.status, false, false, code);
 }
 
@@ -274,11 +275,16 @@ export const ownerChange = (o: LooseOwner, change: Partial<LooseOwnerChange>): L
 
 /** The line under the setting: who, how often, and how much of today's cap is used. */
 export function ownerSummary(o: LooseOwner): string {
-  if (!o.enabled) return 'Off. Reviews and deadlines still notify you, but no bot starts on them.';
-  if (!o.owner) return 'No bot to start: this space has no lead yet. Pick a bot below.';
-  if (o.daily_cap === 0) return `${o.owner.name} is picked, but the daily limit is 0, so no turn starts.`;
+  if (!o.enabled) return t('Off. Reviews and deadlines still notify you, but no bot starts on them.');
+  if (!o.owner) return t('No bot to start: this space has no lead yet. Pick a bot below.');
+  if (o.daily_cap === 0) return t('{name} is picked, but the daily limit is 0, so no turn starts.', { name: o.owner.name });
   const used = Math.min(o.used_today, o.daily_cap);
-  return `${o.owner.name} prepares drafts and next steps, up to ${o.daily_cap} ${o.daily_cap === 1 ? 'time' : 'times'} a day (${used} used today, UTC). Nothing is sent without you.`;
+  return t(
+    o.daily_cap === 1
+      ? '{name} prepares drafts and next steps, up to {n} time a day ({used} used today, UTC). Nothing is sent without you.'
+      : '{name} prepares drafts and next steps, up to {n} times a day ({used} used today, UTC). Nothing is sent without you.',
+    { name: o.owner.name, n: o.daily_cap, used },
+  );
 }
 
 export const looseApi = {
@@ -315,13 +321,13 @@ export interface ImapFields {
 /** The IMAP form as the API wants it, or why it can't be sent yet. */
 export function imapSource(f: ImapFields, secret: string): NewSource | { error: string } {
   const host = f.host.trim();
-  if (!host) return { error: 'Enter the mail server, like imap.gmail.com.' };
-  if (!f.username.trim()) return { error: 'Enter the mailbox login, usually your email address.' };
-  if (!secret) return { error: 'Enter the password. For Gmail, use an app password.' };
+  if (!host) return { error: t('Enter the mail server, like imap.gmail.com.') };
+  if (!f.username.trim()) return { error: t('Enter the mailbox login, usually your email address.') };
+  if (!secret) return { error: t('Enter the password. For Gmail, use an app password.') };
   const port = Number(f.port || (f.security === 'tls' ? 993 : 143));
-  if (!Number.isInteger(port) || port < 1 || port > 65535) return { error: 'The port must be a number like 993.' };
+  if (!Number.isInteger(port) || port < 1 || port > 65535) return { error: t('The port must be a number like 993.') };
   const local = isLoopbackHost(host);
-  if (f.security === 'plain' && !local) return { error: 'An unencrypted connection is only allowed to a server on this computer.' };
+  if (f.security === 'plain' && !local) return { error: t('An unencrypted connection is only allowed to a server on this computer.') };
   return {
     kind: 'imap',
     label: f.label.trim() || f.username.trim(),
@@ -341,15 +347,15 @@ export function imapSource(f: ImapFields, secret: string): NewSource | { error: 
 }
 
 export function githubSource(label: string, apiBase: string, token: string): NewSource | { error: string } {
-  if (!token) return { error: 'Enter a GitHub token. It only needs to read issues and pull requests.' };
+  if (!token) return { error: t('Enter a GitHub token. It only needs to read issues and pull requests.') };
   const base = apiBase.trim() || 'https://api.github.com';
   return { kind: 'github', label: label.trim() || 'GitHub', config: { api_base: base }, secret: token };
 }
 
 /** One line for a source's last scan. */
 export function sourceStatusText(s: LooseSource): { text: string; error: boolean } {
-  if (!s.enabled) return { text: 'Off', error: false };
-  if (s.last_status === 'error' || s.last_error) return { text: s.last_error ? sentence(s.last_error) : 'The last scan failed.', error: true };
-  if (s.last_scan_at) return { text: `Last read ${shortDate(s.last_scan_at)}`, error: false };
-  return { text: 'Not read yet', error: false };
+  if (!s.enabled) return { text: t('Off'), error: false };
+  if (s.last_status === 'error' || s.last_error) return { text: s.last_error ? sentence(s.last_error) : t('The last scan failed.'), error: true };
+  if (s.last_scan_at) return { text: t('Last read {date}', { date: shortDate(s.last_scan_at) }), error: false };
+  return { text: t('Not read yet'), error: false };
 }

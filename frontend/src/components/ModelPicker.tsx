@@ -16,6 +16,7 @@ import {
   parsePick,
   pickHealth,
 } from '../engines';
+import { t } from '../i18n';
 
 interface ModelPickerProps {
   /** A kwant's preferred_model: "auto", "claude", "claude/sonnet"… */
@@ -90,7 +91,7 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({ value, onChange, engin
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div>
           <label htmlFor={`${id}-engine`} className="block text-xs font-medium text-zinc-400 mb-1">
-            Engine
+            {t('Engine')}
           </label>
           <select
             id={`${id}-engine`}
@@ -100,20 +101,20 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({ value, onChange, engin
             aria-invalid={health.kind === 'engine_unavailable' || undefined}
             className={`${SELECT} ${health.kind === 'engine_unavailable' ? 'border-amber-500/60' : ''}`}
           >
-            <option value="auto">Auto (Laya picks)</option>
+            <option value="auto">{t('Auto (Laya picks)')}</option>
             {options.map((o) => (
               <option key={o.id} value={o.id}>
                 {o.via.length ? `${o.label} · ${o.via.join(', ')}` : o.label}
               </option>
             ))}
-            {staleFamily && <option value={staleFamily}>{`${familyLabel(staleFamily)} (can't run now)`}</option>}
+            {staleFamily && <option value={staleFamily}>{t("{family} (can't run now)", { family: familyLabel(staleFamily) })}</option>}
             {family === null && <option value={value}>{value}</option>}
           </select>
         </div>
 
         <div>
           <label htmlFor={`${id}-model`} className="block text-xs font-medium text-zinc-400 mb-1">
-            Model
+            {t('Model')}
           </label>
           {byAccount ? (
             <select
@@ -123,7 +124,7 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({ value, onChange, engin
               aria-describedby={describedBy}
               className={`${SELECT} ${health.kind === 'model_missing' ? 'border-amber-500/60' : ''}`}
             >
-              <option value="">Each account’s own model</option>
+              <option value="">{t('Each account’s own model')}</option>
               {customAccounts.map((p) => (
                 <optgroup key={p.id} label={p.name}>
                   {customModels(p).map((m) => (
@@ -133,7 +134,7 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({ value, onChange, engin
                   ))}
                 </optgroup>
               ))}
-              {pick.model && !owner && <option value={pick.model}>{`${pick.model} (not offered now)`}</option>}
+              {pick.model && !owner && <option value={pick.model}>{t('{model} (not offered now)', { model: pick.model })}</option>}
             </select>
           ) : (
           <select
@@ -144,17 +145,17 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({ value, onChange, engin
             aria-describedby={describedBy}
             className={`${SELECT} ${health.kind === 'model_missing' ? 'border-amber-500/60' : ''}`}
           >
-            <option value="">{family === 'auto' ? 'Laya picks per task' : 'Auto (Laya picks)'}</option>
+            <option value="">{family === 'auto' ? t('Laya picks per task') : t('Auto (Laya picks)')}</option>
             {groupByTier(models).map((g) => (
               <optgroup key={g.label} label={g.label}>
                 {g.models.map((m) => (
                   <option key={m.id} value={m.id}>
-                    {m.default ? `${m.label} (default)` : m.label}
+                    {m.default ? t('{model} (default)', { model: m.label }) : m.label}
                   </option>
                 ))}
               </optgroup>
             ))}
-            {staleModel && <option value={staleModel}>{`${staleModel} (not offered now)`}</option>}
+            {staleModel && <option value={staleModel}>{t('{model} (not offered now)', { model: staleModel })}</option>}
           </select>
           )}
         </div>
@@ -168,16 +169,16 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({ value, onChange, engin
 const SettingsLink: React.FC<{ onOpenSettings?: () => void }> = ({ onOpenSettings }) =>
   onOpenSettings ? (
     <button type="button" onClick={onOpenSettings} className="inline-flex items-center gap-0.5 font-medium text-sky-300 hover:text-sky-200 underline-offset-2 hover:underline">
-      Open Settings <ChevronRight size={11} />
+      {t('Open Settings')} <ChevronRight size={11} />
     </button>
   ) : (
-    <span>Check Settings › This space › Accounts.</span>
+    <span>{t('Check Settings › This space › Accounts.')}</span>
   );
 
 /** "Sign in with Claude", when that's what fixes it. */
 const SignInClaudeLink: React.FC<{ onSignInClaude: () => void }> = ({ onSignInClaude }) => (
   <button type="button" onClick={onSignInClaude} className="inline-flex items-center gap-0.5 font-medium text-sky-300 hover:text-sky-200 underline-offset-2 hover:underline">
-    Sign in with Claude <ChevronRight size={11} />
+    {t('Sign in with Claude')} <ChevronRight size={11} />
   </button>
 );
 
@@ -193,23 +194,23 @@ const PickHint: React.FC<{ id: string; health: ReturnType<typeof pickHealth>; on
     case 'loading':
       return (
         <p id={id} className="flex items-center gap-1.5 text-[11px] text-zinc-500" aria-live="polite">
-          <Loader2 size={11} className="animate-spin motion-reduce:animate-none" /> Checking which engines can run…
+          <Loader2 size={11} className="animate-spin motion-reduce:animate-none" /> {t('Checking which engines can run…')}
         </p>
       );
     case 'none_ready':
       return (
         <div id={id} role="status" className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-[11px] text-amber-200 space-y-1">
           <p className="flex items-center gap-1.5 font-medium">
-            <AlertTriangle size={12} /> No engine can run right now
+            <AlertTriangle size={12} /> {t('No engine can run right now')}
           </p>
           <p className="text-amber-200/80">
             {onSignInClaude ? (
               <>
-                Claude Code is installed but signed out. <SignInClaudeLink onSignInClaude={onSignInClaude} />
+                {t('Claude Code is installed but signed out.')} <SignInClaudeLink onSignInClaude={onSignInClaude} />
               </>
             ) : (
               <>
-                Sign in to a CLI like Claude Code, or add an API key. <SettingsLink onOpenSettings={onOpenSettings} />
+                {t('Sign in to a CLI like Claude Code, or add an API key.')} <SettingsLink onOpenSettings={onOpenSettings} />
               </>
             )}
           </p>
@@ -219,11 +220,11 @@ const PickHint: React.FC<{ id: string; health: ReturnType<typeof pickHealth>; on
       return (
         <div id={id} role="status" className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-[11px] text-amber-200 space-y-1">
           <p className="flex items-center gap-1.5 font-medium">
-            <AlertTriangle size={12} /> {familyLabel(health.family)} can't run right now
+            <AlertTriangle size={12} /> {t("{family} can't run right now", { family: familyLabel(health.family) })}
           </p>
           <p className="text-amber-200/80">
-            {health.reason ? `${health.reason.replace(/`/g, '').replace(/\.$/, '')}. ` : ''}
-            This bot won't switch engine by itself: fix it, or pick another engine.{' '}
+            {health.reason ? `${t('{reason}.', { reason: health.reason.replace(/`/g, '').replace(/[.。]$/, '') })} ` : ''}
+            {t("This bot won't switch engine by itself: fix it, or pick another engine.")}{' '}
             {health.family === 'claude' && onSignInClaude ? <SignInClaudeLink onSignInClaude={onSignInClaude} /> : <SettingsLink onOpenSettings={onOpenSettings} />}
           </p>
         </div>
@@ -232,14 +233,14 @@ const PickHint: React.FC<{ id: string; health: ReturnType<typeof pickHealth>; on
       return (
         <p id={id} role="status" className="flex items-start gap-1.5 text-[11px] text-amber-300">
           <AlertTriangle size={12} className="mt-px shrink-0" />
-          {familyLabel(health.family)} no longer offers “{health.model}”. Pick another model, or Auto.
+          {t('{family} no longer offers “{model}”. Pick another model, or Auto.', { family: familyLabel(health.family), model: health.model })}
         </p>
       );
     case 'unknown':
       return (
         <p id={id} role="status" className="flex items-start gap-1.5 text-[11px] text-amber-300">
           <AlertTriangle size={12} className="mt-px shrink-0" />
-          “{health.value}” isn't a model the app knows. Pick an engine above.
+          {t("“{value}” isn't a model the app knows. Pick an engine above.", { value: health.value })}
         </p>
       );
   }

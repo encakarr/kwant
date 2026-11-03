@@ -4,6 +4,7 @@
 
 import type { SmartBlock } from '../../smartResults';
 import { comparisonCsv, csvCell, plainText, previewNote, stepsMarkdown } from '../../smartResults';
+import { t } from '../../i18n';
 
 type Row = Record<string, unknown>;
 
@@ -32,7 +33,7 @@ export function blockRows(block: SmartBlock): Row[] {
       // A cut preview says so in its own row, so pasted data never passes a partial preview off as the file.
       return block.items.map(({ name, mime, size_bytes, preview }) => {
         const note = previewNote(preview);
-        return { name, type: mime, bytes: size_bytes, ...(note ? { preview: `${note}; Copy data copies the preview only` } : {}) };
+        return { name, type: mime, bytes: size_bytes, ...(note ? { preview: t('{note}; Copy data copies the preview only', { note }) } : {}) };
       });
     case 'steps':
       return block.items.map(({ text, done, when, owner }) => ({ ...(when != null ? { when } : {}), step: text, ...(owner != null ? { owner } : {}), ...(done != null ? { done } : {}) }));

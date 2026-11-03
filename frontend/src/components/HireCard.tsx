@@ -2,6 +2,7 @@ import React, { useId, useState } from 'react';
 import { AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, Loader2, MinusCircle, Undo2, UserPlus } from 'lucide-react';
 import { ModernAvatar } from './ModernAvatar';
 import { HireMeta, evidenceText, hireStateText, hireView, hireLeadIndex, hiredBotGone, isTeamHire, modelText, shortDate } from '../botActions';
+import { t, tj } from '../i18n';
 
 export type HireDecision = 'deny' | 'accept_once' | 'always_accept' | 'undo';
 
@@ -57,7 +58,7 @@ export const HireCard: React.FC<HireCardProps> = ({ meta, messageId, kwantName, 
   const can = (c: string) => pending && view.choices.includes(c);
   const leadIndex = hireLeadIndex(view);
   const team = isTeamHire(view);
-  const toolText = (tools: HireMeta['tools']) => (tools.length ? tools.map((t) => t.name || 'Unknown tool').join(', ') : 'None');
+  const toolText = (tools: HireMeta['tools']) => (tools.length ? tools.map((x) => x.name || t('Unknown tool')).join(t(', ')) : t('None'));
 
   return (
     <section data-message-id={messageId} aria-labelledby={headingId} className={`flex items-start gap-3.5 w-full max-w-5xl rounded-xl ${flash ? 'kw-flash' : ''}`}>
@@ -67,23 +68,25 @@ export const HireCard: React.FC<HireCardProps> = ({ meta, messageId, kwantName, 
           <span className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-400">
             <UserPlus size={12} className="text-violet-300" aria-hidden="true" />
             <span>
-              <span className="text-zinc-200">{proposer}</span>
-              {team
-                ? view.status === 'auto_accepted'
-                  ? ` hired a team of ${view.members.length}`
-                  : pending
-                    ? ` proposes hiring a team of ${view.members.length}`
-                    : ` proposed hiring a team of ${view.members.length}`
-                : view.status === 'auto_accepted'
-                  ? ' hired a new bot'
-                  : pending
-                    ? ' proposes hiring a new bot'
-                    : ' proposed hiring a new bot'}
+              {tj(
+                team
+                  ? view.status === 'auto_accepted'
+                    ? '{name} hired a team of {n}'
+                    : pending
+                      ? '{name} proposes hiring a team of {n}'
+                      : '{name} proposed hiring a team of {n}'
+                  : view.status === 'auto_accepted'
+                    ? '{name} hired a new bot'
+                    : pending
+                      ? '{name} proposes hiring a new bot'
+                      : '{name} proposed hiring a new bot',
+                { name: <span className="text-zinc-200">{proposer}</span>, n: view.members.length },
+              )}
             </span>
           </span>
           {team ? (
             <h3 id={headingId} className={`text-sm font-semibold break-words leading-snug ${done ? 'text-zinc-400' : 'text-zinc-100'}`}>
-              {view.new_team?.name ?? view.team?.name ?? `${view.members.length} new bots`}
+              {view.new_team?.name ?? view.team?.name ?? t('{n} new bots', { n: view.members.length })}
             </h3>
           ) : (
             <div className="flex items-center gap-2.5 min-w-0">
@@ -98,21 +101,19 @@ export const HireCard: React.FC<HireCardProps> = ({ meta, messageId, kwantName, 
           )}
           {view.reason && (
             <p className="text-sm text-zinc-300 break-words leading-relaxed">
-              <span className="text-zinc-500">Why: </span>
-              {view.reason}
+              {tj('{label} {reason}', { label: <span className="text-zinc-500">{t('Why:')}</span>, reason: view.reason })}
             </p>
           )}
           {evidence && (
             <p className="text-sm text-zinc-300 break-words leading-relaxed">
-              <span className="text-zinc-500">Based on: </span>
-              {evidence}
+              {tj('{label} {reason}', { label: <span className="text-zinc-500">{t('Based on:')}</span>, reason: evidence })}
             </p>
           )}
           {!view.requested_by_person && view.evidence?.basis === 'repeated' && view.evidence.similar_requests.some((r) => r.text) && (
-            <ul aria-label="Your earlier requests" className="space-y-1 border-l-2 border-zinc-700 pl-3">
+            <ul aria-label={t('Your earlier requests')} className="space-y-1 border-l-2 border-zinc-700 pl-3">
               {view.evidence.similar_requests.map((r) => (
                 <li key={r.message_id} className="text-xs text-zinc-300 break-words leading-relaxed">
-                  {r.text ? <q className="italic">{r.text}</q> : <span className="text-zinc-500">An earlier message</span>}
+                  {r.text ? <q className="italic">{r.text}</q> : <span className="text-zinc-500">{t('An earlier message')}</span>}
                   {shortDate(r.at) && <span className="text-zinc-500 not-italic"> · {shortDate(r.at)}</span>}
                 </li>
               ))}
@@ -122,7 +123,7 @@ export const HireCard: React.FC<HireCardProps> = ({ meta, messageId, kwantName, 
 
         {team ? (
           <>
-            <ul aria-label="Proposed members" className="mx-4 mb-2 divide-y divide-zinc-800 rounded-xl border border-zinc-800 bg-zinc-950/70 text-xs">
+            <ul aria-label={t('Proposed members')} className="mx-4 mb-2 divide-y divide-zinc-800 rounded-xl border border-zinc-800 bg-zinc-950/70 text-xs">
               {view.members.map((m, i) => (
                 <li key={`${m.name}-${i}`} className="flex items-start gap-2.5 px-3 py-2 min-w-0">
                   <ModernAvatar role={m.role || m.name} name={m.name} size={24} kwantId={view.hired_kwant_ids[i]} />
@@ -130,33 +131,35 @@ export const HireCard: React.FC<HireCardProps> = ({ meta, messageId, kwantName, 
                     <p className={`font-medium break-words ${done ? 'text-zinc-400' : 'text-zinc-100'}`}>
                       {m.name}
                       {i === leadIndex && (
-                        <span className="ml-2 rounded-full border border-violet-500/40 bg-violet-500/10 px-1.5 py-px text-[10px] font-medium text-violet-200">Lead</span>
+                        <span className="ml-2 rounded-full border border-violet-500/40 bg-violet-500/10 px-1.5 py-px text-[10px] font-medium text-violet-200">{t('Lead')}</span>
                       )}
                     </p>
                     {m.role && <p className="text-zinc-400 break-words">{m.role}</p>}
                     <p className="text-[11px] text-zinc-500 break-words">
-                      {modelText(m.model)} · Tools: {toolText(m.tools)}
+                      {t('{model} · Tools: {tools}', { model: modelText(m.model), tools: toolText(m.tools) })}
                     </p>
                   </div>
                 </li>
               ))}
             </ul>
             <dl className="mx-4 mb-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 px-1 text-xs">
-              <dt className="text-zinc-500">Team</dt>
+              <dt className="text-zinc-500">{t('Team')}</dt>
               <dd className="min-w-0 break-words text-zinc-200">
                 {view.new_team
-                  ? `New team: ${view.new_team.name}${leadIndex >= 0 ? `, led by ${view.members[leadIndex].name}` : ''}`
-                  : view.team ? view.team.name : 'No team'}
+                  ? leadIndex >= 0
+                    ? t('New team: {team}, led by {lead}', { team: view.new_team.name, lead: view.members[leadIndex].name })
+                    : t('New team: {team}', { team: view.new_team.name })
+                  : view.team ? view.team.name : t('No team')}
               </dd>
             </dl>
           </>
         ) : (
           <dl className="mx-4 mb-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 rounded-xl border border-zinc-800 bg-zinc-950/70 px-3 py-2 text-xs">
-            <dt className="text-zinc-500">Team</dt>
-            <dd className="min-w-0 break-words text-zinc-200">{view.team ? view.team.name : 'No team'}</dd>
-            <dt className="text-zinc-500">Model</dt>
+            <dt className="text-zinc-500">{t('Team')}</dt>
+            <dd className="min-w-0 break-words text-zinc-200">{view.team ? view.team.name : t('No team')}</dd>
+            <dt className="text-zinc-500">{t('Model')}</dt>
             <dd className="min-w-0 break-words text-zinc-200">{modelText(view.model)}</dd>
-            <dt className="text-zinc-500">Tools</dt>
+            <dt className="text-zinc-500">{t('Tools')}</dt>
             <dd className="min-w-0 break-words text-zinc-200">{toolText(view.tools)}</dd>
           </dl>
         )}
@@ -171,7 +174,13 @@ export const HireCard: React.FC<HireCardProps> = ({ meta, messageId, kwantName, 
               className="inline-flex items-center gap-1 min-h-[32px] text-xs text-zinc-300 hover:text-zinc-100 rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400"
             >
               {showInstructions ? <ChevronDown size={13} aria-hidden="true" /> : <ChevronRight size={13} aria-hidden="true" />}
-              {team ? (showInstructions ? 'Hide their instructions' : 'Show their instructions') : showInstructions ? 'Hide its instructions' : 'Show its instructions'}
+              {team
+                ? showInstructions
+                  ? t('Hide their instructions')
+                  : t('Show their instructions')
+                : showInstructions
+                  ? t('Hide its instructions')
+                  : t('Show its instructions')}
             </button>
             {showInstructions && (
               <p
@@ -209,32 +218,32 @@ export const HireCard: React.FC<HireCardProps> = ({ meta, messageId, kwantName, 
                   className={`${btn} bg-violet-500 text-white hover:bg-violet-400 focus-visible:outline-violet-400`}
                 >
                   {busy === 'accept_once' && spin}
-                  {busy === 'accept_once' ? 'Hiring…' : team ? `Approve all ${view.members.length}` : 'Accept once'}
+                  {busy === 'accept_once' ? t('Hiring…') : team ? t('Approve all {n}', { n: view.members.length }) : t('Accept once')}
                 </button>
               )}
               {can('always_accept') && (
                 <button type="button" onClick={() => decide('always_accept')} disabled={busy !== null} className={quiet}>
                   {busy === 'always_accept' && spin}
-                  {busy === 'always_accept' ? 'Hiring…' : 'Always accept'}
+                  {busy === 'always_accept' ? t('Hiring…') : t('Always accept')}
                 </button>
               )}
               {can('deny') && (
                 <button type="button" onClick={() => decide('deny')} disabled={busy !== null} className={quiet}>
-                  {busy === 'deny' ? 'Saying no…' : team ? 'Decline' : 'Deny'}
+                  {busy === 'deny' ? t('Saying no…') : team ? t('Decline') : t('Deny')}
                 </button>
               )}
             </div>
           )}
           {pending && can('always_accept') && (
             <p className="text-[11px] text-zinc-500">
-              Always accept hires later proposals in this space at once, up to 3 a day, each with Undo. You can change this in Settings › This space.
+              {t('Always accept hires later proposals in this space at once, up to 3 a day, each with Undo. You can change this in Settings › This space.')}
             </p>
           )}
 
           {view.can_undo && (
             <button type="button" onClick={() => decide('undo')} disabled={busy !== null} className={quiet}>
               {busy === 'undo' ? spin : <Undo2 size={13} aria-hidden="true" />}
-              {busy === 'undo' ? 'Undoing…' : 'Undo'}
+              {busy === 'undo' ? t('Undoing…') : t('Undo')}
             </button>
           )}
 

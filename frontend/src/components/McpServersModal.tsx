@@ -36,6 +36,8 @@ import {
   SecretRow,
   StoredStatus,
   McpPreset,
+  McpPresetNeed,
+  MCP_NEED_LABELS,
   ComposioOnlyApp,
   searchComposioOnly,
   COMPOSIO_ONLY_APPS,
@@ -59,6 +61,7 @@ import {
 } from '../mcp';
 import { inDesktopApp, leaveForSignIn, pollUntil, signInChanged } from '../externalLinks';
 import { useEscapeLayer } from '../escape';
+import { t, tj } from '../i18n';
 
 interface McpServersModalProps {
   isOpen: boolean;
@@ -75,8 +78,8 @@ const inputCls =
   'w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-100 placeholder-zinc-600 focus:border-sky-500 focus:outline-none transition-colors';
 
 const TRANSPORTS: Array<{ id: McpTransport; title: string; blurb: string; icon: React.ReactNode }> = [
-  { id: 'stdio', title: 'Runs on this machine', blurb: 'The server starts a command, like npx or uvx', icon: <Terminal size={18} /> },
-  { id: 'http', title: 'Connects to a URL', blurb: 'A server already running somewhere else', icon: <Globe size={18} /> },
+  { id: 'stdio', title: t('Runs on this machine'), blurb: t('The server starts a command, like npx or uvx'), icon: <Terminal size={18} /> },
+  { id: 'http', title: t('Connects to a URL'), blurb: t('A server already running somewhere else'), icon: <Globe size={18} /> },
 ];
 
 const readError = async (res: Response) => {
@@ -86,33 +89,33 @@ const readError = async (res: Response) => {
   } catch {
     // not JSON
   }
-  return `Something went wrong (HTTP ${res.status}).`;
+  return t('Something went wrong (HTTP {status}).', { status: res.status });
 };
 
 const StatusPill: React.FC<{ server: McpServer; status?: StoredStatus; testing: boolean }> = ({ server, status, testing }) => {
   const kind = serverStatusKind(server, status, testing);
   let cls = 'bg-zinc-800/60 text-zinc-400 border-zinc-700/60';
   let icon = <CircleDashed size={11} />;
-  let label = 'Not tested yet';
+  let label = t('Not tested yet');
   if (kind === 'testing') {
     cls = 'bg-sky-500/10 text-sky-300 border-sky-500/20';
     icon = <Loader2 size={11} className="animate-spin" />;
-    label = 'Testing…';
+    label = t('Testing…');
   } else if (kind === 'paused') {
     icon = <PauseCircle size={11} />;
-    label = 'Paused';
+    label = t('Paused');
   } else if (kind === 'ok' && status) {
     cls = 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20';
     icon = <CheckCircle2 size={11} />;
-    label = `Working · ${status.tools.length} ${status.tools.length === 1 ? 'tool' : 'tools'}`;
+    label = t(status.tools.length === 1 ? 'Working · {n} tool' : 'Working · {n} tools', { n: status.tools.length });
   } else if (kind === 'needs_sign_in') {
     cls = 'bg-amber-500/10 text-amber-300 border-amber-500/25';
     icon = <KeyRound size={11} />;
-    label = 'Needs sign-in';
+    label = t('Needs sign-in');
   } else if (kind === 'error') {
     cls = 'bg-rose-500/10 text-rose-300 border-rose-500/20';
     icon = <AlertCircle size={11} />;
-    label = 'Couldn’t connect';
+    label = t('Couldn’t connect');
   }
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-medium whitespace-nowrap ${cls}`}>
@@ -153,19 +156,19 @@ const SecretRows: React.FC<{
               <div className="flex gap-1.5 flex-1 min-w-0">
                 <div className="relative flex-1 min-w-0">
                   <input
-                    aria-label={`Value for ${row.key || 'this entry'}`}
+                    aria-label={row.key ? t('Value for {name}', { name: row.key }) : t('Value for this entry')}
                     aria-describedby={missing ? warnId : undefined}
                     type={shown[i] ? 'text' : 'password'}
                     autoComplete="off"
                     value={row.value}
                     onChange={(e) => update(i, { value: e.target.value })}
-                    placeholder={row.saved ? '•••••••• saved, leave blank to keep' : row.hint || 'Secret value'}
+                    placeholder={row.saved ? t('•••••••• saved, leave blank to keep') : row.hint || t('Secret value')}
                     className={`${inputCls} pr-8 font-mono ${missing ? 'border-amber-500/40' : ''}`}
                   />
                   <button
                     type="button"
                     onClick={() => setShown((s) => ({ ...s, [i]: !s[i] }))}
-                    aria-label={shown[i] ? 'Hide value' : 'Show value'}
+                    aria-label={shown[i] ? t('Hide value') : t('Show value')}
                     className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 rounded text-zinc-500 hover:text-zinc-200"
                   >
                     {shown[i] ? <EyeOff size={13} /> : <Eye size={13} />}
@@ -174,7 +177,7 @@ const SecretRows: React.FC<{
                 <button
                   type="button"
                   onClick={() => onChange(rows.filter((_, j) => j !== i))}
-                  aria-label={`Remove ${row.key || 'entry'}`}
+                  aria-label={row.key ? t('Remove {name}', { name: row.key }) : t('Remove entry')}
                   className="p-2 rounded-lg text-zinc-500 hover:text-rose-300 hover:bg-rose-500/10 transition-colors"
                 >
                   <Trash2 size={14} />
@@ -184,7 +187,7 @@ const SecretRows: React.FC<{
             {missing && (
               <p id={warnId} className="flex items-start gap-1.5 text-[11px] text-amber-300/90">
                 <KeyRound size={12} className="flex-shrink-0 mt-px text-amber-400" aria-hidden="true" />
-                <span>This server needs a key to work. Add it now, or save and edit later.</span>
+                <span>{t('This server needs a key to work. Add it now, or save and edit later.')}</span>
               </p>
             )}
           </div>
@@ -203,21 +206,21 @@ const SecretRows: React.FC<{
 };
 
 const ToolChips: React.FC<{ tools: Array<{ name: string; description?: string }>; max?: number }> = ({ tools, max = 8 }) => {
-  if (tools.length === 0) return <p className="text-[11px] text-zinc-500">Connected, but it didn’t offer any tools.</p>;
+  if (tools.length === 0) return <p className="text-[11px] text-zinc-500">{t('Connected, but it didn’t offer any tools.')}</p>;
   const extra = tools.length - max;
   return (
     <div className="flex flex-wrap gap-1">
-      {tools.slice(0, max).map((t) => (
+      {tools.slice(0, max).map((tool) => (
         <span
-          key={t.name}
-          title={t.description || t.name}
+          key={tool.name}
+          title={tool.description || tool.name}
           className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-950/70 border border-zinc-800 text-[11px] text-zinc-300"
         >
           <Wrench size={10} className="text-sky-400/80" />
-          {humanizeToolName(t.name)}
+          {humanizeToolName(tool.name)}
         </span>
       ))}
-      {extra > 0 && <span className="px-2 py-0.5 text-[11px] text-zinc-500">+{extra} more</span>}
+      {extra > 0 && <span className="px-2 py-0.5 text-[11px] text-zinc-500">{t('+{n} more', { n: extra })}</span>}
     </div>
   );
 };
@@ -226,28 +229,31 @@ const ToolChips: React.FC<{ tools: Array<{ name: string; description?: string }>
 const ComposioOnlyNote: React.FC<{ app: ComposioOnlyApp; onOpenConnections?: () => void; onClose: () => void }> = ({ app, onOpenConnections, onClose }) => (
   <div role="status" className="space-y-2 p-3 rounded-xl border border-amber-500/30 bg-amber-500/5 text-xs text-zinc-300" data-composio-note={app.id}>
     <p>
-      <span className="font-medium text-zinc-100">{app.label}</span> goes through Composio. {app.why} This app doesn’t offer unofficial servers for it.
+      {tj('{app} goes through Composio. {why} This app doesn’t offer unofficial servers for it.', {
+        app: <span className="font-medium text-zinc-100">{app.label}</span>,
+        why: app.why,
+      })}
     </p>
     <p className="flex items-start gap-1.5 text-amber-100">
       <AlertTriangle size={12} className="mt-px shrink-0 text-amber-300" aria-hidden="true" />
-      <span>Composio keeps your {app.label} sign-in on Composio’s servers, not in this app’s vault.</span>
+      <span>{t('Composio keeps your {app} sign-in on Composio’s servers, not in this app’s vault.', { app: app.label })}</span>
     </p>
     <p className="text-zinc-400">
-      Add Composio under Connections, then use “Find an app” there and search for “{app.toolkit}”.
+      {t('Add Composio under Connections, then use “Find an app” there and search for “{toolkit}”.', { toolkit: app.toolkit })}
     </p>
     <div className="flex flex-wrap gap-2">
       {onOpenConnections && (
         <button type="button" onClick={onOpenConnections} className="px-2.5 py-1 rounded-lg bg-sky-500 text-zinc-950 hover:bg-sky-400 text-xs font-medium">
-          Open Connections
+          {t('Open Connections')}
         </button>
       )}
       <a href={app.source} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 text-sky-300 hover:text-sky-200 hover:underline underline-offset-2">
-        {app.label} on Composio
+        {t('{app} on Composio', { app: app.label })}
         <ExternalLink size={10} aria-hidden="true" />
-        <span className="sr-only">(opens in a new tab)</span>
+        <span className="sr-only">{t('(opens in a new tab)')}</span>
       </a>
       <button type="button" onClick={onClose} className="text-zinc-400 hover:text-zinc-200">
-        Close
+        {t('Close')}
       </button>
     </div>
   </div>
@@ -272,17 +278,17 @@ export const PresetCatalog: React.FC<{
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" aria-hidden="true" />
         <input
           type="search"
-          aria-label="Search servers"
+          aria-label={t('Search servers')}
           value={query}
           autoFocus={autoFocus}
           onChange={(e) => onQuery(e.target.value)}
-          placeholder={`Search ${total} apps and servers, like gmail or database`}
+          placeholder={t('Search {total} apps and servers, like gmail or database', { total })}
           className={`${inputCls} pl-8`}
         />
       </div>
       {groups.length === 0 && (
         <p className="py-4 text-center text-xs text-zinc-500">
-          Nothing matches “{query.trim()}”. You can still add it as a custom server.
+          {t('Nothing matches “{query}”. You can still add it as a custom server.', { query: query.trim() })}
         </p>
       )}
       {groups.map((g) => (
@@ -315,7 +321,7 @@ export const PresetCatalog: React.FC<{
                             : 'border-zinc-700/70 text-zinc-400'
                         }`}
                       >
-                        {n}
+                        {n in MCP_NEED_LABELS ? MCP_NEED_LABELS[n as McpPresetNeed] : t('Nothing to install')}
                       </span>
                     ))}
                   </span>
@@ -339,7 +345,7 @@ export const PresetCatalog: React.FC<{
                   </span>
                   <span className="mt-1 block text-[11px] text-zinc-500 leading-snug">{a.blurb}</span>
                   <span className="mt-2 flex flex-wrap gap-1">
-                    <span className="px-1.5 py-px rounded border text-[10px] border-amber-500/25 text-amber-300/90">via Composio</span>
+                    <span className="px-1.5 py-px rounded border text-[10px] border-amber-500/25 text-amber-300/90">{t('via Composio')}</span>
                   </span>
                 </button>
                 {composioApp === a.id && <ComposioOnlyNote app={a} onOpenConnections={onOpenConnections} onClose={() => setComposioApp(null)} />}
@@ -355,8 +361,8 @@ export const PresetCatalog: React.FC<{
       >
         <Plus size={16} className="flex-shrink-0 text-sky-400" />
         <span>
-          <span className="block text-xs font-medium text-zinc-200">Custom server</span>
-          <span className="block text-[11px] text-zinc-500">Paste a command or URL from any server’s README.</span>
+          <span className="block text-xs font-medium text-zinc-200">{t('Custom server')}</span>
+          <span className="block text-[11px] text-zinc-500">{t('Paste a command or URL from any server’s README.')}</span>
         </span>
       </button>
     </div>
@@ -399,7 +405,7 @@ export const McpServersModal: React.FC<McpServersModalProps> = ({ isOpen, onClos
       setLoadError(null);
       return list;
     } catch (err) {
-      setLoadError(err instanceof Error ? err.message : 'Could not reach the server.');
+      setLoadError(err instanceof Error ? err.message : t('Could not reach the server.'));
       setServers((prev) => prev ?? []);
       return null;
     }
@@ -424,15 +430,15 @@ export const McpServersModal: React.FC<McpServersModalProps> = ({ isOpen, onClos
   }, []);
 
   const runTest = useCallback(async (id: string) => {
-    setTesting((t) => ({ ...t, [id]: true }));
+    setTesting((prev) => ({ ...prev, [id]: true }));
     let result: McpTestResult;
     try {
       const res = await fetch(`/api/mcp/servers/${id}/test`, { method: 'POST' });
       result = res.ok ? await res.json() : { ok: false, error: await readError(res) };
     } catch {
-      result = { ok: false, error: 'Could not reach the server.' };
+      result = { ok: false, error: t('Could not reach the server.') };
     }
-    setTesting((t) => ({ ...t, [id]: false }));
+    setTesting((prev) => ({ ...prev, [id]: false }));
     setTestResults((r) => ({ ...r, [id]: result }));
     setStatus(id, toStoredStatus(result, new Date().toISOString()));
     playSfx(result.ok ? 'coin' : 'alert');
@@ -483,7 +489,7 @@ export const McpServersModal: React.FC<McpServersModalProps> = ({ isOpen, onClos
         refresh();
         runTest(id);
       } else {
-        setOauthErrors((e) => ({ ...e, [id]: msg.error || 'Sign-in didn’t finish. Try again.' }));
+        setOauthErrors((e) => ({ ...e, [id]: msg.error || t('Sign-in didn’t finish. Try again.') }));
         playSfx('alert');
       }
     };
@@ -509,9 +515,9 @@ export const McpServersModal: React.FC<McpServersModalProps> = ({ isOpen, onClos
     const popup = macApp ? null : window.open('', 'kwnt-mcp-oauth', 'popup,width=520,height=720');
     if (popup) {
       try {
-        popup.document.title = 'Signing in…';
+        popup.document.title = t('Signing in…');
         popup.document.body.style.cssText = 'background:#18181b;color:#a1a1aa;font:14px system-ui;display:grid;place-items:center;height:100vh;margin:0';
-        popup.document.body.textContent = `Opening sign-in for ${server.name}…`;
+        popup.document.body.textContent = t('Opening sign-in for {name}…', { name: server.name });
       } catch {
         // not ours to style; harmless
       }
@@ -526,12 +532,12 @@ export const McpServersModal: React.FC<McpServersModalProps> = ({ isOpen, onClos
       });
       if (!res.ok) throw new Error(await readError(res));
       const body = await res.json();
-      if (typeof body?.authorize_url !== 'string' || !/^https?:\/\//.test(body.authorize_url)) throw new Error('The server didn’t return a sign-in page.');
+      if (typeof body?.authorize_url !== 'string' || !/^https?:\/\//.test(body.authorize_url)) throw new Error(t('The server didn’t return a sign-in page.'));
       url = body.authorize_url;
     } catch (err) {
       popup?.close();
       setConnecting(null);
-      setOauthErrors((e) => ({ ...e, [server.id]: err instanceof Error ? err.message : 'Could not reach the server.' }));
+      setOauthErrors((e) => ({ ...e, [server.id]: err instanceof Error ? err.message : t('Could not reach the server.') }));
       playSfx('alert');
       return;
     }
@@ -579,7 +585,7 @@ export const McpServersModal: React.FC<McpServersModalProps> = ({ isOpen, onClos
     setConfirmDisconnect(null);
     const res = await fetch(`/api/mcp/servers/${server.id}/oauth`, { method: 'DELETE' }).catch(() => null);
     if (!res || !res.ok) {
-      setLoadError(res ? await readError(res) : 'Could not reach the server.');
+      setLoadError(res ? await readError(res) : t('Could not reach the server.'));
       return;
     }
     setTestResults(({ [server.id]: _, ...rest }) => rest);
@@ -625,7 +631,7 @@ export const McpServersModal: React.FC<McpServersModalProps> = ({ isOpen, onClos
         body: JSON.stringify(formToPayload(form)),
       });
       if (res.status === 409) {
-        setFormError(`A server named "${form.name.trim()}" already exists.`);
+        setFormError(t('A server named "{name}" already exists.', { name: form.name.trim() }));
         return;
       }
       if (!res.ok) {
@@ -639,7 +645,7 @@ export const McpServersModal: React.FC<McpServersModalProps> = ({ isOpen, onClos
       setStatus(saved.id, null);
       runTest(saved.id);
     } catch {
-      setFormError('Could not reach the server.');
+      setFormError(t('Could not reach the server.'));
     } finally {
       setSaving(false);
     }
@@ -650,7 +656,7 @@ export const McpServersModal: React.FC<McpServersModalProps> = ({ isOpen, onClos
     const res = await fetch(`/api/mcp/servers/${server.id}`, { method: 'DELETE' }).catch(() => null);
     setConfirmDelete(null);
     if (!res || !res.ok) {
-      setLoadError(res ? await readError(res) : 'Could not reach the server.');
+      setLoadError(res ? await readError(res) : t('Could not reach the server.'));
       return;
     }
     setStatus(server.id, null);
@@ -665,7 +671,7 @@ export const McpServersModal: React.FC<McpServersModalProps> = ({ isOpen, onClos
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...formToPayload(serverToForm(server)), enabled: !server.enabled }),
     }).catch(() => null);
-    if (!res || !res.ok) setLoadError(res ? await readError(res) : 'Could not reach the server.');
+    if (!res || !res.ok) setLoadError(res ? await readError(res) : t('Could not reach the server.'));
     refresh();
   };
 
@@ -687,11 +693,11 @@ export const McpServersModal: React.FC<McpServersModalProps> = ({ isOpen, onClos
         <Plug size={26} />
       </div>
       <div className="space-y-1.5 max-w-md mx-auto">
-        <h3 className="text-sm font-semibold text-zinc-100">Give your bots new abilities</h3>
+        <h3 className="text-sm font-semibold text-zinc-100">{t('Give your bots new abilities')}</h3>
         <p className="text-xs text-zinc-400 leading-relaxed">
-          MCP servers are small add-ons that hand your bots tools, like reading files, browsing the web or working with GitHub.
-          Add one here and every bot in this space can use it; switch it off for a bot in that bot’s edit screen. They always ask you before using a tool.
-          Pick a popular one below and just add your key or sign in.
+          {t(
+            'MCP servers are small add-ons that hand your bots tools, like reading files, browsing the web or working with GitHub. Add one here and every bot in this space can use it; switch it off for a bot in that bot’s edit screen. They always ask you before using a tool. Pick a popular one below and just add your key or sign in.',
+          )}
         </p>
       </div>
       <PresetCatalog query={query} onQuery={setQuery} onPick={(p) => openForm('new', p)} onCustom={() => openForm('new')} onOpenConnections={onOpenConnections} />
@@ -724,13 +730,13 @@ export const McpServersModal: React.FC<McpServersModalProps> = ({ isOpen, onClos
               <StatusPill server={server} status={status} testing={isTesting} />
             </div>
             <p className="text-[11px] text-zinc-500">
-              {server.transport === 'stdio' ? 'Runs a command on this machine' : 'Connects to a URL'}
-              {secretCount > 0 && <span> · {secretCount} hidden {secretCount === 1 ? 'secret' : 'secrets'}</span>}
+              {server.transport === 'stdio' ? t('Runs a command on this machine') : t('Connects to a URL')}
+              {secretCount > 0 && <span> · {t(secretCount === 1 ? '{n} hidden secret' : '{n} hidden secrets', { n: secretCount })}</span>}
               {signedIn && (
                 <span className="text-emerald-300/80">
                   {' · '}
                   <ShieldCheck size={11} className="inline -mt-px mr-0.5" aria-hidden="true" />
-                  Signed in
+                  {t('Signed in')}
                 </span>
               )}
             </p>
@@ -742,12 +748,11 @@ export const McpServersModal: React.FC<McpServersModalProps> = ({ isOpen, onClos
                 <Users size={11} className="flex-shrink-0 mt-[3px] text-zinc-500" aria-hidden="true" />
                 <span className="min-w-0 break-words">
                   {usage.allKwants ? (
-                    server.enabled ? 'Used by every bot in this space' : 'Every bot here gets it once it’s on'
+                    server.enabled ? t('Used by every bot in this space') : t('Every bot here gets it once it’s on')
                   ) : (
-                    <>
-                      {server.enabled ? 'Off for: ' : 'Once it’s on, off for: '}
-                      <span className="text-zinc-300">{usage.offFor.join(', ')}</span>
-                    </>
+                    tj(server.enabled ? 'Off for: {names}' : 'Once it’s on, off for: {names}', {
+                      names: <span className="text-zinc-300">{usage.offFor.join(', ')}</span>,
+                    })
                   )}
                 </span>
               </p>
@@ -772,9 +777,9 @@ export const McpServersModal: React.FC<McpServersModalProps> = ({ isOpen, onClos
               <span>
                 {isConnecting
                   ? macApp
-                    ? 'Finish signing in in your browser. This updates by itself when you’re done.'
-                    : 'Waiting for you to approve access in the sign-in window…'
-                  : 'This server asks you to sign in and approve access.'}
+                    ? t('Finish signing in in your browser. This updates by itself when you’re done.')
+                    : t('Waiting for you to approve access in the sign-in window…')
+                  : t('This server asks you to sign in and approve access.')}
               </span>
             </div>
             {oauthError && !isConnecting && (
@@ -790,16 +795,16 @@ export const McpServersModal: React.FC<McpServersModalProps> = ({ isOpen, onClos
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-medium text-white bg-sky-600 hover:bg-sky-500 transition-colors shadow-sm disabled:opacity-60"
             >
               {isConnecting && !macApp ? <Loader2 size={12} className="animate-spin" /> : <KeyRound size={12} />}
-              {isConnecting ? (macApp ? 'Open the sign-in again' : 'Waiting…') : oauthError ? 'Retry' : 'Connect'}
+              {isConnecting ? (macApp ? t('Open the sign-in again') : t('Waiting…')) : oauthError ? t('Retry') : t('Connect')}
             </button>
           </div>
         )}
         {result && !result.ok && kind !== 'needs_sign_in' && (
           <div className="mt-2.5 ml-12 p-2.5 rounded-lg bg-rose-500/5 border border-rose-500/20 text-[11px] text-rose-200 space-y-1">
-            <p>{result.error || 'The server didn’t answer.'}</p>
+            <p>{result.error || t('The server didn’t answer.')}</p>
             {result.stderr_tail && (
               <details>
-                <summary className="cursor-pointer text-rose-300/80">What the server printed</summary>
+                <summary className="cursor-pointer text-rose-300/80">{t('What the server printed')}</summary>
                 <pre className="mt-1 whitespace-pre-wrap break-all font-mono text-[10px] text-zinc-400 max-h-32 overflow-y-auto">{result.stderr_tail}</pre>
               </details>
             )}
@@ -809,38 +814,38 @@ export const McpServersModal: React.FC<McpServersModalProps> = ({ isOpen, onClos
         <div className="mt-3 pt-2.5 border-t border-zinc-800/70 flex flex-wrap items-center justify-between gap-2">
           {confirmDisconnect === server.id ? (
             <div className="flex flex-wrap items-center gap-2 text-[11px] text-zinc-300">
-              <span>Sign out of {server.name}? Bots can’t use its tools until you connect again.</span>
+              <span>{t('Sign out of {name}? Bots can’t use its tools until you connect again.', { name: server.name })}</span>
               <button
                 type="button"
                 onClick={() => setConfirmDisconnect(null)}
                 className="px-2.5 py-1 rounded-md font-medium text-zinc-300 hover:bg-zinc-800 transition-colors"
               >
-                Stay signed in
+                {t('Stay signed in')}
               </button>
               <button
                 type="button"
                 onClick={() => disconnect(server)}
                 className="px-2.5 py-1 rounded-md font-medium text-white bg-rose-600 hover:bg-rose-500 transition-colors"
               >
-                Disconnect
+                {t('Disconnect')}
               </button>
             </div>
           ) : confirmDelete === server.id ? (
             <div className="flex flex-wrap items-center gap-2 text-[11px] text-zinc-300">
-              <span>Delete {server.name}? Bots using it lose these tools.</span>
+              <span>{t('Delete {name}? Bots using it lose these tools.', { name: server.name })}</span>
               <button
                 type="button"
                 onClick={() => setConfirmDelete(null)}
                 className="px-2.5 py-1 rounded-md font-medium text-zinc-300 hover:bg-zinc-800 transition-colors"
               >
-                Keep it
+                {t('Keep it')}
               </button>
               <button
                 type="button"
                 onClick={() => handleDelete(server)}
                 className="px-2.5 py-1 rounded-md font-medium text-white bg-rose-600 hover:bg-rose-500 transition-colors"
               >
-                Delete
+                {t('Delete')}
               </button>
             </div>
           ) : (
@@ -850,13 +855,13 @@ export const McpServersModal: React.FC<McpServersModalProps> = ({ isOpen, onClos
                   type="button"
                   role="switch"
                   aria-checked={server.enabled}
-                  aria-label={`${server.enabled ? 'Pause' : 'Turn on'} ${server.name}`}
+                  aria-label={t(server.enabled ? 'Pause {name}' : 'Turn on {name}', { name: server.name })}
                   onClick={() => toggleEnabled(server)}
                   className={`relative w-8 h-[18px] rounded-full transition-colors ${server.enabled ? 'bg-sky-600' : 'bg-zinc-700'}`}
                 >
                   <span className={`absolute top-0.5 w-3.5 h-3.5 rounded-full bg-white shadow transition-all ${server.enabled ? 'left-[16px]' : 'left-0.5'}`} />
                 </button>
-                {server.enabled ? 'On' : 'Paused'}
+                {server.enabled ? t('On') : t('Paused')}
               </label>
               <div className="flex items-center gap-1">
                 <button
@@ -866,7 +871,7 @@ export const McpServersModal: React.FC<McpServersModalProps> = ({ isOpen, onClos
                   className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium text-sky-200 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/20 transition-colors disabled:opacity-60"
                 >
                   {isTesting ? <Loader2 size={12} className="animate-spin" /> : <Zap size={12} />}
-                  Test connection
+                  {t('Test connection')}
                 </button>
                 {signedIn && (
                   <button
@@ -876,8 +881,8 @@ export const McpServersModal: React.FC<McpServersModalProps> = ({ isOpen, onClos
                       setConfirmDelete(null);
                       setConfirmDisconnect(server.id);
                     }}
-                    aria-label={`Disconnect ${server.name}`}
-                    title="Disconnect (sign out)"
+                    aria-label={t('Disconnect {name}', { name: server.name })}
+                    title={t('Disconnect (sign out)')}
                     className="p-1.5 rounded-md text-zinc-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors"
                   >
                     <LogOut size={13} />
@@ -886,7 +891,7 @@ export const McpServersModal: React.FC<McpServersModalProps> = ({ isOpen, onClos
                 <button
                   type="button"
                   onClick={() => openForm(server)}
-                  aria-label={`Edit ${server.name}`}
+                  aria-label={t('Edit {name}', { name: server.name })}
                   className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
                 >
                   <Pencil size={13} />
@@ -898,7 +903,7 @@ export const McpServersModal: React.FC<McpServersModalProps> = ({ isOpen, onClos
                     setConfirmDisconnect(null);
                     setConfirmDelete(server.id);
                   }}
-                  aria-label={`Delete ${server.name}`}
+                  aria-label={t('Delete {name}', { name: server.name })}
                   className="p-1.5 rounded-md text-zinc-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors"
                 >
                   <Trash2 size={13} />
@@ -915,7 +920,7 @@ export const McpServersModal: React.FC<McpServersModalProps> = ({ isOpen, onClos
     if (servers === null) {
       return (
         <div className="py-12 flex justify-center text-zinc-500">
-          <Loader2 size={20} className="animate-spin" aria-label="Loading" />
+          <Loader2 size={20} className="animate-spin" aria-label={t('Loading')} />
         </div>
       );
     }
@@ -924,7 +929,7 @@ export const McpServersModal: React.FC<McpServersModalProps> = ({ isOpen, onClos
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-2">
           <p className="text-[11px] text-zinc-500">
-            {servers.length} {servers.length === 1 ? 'server' : 'servers'}
+            {t(servers.length === 1 ? '{n} server' : '{n} servers', { n: servers.length })}
           </p>
           <button
             type="button"
@@ -932,7 +937,7 @@ export const McpServersModal: React.FC<McpServersModalProps> = ({ isOpen, onClos
             className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-sky-600 hover:bg-sky-500 transition-colors shadow-sm whitespace-nowrap"
           >
             <Plus size={14} />
-            Add server
+            {t('Add server')}
           </button>
         </div>
         <ul className="space-y-2.5">{servers.map(renderCard)}</ul>
@@ -944,25 +949,25 @@ export const McpServersModal: React.FC<McpServersModalProps> = ({ isOpen, onClos
     <form onSubmit={handleSave} className="space-y-5" noValidate>
       <fieldset>
         <legend className="text-xs font-medium text-zinc-300 mb-2">
-          <span className="text-sky-400 mr-1.5">1</span>How does it connect?
+          <span className="text-sky-400 mr-1.5">1</span>{t('How does it connect?')}
         </legend>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {TRANSPORTS.map((t) => {
-            const active = form.transport === t.id;
+          {TRANSPORTS.map((tr) => {
+            const active = form.transport === tr.id;
             return (
               <button
-                key={t.id}
+                key={tr.id}
                 type="button"
                 aria-pressed={active}
-                onClick={() => setForm((f) => ({ ...f, transport: t.id }))}
+                onClick={() => setForm((f) => ({ ...f, transport: tr.id }))}
                 className={`flex items-start gap-2.5 p-3 rounded-xl border text-left transition-all ${
                   active ? 'border-sky-500/60 bg-sky-500/10' : 'border-zinc-800 bg-zinc-950/60 hover:border-zinc-700'
                 }`}
               >
-                <span className={active ? 'text-sky-300' : 'text-zinc-500'}>{t.icon}</span>
+                <span className={active ? 'text-sky-300' : 'text-zinc-500'}>{tr.icon}</span>
                 <span>
-                  <span className={`block text-xs font-medium ${active ? 'text-sky-100' : 'text-zinc-200'}`}>{t.title}</span>
-                  <span className="block text-[11px] text-zinc-500">{t.blurb}</span>
+                  <span className={`block text-xs font-medium ${active ? 'text-sky-100' : 'text-zinc-200'}`}>{tr.title}</span>
+                  <span className="block text-[11px] text-zinc-500">{tr.blurb}</span>
                 </span>
               </button>
             );
@@ -972,28 +977,28 @@ export const McpServersModal: React.FC<McpServersModalProps> = ({ isOpen, onClos
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
             {preset ? (
               <span className="text-zinc-400">
-                Filled in for <span className="text-zinc-200">{preset.label}</span>.{' '}
+                {tj('Filled in for {name}.', { name: <span className="text-zinc-200">{preset.label}</span> })}{' '}
                 {preset.needs.includes('Sign-in')
-                  ? 'Add it, then use Connect on its card to sign in.'
+                  ? t('Add it, then use Connect on its card to sign in.')
                   : preset.form.env.length + preset.form.headers.length > 0
-                    ? 'Add your key below.'
+                    ? t('Add your key below.')
                     : preset.form.transport === 'stdio'
-                      ? 'Check the command, then add it.'
-                      : 'Just add it.'}{' '}
+                      ? t('Check the command, then add it.')
+                      : t('Just add it.')}{' '}
                 <a
                   href={preset.source}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-0.5 text-sky-300 hover:text-sky-200 underline-offset-2 hover:underline"
                 >
-                  Setup guide
+                  {t('Setup guide')}
                   <ExternalLink size={10} aria-hidden="true" />
-                  <span className="sr-only">(opens in a new tab)</span>
+                  <span className="sr-only">{t('(opens in a new tab)')}</span>
                 </a>
               </span>
             ) : null}
             <button type="button" onClick={openCatalog} className="text-sky-300 hover:text-sky-200 hover:underline underline-offset-2">
-              {preset ? 'Pick a different one' : 'Or pick a popular server'}
+              {preset ? t('Pick a different one') : t('Or pick a popular server')}
             </button>
           </div>
         )}
@@ -1001,26 +1006,32 @@ export const McpServersModal: React.FC<McpServersModalProps> = ({ isOpen, onClos
 
       <fieldset className="space-y-3">
         <legend className="text-xs font-medium text-zinc-300 mb-2">
-          <span className="text-sky-400 mr-1.5">2</span>Details
+          <span className="text-sky-400 mr-1.5">2</span>{t('Details')}
         </legend>
         <div>
-          <label htmlFor="mcp-name" className="block text-xs font-medium text-zinc-400 mb-1">Name</label>
+          <label htmlFor="mcp-name" className="block text-xs font-medium text-zinc-400 mb-1">{t('Name')}</label>
           <input
             id="mcp-name"
             value={form.name}
             onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-            placeholder="e.g. files, github"
+            placeholder={t('e.g. files, github')}
             className={`${inputCls} font-mono`}
           />
           <p className="mt-1 text-[11px] text-zinc-500">
-            Short and simple: letters, numbers, - or _. Bots see its tools as <span className="font-mono text-zinc-400">{form.name.trim() || 'name'} · tool</span>.
+            {tj('Short and simple: letters, numbers, - or _. Bots see its tools as {example}.', {
+              example: (
+                <span className="font-mono text-zinc-400">
+                  {form.name.trim() || t('name')} · {t('tool')}
+                </span>
+              ),
+            })}
           </p>
         </div>
 
         {form.transport === 'stdio' ? (
           <>
             <div>
-              <label htmlFor="mcp-command" className="block text-xs font-medium text-zinc-400 mb-1">Command</label>
+              <label htmlFor="mcp-command" className="block text-xs font-medium text-zinc-400 mb-1">{t('Command')}</label>
               <input
                 id="mcp-command"
                 value={form.commandLine}
@@ -1031,29 +1042,33 @@ export const McpServersModal: React.FC<McpServersModalProps> = ({ isOpen, onClos
               />
               <p className="mt-1 text-[11px] text-zinc-500">
                 {parsed.length > 0 ? (
-                  <>
-                    Runs <span className="font-mono text-zinc-300">{parsed[0]}</span>
-                    {parsed.length > 1 ? ` with ${parsed.length - 1} ${parsed.length === 2 ? 'argument' : 'arguments'}` : ''}. Use quotes around paths with spaces.
-                  </>
+                  tj(
+                    parsed.length === 1
+                      ? 'Runs {command}. Use quotes around paths with spaces.'
+                      : parsed.length === 2
+                        ? 'Runs {command} with {n} argument. Use quotes around paths with spaces.'
+                        : 'Runs {command} with {n} arguments. Use quotes around paths with spaces.',
+                    { command: <span className="font-mono text-zinc-300">{parsed[0]}</span>, n: parsed.length - 1 },
+                  )
                 ) : (
-                  'Paste it the way the server’s README shows it.'
+                  t('Paste it the way the server’s README shows it.')
                 )}
               </p>
             </div>
             <div className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-500/5 border border-amber-500/20 text-[11px] text-amber-200/90">
               <ShieldAlert size={14} className="flex-shrink-0 mt-px text-amber-400" />
-              <span>This command runs on the server’s machine with your user’s permissions. Only add servers you trust.</span>
+              <span>{t('This command runs on the server’s machine with your user’s permissions. Only add servers you trust.')}</span>
             </div>
             <div>
               <p className="text-xs font-medium text-zinc-400 mb-1">
-                Secrets & settings <span className="text-zinc-600 font-normal">· environment variables, always hidden</span>
+                {t('Secrets & settings')} <span className="text-zinc-600 font-normal">{t('· environment variables, always hidden')}</span>
               </p>
               <SecretRows
                 rows={form.env}
                 onChange={(env) => setForm((f) => ({ ...f, env }))}
                 keyPlaceholder="API_TOKEN"
-                keyLabel="Variable name"
-                addLabel="Add variable"
+                keyLabel={t('Variable name')}
+                addLabel={t('Add variable')}
                 idPrefix="mcp-env"
               />
             </div>
@@ -1061,7 +1076,7 @@ export const McpServersModal: React.FC<McpServersModalProps> = ({ isOpen, onClos
         ) : (
           <>
             <div>
-              <label htmlFor="mcp-url" className="block text-xs font-medium text-zinc-400 mb-1">Server URL</label>
+              <label htmlFor="mcp-url" className="block text-xs font-medium text-zinc-400 mb-1">{t('Server URL')}</label>
               <input
                 id="mcp-url"
                 type="url"
@@ -1074,28 +1089,30 @@ export const McpServersModal: React.FC<McpServersModalProps> = ({ isOpen, onClos
             </div>
             <div>
               <p className="text-xs font-medium text-zinc-400 mb-1">
-                Headers <span className="text-zinc-600 font-normal">· e.g. Authorization, always hidden</span>
+                {t('Headers')} <span className="text-zinc-600 font-normal">{t('· e.g. Authorization, always hidden')}</span>
               </p>
               <SecretRows
                 rows={form.headers}
                 onChange={(headers) => setForm((f) => ({ ...f, headers }))}
                 keyPlaceholder="Authorization"
-                keyLabel="Header name"
-                addLabel="Add header"
+                keyLabel={t('Header name')}
+                addLabel={t('Add header')}
                 idPrefix="mcp-header"
               />
               <p className="mt-1.5 text-[11px] text-zinc-500">
-                Servers that need sign-in (like Notion) don’t need a header. Use <span className="text-zinc-300">Connect</span> on the server after saving.
+                {tj('Servers that need sign-in (like Notion) don’t need a header. Use {connect} on the server after saving.', {
+                  connect: <span className="text-zinc-300">{t('Connect')}</span>,
+                })}
               </p>
             </div>
           </>
         )}
 
         <details className="group">
-          <summary className="cursor-pointer text-[11px] text-zinc-500 hover:text-zinc-300 select-none">More options</summary>
+          <summary className="cursor-pointer text-[11px] text-zinc-500 hover:text-zinc-300 select-none">{t('More options')}</summary>
           <div className="mt-2 flex flex-wrap items-center gap-4">
             <label className="flex items-center gap-2 text-[11px] text-zinc-400">
-              Give up after
+              {t('Give up after')}
               <input
                 type="number"
                 min={1}
@@ -1104,7 +1121,7 @@ export const McpServersModal: React.FC<McpServersModalProps> = ({ isOpen, onClos
                 onChange={(e) => setForm((f) => ({ ...f, timeout_secs: Number(e.target.value) }))}
                 className={`${inputCls} w-20`}
               />
-              seconds
+              {t('seconds')}
             </label>
             <label className="flex items-center gap-2 text-[11px] text-zinc-400">
               <input
@@ -1113,7 +1130,7 @@ export const McpServersModal: React.FC<McpServersModalProps> = ({ isOpen, onClos
                 onChange={(e) => setForm((f) => ({ ...f, enabled: e.target.checked }))}
                 className="accent-sky-500"
               />
-              Turned on
+              {t('Turned on')}
             </label>
           </div>
         </details>
@@ -1132,7 +1149,7 @@ export const McpServersModal: React.FC<McpServersModalProps> = ({ isOpen, onClos
           onClick={() => setEditing(null)}
           className="px-3.5 py-2 rounded-lg text-xs font-medium text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
         >
-          Cancel
+          {t('Cancel')}
         </button>
         <button
           type="submit"
@@ -1140,7 +1157,7 @@ export const McpServersModal: React.FC<McpServersModalProps> = ({ isOpen, onClos
           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium text-white bg-sky-600 hover:bg-sky-500 transition-colors shadow-sm disabled:opacity-60"
         >
           {saving && <Loader2 size={13} className="animate-spin" />}
-          {editing === 'new' ? 'Add & test' : 'Save & test'}
+          {editing === 'new' ? t('Add & test') : t('Save & test')}
         </button>
       </div>
     </form>
@@ -1165,7 +1182,7 @@ export const McpServersModal: React.FC<McpServersModalProps> = ({ isOpen, onClos
                   setEditing(null);
                   setPicking(false);
                 }}
-                aria-label="Back to servers"
+                aria-label={t('Back to servers')}
                 className="w-8 h-8 flex-shrink-0 rounded-lg bg-zinc-800/60 border border-zinc-700/60 flex items-center justify-center text-zinc-300 hover:text-zinc-100"
               >
                 <ChevronLeft size={17} />
@@ -1177,23 +1194,29 @@ export const McpServersModal: React.FC<McpServersModalProps> = ({ isOpen, onClos
             )}
             <div className="min-w-0">
               <h2 id="mcp-title" className="text-sm font-semibold text-zinc-100 truncate">
-                {editing === 'new' || picking ? 'Add a tool server' : editing ? `Edit ${form.name || 'server'}` : 'Tools for your kwant bots'}
+                {editing === 'new' || picking
+                  ? t('Add a tool server')
+                  : editing
+                    ? form.name
+                      ? t('Edit {name}', { name: form.name })
+                      : t('Edit server')
+                    : t('Tools for your kwant bots')}
               </h2>
               <p className="text-xs text-zinc-400 truncate">
                 {picking
-                  ? 'Pick a popular server or add your own'
+                  ? t('Pick a popular server or add your own')
                   : editing === 'new'
-                  ? 'Pick how it connects, then fill in the details'
+                  ? t('Pick how it connects, then fill in the details')
                   : editing
-                    ? 'Saved secrets stay hidden and are kept unless you change them'
-                    : 'MCP servers your bots can use, with your approval'}
+                    ? t('Saved secrets stay hidden and are kept unless you change them')
+                    : t('MCP servers your bots can use, with your approval')}
               </p>
             </div>
           </div>
           <button
             type="button"
             onClick={close}
-            aria-label="Close"
+            aria-label={t('Close')}
             className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
           >
             <X size={18} />

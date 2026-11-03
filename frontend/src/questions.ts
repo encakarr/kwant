@@ -1,4 +1,5 @@
 // Ask-user: an agent's one-tap question in a chat (batch 2 / C).
+import { t } from './i18n';
 import { request } from './threads';
 
 export type QuestionStatus = 'open' | 'answered' | 'cancelled';
@@ -120,8 +121,8 @@ export function turnsAwaitingAnswer(map: Record<string, Question>): Set<string> 
 
 /** Problem with a typed answer, or null. */
 export function answerTextError(text: string): string | null {
-  if (!text.trim()) return 'Type an answer or tap a choice.';
-  if (text.length > ANSWER_MAX) return `Answers are at most ${ANSWER_MAX} characters.`;
+  if (!text.trim()) return t('Type an answer or tap a choice.');
+  if (text.length > ANSWER_MAX) return t('Answers are at most {n} characters.', { n: ANSWER_MAX });
   return null;
 }
 

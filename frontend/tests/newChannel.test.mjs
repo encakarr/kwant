@@ -1,15 +1,10 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
-import ts from 'typescript';
+import { loadBundled } from './bundle.mjs';
 
-const load = async (path) => {
-  const source = await readFile(new URL(path, import.meta.url), 'utf8');
-  const { outputText } = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext } });
-  return import(`data:text/javascript;base64,${Buffer.from(outputText).toString('base64')}`);
-};
-
-const c = await load('../src/channels.ts');
+// Bundled, since its messages go through t() (src/i18n).
+const c = await loadBundled(`export * from './src/channels';`);
 
 test('a typed name becomes a channel handle', () => {
   assert.equal(c.channelSlug('  #Launch Plan 2027! '), 'launch-plan-2027');

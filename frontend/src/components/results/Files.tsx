@@ -2,6 +2,7 @@ import React from 'react';
 import { File as FileIcon, Image as ImageIcon } from 'lucide-react';
 import { FileItem, FilePreview, FilesBlock, PreviewCut, inRange, isIndex, isObj, isText, parseCommon, previewNote, uniqueIds } from '../../smartResults';
 import type { RendererProps } from './registry';
+import { t } from '../../i18n';
 
 /** The optional cut fields: each a non-negative integer (`truncated` only ever `true`); anything else is invalid. */
 function validCut(v: Record<string, unknown>, keys: ('total_rows' | 'total_cols' | 'total_lines')[]): PreviewCut | undefined {
@@ -151,7 +152,7 @@ const FilePreviewView: React.FC<{ item: FileItem }> = ({ item }) => {
   return (
     <div className="mt-2 flex items-center gap-2 rounded-lg border border-dashed border-zinc-800 bg-zinc-900/40 px-3 py-4 text-[11px] text-zinc-500">
       <ImageIcon size={14} aria-hidden="true" />
-      Image preview not available yet
+      {t('Image preview not available yet')}
     </div>
   );
 };
@@ -172,9 +173,9 @@ export const Files: React.FC<RendererProps<FilesBlock>> = ({ block }) => {
       <div data-smart-result="files" data-block-id={block.id} data-preview-only="" className="min-w-0 max-w-full">
         <ul role="list" className="mt-2 min-w-0 max-w-full space-y-2">
           {shown.map((item) => (
-            <li key={item.id} aria-label={`Preview of ${item.name}`} className="min-w-0">
+            <li key={item.id} aria-label={t('Preview of {name}', { name: item.name })} className="min-w-0">
               <div className="truncate text-[11px] text-zinc-500" title={item.name}>
-                Preview of {item.name}
+                {t('Preview of {name}', { name: item.name })}
               </div>
               <FilePreviewView item={item} />
             </li>

@@ -3,6 +3,7 @@ import { ArrowUp, Check, CheckCircle2, Clock, HelpCircle, Loader2, MinusCircle }
 import { ModernAvatar } from './ModernAvatar';
 import { ANSWER_MAX, Question, QuestionMeta, answerTextError, questionView } from '../questions';
 import { whyYouText } from '../decideFirst';
+import { t, tj } from '../i18n';
 
 export interface QuestionCardProps {
   meta: QuestionMeta;
@@ -77,19 +78,19 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ meta, messageId, kwa
   const status =
     view.status === 'cancelled' ? (
       <span className="inline-flex items-center gap-1.5 text-zinc-400">
-        <MinusCircle size={13} aria-hidden="true" /> Dismissed: {kwantName} was told you skipped it
+        <MinusCircle size={13} aria-hidden="true" /> {t('Dismissed: {name} was told you skipped it', { name: kwantName })}
       </span>
     ) : !open ? (
       <span className="inline-flex items-center gap-1.5 text-emerald-300">
-        <CheckCircle2 size={13} aria-hidden="true" /> Answered{view.status === 'open' ? ', sending…' : ''}
+        <CheckCircle2 size={13} aria-hidden="true" /> {view.status === 'open' ? t('Answered, sending…') : t('Answered')}
       </span>
     ) : waiting ? (
       <span className="inline-flex items-center gap-1.5 text-amber-300">
-        <Clock size={13} aria-hidden="true" /> {kwantName} is waiting for your answer. You can keep chatting meanwhile.
+        <Clock size={13} aria-hidden="true" /> {t('{name} is waiting for your answer. You can keep chatting meanwhile.', { name: kwantName })}
       </span>
     ) : (
       <span className="inline-flex items-center gap-1.5 text-zinc-400">
-        <Clock size={13} aria-hidden="true" /> {kwantName} stopped waiting. Answer any time to pick it up in a new reply.
+        <Clock size={13} aria-hidden="true" /> {t('{name} stopped waiting. Answer any time to pick it up in a new reply.', { name: kwantName })}
       </span>
     );
 
@@ -108,16 +109,16 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ meta, messageId, kwa
         <div className="px-4 pt-3 pb-2 space-y-1">
           <span className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-400">
             <HelpCircle size={12} className="text-amber-300" aria-hidden="true" />
-            <span className="text-zinc-200">{kwantName}</span> asks
+            {tj('{name} asks', { name: <span className="text-zinc-200">{kwantName}</span> })}
           </span>
           <h3 id={headingId} className="text-sm font-semibold text-zinc-100 whitespace-pre-wrap break-words leading-snug">
             {view.question}
           </h3>
-          {whyYou && <p className="text-[11px] text-zinc-400 break-words">Only you can answer: {whyYou}</p>}
-          {view.checked && <p className="text-[11px] text-zinc-500 break-words">Already tried: {view.checked}</p>}
+          {whyYou && <p className="text-[11px] text-zinc-400 break-words">{t('Only you can answer: {reason}', { reason: whyYou })}</p>}
+          {view.checked && <p className="text-[11px] text-zinc-500 break-words">{t('Already tried: {checked}', { checked: view.checked })}</p>}
         </div>
 
-        <div role="group" aria-label="Choices" className="px-4 pb-2 flex flex-col sm:flex-row sm:flex-wrap gap-2">
+        <div role="group" aria-label={t('Choices')} className="px-4 pb-2 flex flex-col sm:flex-row sm:flex-wrap gap-2">
           {view.choices.map((c, i) => {
             const chosen = !open && answer === c;
             return (
@@ -157,7 +158,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ meta, messageId, kwa
             }}
           >
             <label htmlFor={`${headingId}-text`} className="sr-only">
-              Or type your own answer
+              {t('Or type your own answer')}
             </label>
             <div className="flex items-end gap-2 rounded-xl bg-zinc-950 border border-zinc-800 focus-within:border-amber-500/50 p-1.5">
               <textarea
@@ -177,13 +178,13 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ meta, messageId, kwa
                     submit({ text });
                   }
                 }}
-                placeholder="Or type your own answer…"
+                placeholder={t('Or type your own answer…')}
                 className="flex-1 bg-transparent px-2 py-1 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none resize-none leading-relaxed"
               />
               <button
                 type="submit"
                 disabled={!text.trim() || busy !== null}
-                aria-label="Send answer"
+                aria-label={t('Send answer')}
                 className="w-7 h-7 shrink-0 rounded-lg flex items-center justify-center bg-amber-500 text-zinc-950 hover:bg-amber-400 disabled:bg-zinc-800 disabled:text-zinc-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-400"
               >
                 {busy === 'text' ? <Loader2 size={13} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <ArrowUp size={14} strokeWidth={2.4} aria-hidden="true" />}
@@ -194,7 +195,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ meta, messageId, kwa
           answer &&
           !view.choices.includes(answer) && (
             <p className="mx-4 mb-2 px-3 py-2 rounded-xl bg-zinc-800/70 border border-zinc-700/60 text-sm text-zinc-100 whitespace-pre-wrap break-words">
-              <span className="sr-only">Your answer: </span>
+              <span className="sr-only">{t('Your answer:')} </span>
               {answer}
             </p>
           )
@@ -211,7 +212,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ meta, messageId, kwa
               disabled={busy !== null}
               className="ml-auto text-zinc-500 hover:text-zinc-300 underline-offset-2 hover:underline disabled:opacity-50 rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-zinc-500"
             >
-              {busy === 'dismiss' ? 'Skipping…' : 'Skip question'}
+              {busy === 'dismiss' ? t('Skipping…') : t('Skip question')}
             </button>
           )}
           {error && (

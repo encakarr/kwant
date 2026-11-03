@@ -24,6 +24,7 @@ import {
 } from '../connections';
 import { inDesktopApp } from '../externalLinks';
 import { editorProps } from '../escape';
+import { t, tj } from '../i18n';
 
 const TONES: Record<Tone, string> = {
   amber: 'border-amber-500/30 bg-amber-500/10 text-amber-200',
@@ -56,9 +57,9 @@ export interface ManageLinks {
 }
 
 const manageFor = (kind: string, links: ManageLinks): { label: string; run: () => void } | null => {
-  if (kind === 'mcp' && links.onOpenTools) return { label: 'Manage tools', run: links.onOpenTools };
-  if (kind === 'account' && links.onOpenAccounts) return { label: 'Manage accounts', run: links.onOpenAccounts };
-  if ((kind === 'email' || kind === 'github') && links.onOpenLooseEnds) return { label: 'Open Loose ends', run: links.onOpenLooseEnds };
+  if (kind === 'mcp' && links.onOpenTools) return { label: t('Manage tools'), run: links.onOpenTools };
+  if (kind === 'account' && links.onOpenAccounts) return { label: t('Manage accounts'), run: links.onOpenAccounts };
+  if ((kind === 'email' || kind === 'github') && links.onOpenLooseEnds) return { label: t('Open Loose ends'), run: links.onOpenLooseEnds };
   return null;
 };
 
@@ -96,7 +97,7 @@ export const ConnectionRow: React.FC<ConnectionRowProps> = ({ c, now = Date.now(
               <details className="mt-0.5 text-xs text-zinc-400 group">
                 <summary className="inline-flex items-center gap-1 cursor-pointer select-none text-[11px] text-zinc-500 hover:text-zinc-300 list-none [&::-webkit-details-marker]:hidden">
                   <ChevronRight size={11} className="transition-transform group-open:rotate-90 motion-reduce:transition-none" aria-hidden="true" />
-                  Details
+                  {t('Details')}
                 </summary>
                 <code className="mt-1 block font-mono text-[11px] text-zinc-400 break-all">{c.detail}</code>
               </details>
@@ -106,16 +107,16 @@ export const ConnectionRow: React.FC<ConnectionRowProps> = ({ c, now = Date.now(
           {status && <p className={`mt-1 text-xs ${c.status === 'error' ? 'text-rose-300' : 'text-amber-200'} break-words`}>{status}</p>}
           <dl className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-zinc-400">
             <div className="flex items-center gap-1">
-              <dt className="sr-only">Used by</dt>
+              <dt className="sr-only">{t('Used by')}</dt>
               <Bot size={11} aria-hidden="true" />
               <dd>{usedByText(c.used_by, c.status)}</dd>
             </div>
             <div>
-              <dt className="sr-only">Last check</dt>
-              <dd>{c.last_check ? `Checked ${relativeTime(c.last_check, now)}` : 'Never checked'}</dd>
+              <dt className="sr-only">{t('Last check')}</dt>
+              <dd>{c.last_check ? t('Checked {when}', { when: relativeTime(c.last_check, now) }) : t('Never checked')}</dd>
             </div>
             <div className={composio ? 'text-amber-200' : undefined}>
-              <dt className="sr-only">Where the login is stored</dt>
+              <dt className="sr-only">{t('Where the login is stored')}</dt>
               <dd className="flex items-center gap-1">
                 {composio ? <AlertTriangle size={11} aria-hidden="true" /> : <Lock size={11} aria-hidden="true" />}
                 {storedLabel(c.logins_stored, c.kind)}
@@ -126,13 +127,13 @@ export const ConnectionRow: React.FC<ConnectionRowProps> = ({ c, now = Date.now(
         {(canCheck || manage) && (
           <div className="flex gap-2 shrink-0">
             {canCheck && (
-              <button type="button" className={quietBtn} disabled={checking} onClick={() => onCheck!(c)} aria-label={`Check ${c.name} now`}>
+              <button type="button" className={quietBtn} disabled={checking} onClick={() => onCheck!(c)} aria-label={t('Check {name} now', { name: c.name })}>
                 <RefreshCw size={12} className={checking ? 'animate-spin motion-reduce:animate-none' : ''} aria-hidden="true" />
-                {checking ? 'Checking…' : 'Check now'}
+                {checking ? t('Checking…') : t('Check now')}
               </button>
             )}
             {manage && (
-              <button type="button" className={quietBtn} onClick={manage.run} aria-label={`${manage.label}: ${c.name}`}>
+              <button type="button" className={quietBtn} onClick={manage.run} aria-label={t('{action}: {name}', { action: manage.label, name: c.name })}>
                 {manage.label}
               </button>
             )}
@@ -148,7 +149,7 @@ export interface ComposioSearchApi {
   connect: (slug: string) => Promise<{ redirect_url: string }>;
 }
 
-const errorText = (e: unknown) => (e instanceof ConnectionsError || e instanceof Error ? e.message : 'Something went wrong.');
+const errorText = (e: unknown) => (e instanceof ConnectionsError || e instanceof Error ? e.message : t('Something went wrong.'));
 
 /** "Find an app": searches Composio's catalogue through kwnt, with the person's own Composio key. */
 export const ComposioAppSearch: React.FC<{
@@ -169,7 +170,9 @@ export const ComposioAppSearch: React.FC<{
   if (!entry.can_search) {
     return (
       <p className="text-[11px] text-zinc-400" data-composio-search="needs-key">
-        To find apps from here, add your Composio API key as the <code className="text-zinc-300">x-api-key</code> header of the Composio server in Tools.
+        {tj('To find apps from here, add your Composio API key as the {header} header of the Composio server in Tools.', {
+          header: <code className="text-zinc-300">x-api-key</code>,
+        })}
       </p>
     );
   }
@@ -177,7 +180,7 @@ export const ComposioAppSearch: React.FC<{
   const search = async (e: React.FormEvent) => {
     e.preventDefault();
     const query = q.trim();
-    if (!query) return setError('Type an app name, like gmail.');
+    if (!query) return setError(t('Type an app name, like gmail.'));
     setBusy(true);
     setError(null);
     setOpened(null);
@@ -213,9 +216,9 @@ export const ComposioAppSearch: React.FC<{
 
   return (
     <div className="space-y-2" data-composio-search>
-      <form onSubmit={search} role="search" aria-label="Find an app on Composio" className="flex gap-2">
+      <form onSubmit={search} role="search" aria-label={t('Find an app on Composio')} className="flex gap-2">
         <label htmlFor={`${id}-q`} className="sr-only">
-          Find an app
+          {t('Find an app')}
         </label>
         <input
           id={`${id}-q`}
@@ -224,31 +227,38 @@ export const ComposioAppSearch: React.FC<{
           autoComplete="off"
           spellCheck={false}
           maxLength={60}
-          placeholder="Find an app, like gmail or figma"
+          placeholder={t('Find an app, like gmail or figma')}
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
         <button type="submit" disabled={busy} className={quietBtn}>
           {busy ? <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Search size={12} aria-hidden="true" />}
-          Find
+          {t('Find')}
         </button>
       </form>
       {!canConnect && (
         <p className="text-[11px] text-zinc-400">
-          Your Composio URL has no <code className="text-zinc-300">user_id</code>, so connect apps on composio.dev. If your Composio server lists fixed apps, add the app to it there too.
+          {tj('Your Composio URL has no {param}, so connect apps on composio.dev. If your Composio server lists fixed apps, add the app to it there too.', {
+            param: <code className="text-zinc-300">user_id</code>,
+          })}
         </p>
       )}
       <div role="status" aria-live="polite">
         {error && <p className="px-3 py-2 rounded-lg border border-rose-500/20 bg-rose-500/5 text-xs text-rose-300">{error}</p>}
         {opened && (
           <p className="text-xs text-emerald-200">
-            Opened {opened}’s sign-in on Composio in {inDesktopApp() ? 'your browser' : 'a new tab'}. Its tools reach your bots through the Composio server once you finish there.
+            {t(
+              inDesktopApp()
+                ? 'Opened {app}’s sign-in on Composio in your browser. Its tools reach your bots through the Composio server once you finish there.'
+                : 'Opened {app}’s sign-in on Composio in a new tab. Its tools reach your bots through the Composio server once you finish there.',
+              { app: opened },
+            )}
           </p>
         )}
-        {apps && apps.length === 0 && <p className="text-xs text-zinc-400">No Composio apps match.</p>}
+        {apps && apps.length === 0 && <p className="text-xs text-zinc-400">{t('No Composio apps match.')}</p>}
       </div>
       {apps && apps.length > 0 && (
-        <ul className="divide-y divide-zinc-800 rounded-lg border border-zinc-800" aria-label="Composio apps">
+        <ul className="divide-y divide-zinc-800 rounded-lg border border-zinc-800" aria-label={t('Composio apps')}>
           {apps.map((a) => (
             <li key={a.slug} className="flex flex-wrap items-center gap-2 px-3 py-2" data-composio-app={a.slug}>
               <div className="min-w-0 flex-1 basis-48">
@@ -258,14 +268,15 @@ export const ComposioAppSearch: React.FC<{
                 </p>
                 {a.description && <p className="text-[11px] text-zinc-400 line-clamp-2">{a.description}</p>}
                 <p className="text-[11px] text-zinc-500">
-                  {a.tools_count != null && `${a.tools_count} tools · `}
-                  {a.no_auth ? 'No sign-in needed' : 'Sign-in kept on Composio'}
+                  {a.tools_count != null && t('{n} tools · ', { n: a.tools_count })}
+                  {a.no_auth ? t('No sign-in needed') : t('Sign-in kept on Composio')}
                 </p>
               </div>
               {canConnect && !a.no_auth && (
                 <button type="button" className={quietBtn} disabled={connecting !== null} onClick={() => connect(a)}>
                   {connecting === a.slug ? <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <ExternalLink size={12} aria-hidden="true" />}
-                  Connect<span className="sr-only"> {a.name} on Composio (opens in a new tab)</span>
+                  {t('Connect')}
+                  <span className="sr-only"> {t('{app} on Composio (opens in a new tab)', { app: a.name })}</span>
                 </button>
               )}
             </li>
@@ -329,21 +340,21 @@ export const ComposioCard: React.FC<ComposioCardProps> = ({ entry, initialOpen =
             <h4 id={`${id}-n`} className="text-sm font-medium text-zinc-100">
               {entry.name}
             </h4>
-            <span className={`px-1.5 py-px rounded border text-[11px] ${TONES.zinc}`}>Optional</span>
+            <span className={`px-1.5 py-px rounded border text-[11px] ${TONES.zinc}`}>{t('Optional')}</span>
             {entry.added && (
-              <span className={`px-1.5 py-px rounded border text-[11px] ${entry.enabled ? TONES.emerald : TONES.zinc}`}>{entry.enabled ? 'Added · on' : 'Added · off'}</span>
+              <span className={`px-1.5 py-px rounded border text-[11px] ${entry.enabled ? TONES.emerald : TONES.zinc}`}>{entry.enabled ? t('Added · on') : t('Added · off')}</span>
             )}
           </div>
           <p className="mt-1 text-xs text-zinc-400">{entry.description}</p>
         </div>
         {!entry.added && !open && (
           <button type="button" className={quietBtn} onClick={() => setOpen(true)} aria-expanded={false}>
-            <Plus size={12} aria-hidden="true" /> Add {entry.name}
+            <Plus size={12} aria-hidden="true" /> {t('Add {name}', { name: entry.name })}
           </button>
         )}
         {entry.added && onOpenTools && (
           <button type="button" className={quietBtn} onClick={onOpenTools}>
-            {entry.enabled ? 'Manage in Tools' : 'Turn on in Tools'}
+            {entry.enabled ? t('Manage in Tools') : t('Turn on in Tools')}
           </button>
         )}
       </div>
@@ -356,10 +367,10 @@ export const ComposioCard: React.FC<ComposioCardProps> = ({ entry, initialOpen =
       {entry.added && <ComposioAppSearch entry={entry} api={searchApi} initialApps={initialApps} />}
 
       {open && !entry.added && (
-        <form onSubmit={submit} {...editorProps(!!(url.trim() || key.trim() || enabled))} className="space-y-3" aria-label={`Add ${entry.name}`} noValidate>
+        <form onSubmit={submit} {...editorProps(!!(url.trim() || key.trim() || enabled))} className="space-y-3" aria-label={t('Add {name}', { name: entry.name })} noValidate>
           <div className="space-y-1">
             <label htmlFor={`${id}-url`} className="block text-xs font-medium text-zinc-200">
-              MCP URL
+              {t('MCP URL')}
             </label>
             <input
               id={`${id}-url`}
@@ -376,23 +387,23 @@ export const ComposioCard: React.FC<ComposioCardProps> = ({ entry, initialOpen =
               autoFocus
             />
             <p id={`${id}-url-h`} className="text-[11px] text-zinc-400">
-              From your Composio dashboard. It has to be an https address on composio.dev.
+              {t('From your Composio dashboard. It has to be an https address on composio.dev.')}
             </p>
           </div>
           <div className="space-y-1">
             <label htmlFor={`${id}-key`} className="block text-xs font-medium text-zinc-200">
-              API key <span className="font-normal text-zinc-400">(optional)</span>
+              {t('API key')} <span className="font-normal text-zinc-400">{t('(optional)')}</span>
             </label>
             <input id={`${id}-key`} className={field} type="password" autoComplete="off" value={key} onChange={(e) => setKey(e.target.value)} aria-describedby={`${id}-key-h`} />
             <p id={`${id}-key-h`} className="text-[11px] text-zinc-400">
-              Stored like any tool-server header and never shown again.
+              {t('Stored like any tool-server header and never shown again.')}
             </p>
           </div>
           <label className="flex items-start gap-2 text-xs text-zinc-200">
             <input type="checkbox" className="mt-0.5 accent-sky-500" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />
             <span>
-              Turn it on for my bots now
-              <span className="block text-[11px] text-zinc-400">Off by default. Until it’s on, no bot can use it.</span>
+              {t('Turn it on for my bots now')}
+              <span className="block text-[11px] text-zinc-400">{t('Off by default. Until it’s on, no bot can use it.')}</span>
             </span>
           </label>
           <div role="status" aria-live="polite">
@@ -401,10 +412,10 @@ export const ComposioCard: React.FC<ComposioCardProps> = ({ entry, initialOpen =
           <div className="flex flex-wrap gap-2">
             <button type="submit" disabled={saving} className={`${actionBtn} bg-sky-500 text-zinc-950 hover:bg-sky-400`}>
               {saving && <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />}
-              Add {entry.name}
+              {t('Add {name}', { name: entry.name })}
             </button>
             <button type="button" className={quietBtn} onClick={() => (setOpen(false), setError(null))}>
-              Cancel
+              {t('Cancel')}
             </button>
           </div>
         </form>
@@ -425,9 +436,9 @@ export interface AddChoice {
 export const addChoices = (links: ManageLinks, onComposio?: () => void): AddChoice[] => {
   const out: AddChoice[] = [];
   const tool = links.onAddTool ?? links.onOpenTools;
-  if (tool) out.push({ key: 'mcp', label: 'Tool server (MCP)', hint: 'A command on this computer or a server URL', run: tool });
-  if (links.onOpenAccounts) out.push({ key: 'account', label: 'Engine account', hint: 'Claude, Codex, Copilot and other engines', run: links.onOpenAccounts });
-  if (onComposio) out.push({ key: 'composio', label: 'App via Composio', hint: 'Gmail, Notion, Slack and hundreds more', run: onComposio });
+  if (tool) out.push({ key: 'mcp', label: t('Tool server (MCP)'), hint: t('A command on this computer or a server URL'), run: tool });
+  if (links.onOpenAccounts) out.push({ key: 'account', label: t('Engine account'), hint: t('Claude, Codex, Copilot and other engines'), run: links.onOpenAccounts });
+  if (onComposio) out.push({ key: 'composio', label: t('App via Composio'), hint: t('Gmail, Notion, Slack and hundreds more'), run: onComposio });
   return out;
 };
 
@@ -479,13 +490,13 @@ export const AddConnectionMenu: React.FC<{ choices: AddChoice[]; disabled?: bool
         className="inline-flex items-center gap-1.5 min-h-[32px] px-2.5 py-1 rounded-lg text-xs font-medium text-white bg-sky-600 hover:bg-sky-500 disabled:opacity-60 shadow-sm whitespace-nowrap focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500"
       >
         <Plus size={14} aria-hidden="true" />
-        Add connection
+        {t('Add connection')}
       </button>
       {open && (
         <div
           id={`${id}-list`}
           role="group"
-          aria-label="Add a connection"
+          aria-label={t('Add a connection')}
           className="absolute right-0 top-full mt-2 z-30 w-72 max-w-[calc(100vw-1rem)] rounded-xl border border-zinc-700 bg-zinc-900 p-1.5 shadow-xl shadow-black/40"
         >
           <ul className="space-y-0.5">
@@ -563,7 +574,7 @@ export const ConnectionsView: React.FC<ConnectionsViewProps> = ({
   const emptyAdd: Record<string, AddChoice | undefined> = {
     mcp: choices.find((c) => c.key === 'mcp'),
     account: choices.find((c) => c.key === 'account'),
-    sources: links.onOpenLooseEnds ? { key: 'sources', label: 'Loose ends', hint: '', run: links.onOpenLooseEnds } : undefined,
+    sources: links.onOpenLooseEnds ? { key: 'sources', label: t('Loose ends'), hint: '', run: links.onOpenLooseEnds } : undefined,
   };
   return (
     <div className={embedded ? 'space-y-4' : 'flex-1 flex flex-col h-full bg-zinc-950 overflow-hidden'}>
@@ -578,47 +589,49 @@ export const ConnectionsView: React.FC<ConnectionsViewProps> = ({
           <button
             type="button"
             onClick={onBack}
-            aria-label="Back to chats"
+            aria-label={t('Back to chats')}
             className="shrink-0 p-2 -ml-0.5 -mr-2 rounded-lg text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500"
           >
             <ChevronLeft size={18} />
           </button>
         )}
         <div className="min-w-0 flex-1">
-          {!embedded && <h2 className="text-sm font-semibold text-zinc-100 truncate">Connections</h2>}
-          <p className={`text-[11px] text-zinc-400 truncate ${embedded ? '' : 'mt-0.5'}`}>{data ? countsLine(data.connections) : 'Everything your bots reach outside the app'}</p>
+          {!embedded && <h2 className="text-sm font-semibold text-zinc-100 truncate">{t('Connections')}</h2>}
+          <p className={`text-[11px] text-zinc-400 truncate ${embedded ? '' : 'mt-0.5'}`}>{data ? countsLine(data.connections) : t('Everything your bots reach outside the app')}</p>
         </div>
         <button
           type="button"
           onClick={onRefresh}
           disabled={loading || needsToken}
-          aria-label="Refresh"
+          aria-label={t('Refresh')}
           className="shrink-0 inline-flex items-center gap-1.5 min-h-[32px] px-2.5 py-1 rounded-lg text-xs text-zinc-300 border border-zinc-700/60 hover:bg-zinc-800 disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500"
         >
           <RefreshCw size={12} className={loading ? 'animate-spin motion-reduce:animate-none' : ''} aria-hidden="true" />
-          <span className="hidden sm:inline">Refresh</span>
+          <span className="hidden sm:inline">{t('Refresh')}</span>
         </button>
         <AddConnectionMenu choices={choices} disabled={needsToken} initialOpen={addMenuOpen} />
       </div>
 
       <div className={embedded ? '' : 'flex-1 overflow-y-auto p-4 sm:p-6'} aria-busy={loading}>
         <div className={embedded ? 'space-y-5' : 'max-w-3xl mx-auto space-y-5'}>
-          <p className="text-[11px] text-zinc-400">Tool servers, accounts and logins your bots use. Logins stay in your own vault on this computer unless a row says otherwise. Nothing secret is shown here.</p>
+          <p className="text-[11px] text-zinc-400">
+            {t('Tool servers, accounts and logins your bots use. Logins stay in your own vault on this computer unless a row says otherwise. Nothing secret is shown here.')}
+          </p>
 
           {needsToken && (
             <div role="alert" className="px-3 py-2 rounded-lg border border-amber-500/30 bg-amber-500/10 flex flex-wrap items-center gap-2 text-xs text-amber-100">
-              <span>Only you can see connections. Confirm it’s you to open them.</span>
+              <span>{t('Only you can see connections. Confirm it’s you to open them.')}</span>
               <button type="button" onClick={requestPersonToken} className="ml-auto px-2 py-0.5 rounded border border-amber-500/40 hover:bg-amber-500/10">
-                Confirm it’s you
+                {t('Confirm it’s you')}
               </button>
             </div>
           )}
 
           {error && !needsToken && (
             <div role="alert" className="px-3 py-2 rounded-lg border border-rose-500/20 bg-rose-500/5 flex items-center gap-2 text-xs text-rose-300">
-              <span>Couldn’t load connections: {error}</span>
+              <span>{t('Couldn’t load connections: {error}', { error })}</span>
               <button type="button" onClick={onRefresh} className="ml-auto px-2 py-0.5 rounded border border-rose-500/30 hover:bg-rose-500/10">
-                Retry
+                {t('Retry')}
               </button>
             </div>
           )}
@@ -633,17 +646,17 @@ export const ConnectionsView: React.FC<ConnectionsViewProps> = ({
 
           {!data && loading && (
             <p className="flex items-center gap-2 text-xs text-zinc-400">
-              <Loader2 size={14} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> Loading…
+              <Loader2 size={14} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> {t('Loading…')}
             </p>
           )}
 
           {vault && vault.status !== 'ok' && (
             <div className="px-3 py-2 rounded-lg border border-amber-500/30 bg-amber-500/10 flex flex-wrap items-center gap-2 text-xs text-amber-100" data-vault={vault.status}>
               <Lock size={13} aria-hidden="true" />
-              <span>{vault.status === 'locked' ? 'Unlock Bitwarden to list saved logins.' : 'Saved logins can’t be read right now, so they aren’t listed.'}</span>
+              <span>{vault.status === 'locked' ? t('Unlock Bitwarden to list saved logins.') : t('Saved logins can’t be read right now, so they aren’t listed.')}</span>
               {vault.status === 'locked' && onUnlockVault && (
                 <button type="button" onClick={onUnlockVault} className="ml-auto px-2 py-0.5 rounded border border-amber-500/40 hover:bg-amber-500/10">
-                  Unlock Bitwarden
+                  {t('Unlock Bitwarden')}
                 </button>
               )}
             </div>
@@ -665,7 +678,7 @@ export const ConnectionsView: React.FC<ConnectionsViewProps> = ({
                     </ul>
                   ) : (
                     <p className="flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-3 rounded-xl border border-dashed border-zinc-800 text-xs text-zinc-400" data-empty={g.key}>
-                      <span>{lockedLogins ? 'Hidden while Bitwarden is locked.' : g.empty}</span>
+                      <span>{lockedLogins ? t('Hidden while Bitwarden is locked.') : g.empty}</span>
                       {!lockedLogins && emptyAdd[g.key] && (
                         <button
                           type="button"
@@ -674,7 +687,7 @@ export const ConnectionsView: React.FC<ConnectionsViewProps> = ({
                           className="inline-flex items-center gap-1 min-h-[28px] font-medium text-sky-300 hover:text-sky-200 underline-offset-2 hover:underline rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500"
                         >
                           <Plus size={12} aria-hidden="true" />
-                          {g.key === 'sources' ? 'Add one in Loose ends' : 'Add one'}
+                          {g.key === 'sources' ? t('Add one in Loose ends') : t('Add one')}
                           {g.key !== 'sources' && <span className="sr-only"> {g.label.toLowerCase()}</span>}
                         </button>
                       )}
@@ -687,7 +700,7 @@ export const ConnectionsView: React.FC<ConnectionsViewProps> = ({
           {data && data.catalog.length > 0 && (
             <section aria-labelledby="conn-catalog" className="space-y-2">
               <h3 id="conn-catalog" className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">
-                Optional connectors
+                {t('Optional connectors')}
               </h3>
               <ul className="space-y-2">
                 {data.catalog.map((entry) => (
@@ -732,7 +745,7 @@ export const ConnectionsPage: React.FC<ManageLinks & { onBack?: () => void; embe
     } catch (e) {
       if (!alive.current) return;
       if (e instanceof ConnectionsError && e.status === 401) setNeedsToken(true);
-      else setError(e instanceof Error ? e.message : 'Something went wrong.');
+      else setError(e instanceof Error ? e.message : t('Something went wrong.'));
     } finally {
       if (alive.current) setLoading(false);
     }
@@ -755,9 +768,13 @@ export const ConnectionsPage: React.FC<ManageLinks & { onBack?: () => void; embe
     setNotice(null);
     try {
       const r = await connectionsApi.testMcp(sid);
-      if (alive.current) setNotice(r.ok === false ? { text: `${c.name}: ${r.error || 'the check failed.'}`, error: true } : { text: `${c.name} answered.`, error: false });
+      if (alive.current) setNotice(
+          r.ok === false
+            ? { text: t('{name}: {error}', { name: c.name, error: r.error || t('the check failed.') }), error: true }
+            : { text: t('{name} answered.', { name: c.name }), error: false },
+        );
     } catch (e) {
-      if (alive.current) setNotice({ text: `Couldn’t check ${c.name}: ${e instanceof Error ? e.message : 'something went wrong.'}`, error: true });
+      if (alive.current) setNotice({ text: t('Couldn’t check {name}: {error}', { name: c.name, error: e instanceof Error ? e.message : t('something went wrong.') }), error: true });
     } finally {
       if (alive.current) setChecking(null);
       load();
@@ -767,7 +784,7 @@ export const ConnectionsPage: React.FC<ManageLinks & { onBack?: () => void; embe
   const addComposio = async (url: string, apiKey: string, enabled: boolean): Promise<string | null> => {
     try {
       await connectionsApi.addComposio(apiKey ? { url, api_key: apiKey, enabled } : { url, enabled });
-      setNotice({ text: enabled ? 'Composio is added and on.' : 'Composio is added and off. Turn it on in Tools when you want bots to use it.', error: false });
+      setNotice({ text: enabled ? t('Composio is added and on.') : t('Composio is added and off. Turn it on in Tools when you want bots to use it.'), error: false });
       load();
       return null;
     } catch (e) {

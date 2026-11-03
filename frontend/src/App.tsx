@@ -115,6 +115,7 @@ import { teamChannelOf, teamOfChannel } from './teamChannel';
 import { PromptContext, suggestedPrompts } from './suggestedPrompts';
 import { isNotificationOpen, showDeviceNotification } from './push';
 import { inDesktopApp, leaveForSignIn, mcpSignIn, pollUntil, signInChanged } from './externalLinks';
+import { t } from './i18n';
 
 // Kwant and Tools editors are their own chunks. They stay mounted (rendering nothing while closed),
 // so both load right after start-up and opening them never waits.
@@ -383,18 +384,18 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
         n.kind === 'routine_failed'
           ? undefined
           : n.kind === 'skill_proposed'
-            ? { label: 'Review', onClick: () => openSkillsRef.current(n.kwant_id) }
+            ? { label: t('Review'), onClick: () => openSkillsRef.current(n.kwant_id) }
             : n.kind === 'automation_suggested'
-              ? { label: 'Review', onClick: () => openSpaceSettings('routines') }
+              ? { label: t('Review'), onClick: () => openSpaceSettings('routines') }
               : n.kind === 'tier_proposed'
-              ? { label: 'Review', onClick: openBoardForTier }
+              ? { label: t('Review'), onClick: openBoardForTier }
               : n.kind === 'fact_disputed'
-              ? { label: 'Settle', onClick: openBoardForTier }
+              ? { label: t('Settle'), onClick: openBoardForTier }
               : n.kind === 'question_asked'
-              ? { label: 'Answer', onClick: () => openQuestionRef.current(n.kwant_id) || openTargetRef.current(target) }
+              ? { label: t('Answer'), onClick: () => openQuestionRef.current(n.kwant_id) || openTargetRef.current(target) }
               : n.kind === 'human_step'
-                ? { label: 'Open', onClick: () => openHumanStepRef.current(n.kwant_id) || openTargetRef.current(target) }
-                : { label: 'Open', onClick: () => openTargetRef.current(target) };
+                ? { label: t('Open'), onClick: () => openHumanStepRef.current(n.kwant_id) || openTargetRef.current(target) }
+                : { label: t('Open'), onClick: () => openTargetRef.current(target) };
       setToasts((prev) => [...prev.slice(-2), { id, title: n.title, detail: n.body, action }]);
       if (n.kind !== 'routine_failed') playSfx('alert');
       return;
@@ -543,7 +544,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
         setMessagesError(null);
       }
     } catch {
-      if (openCtxRef.current === ctx && chatLoadsRef.current.isLatest(ctx, n)) setMessagesError('Could not load this chat.');
+      if (openCtxRef.current === ctx && chatLoadsRef.current.isLatest(ctx, n)) setMessagesError(t('Could not load this chat.'));
     }
   };
 
@@ -563,7 +564,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
         return next;
       });
     } catch (err) {
-      setThreadErrors((prev) => ({ ...prev, [kwantId]: err instanceof Error ? err.message : 'Failed' }));
+      setThreadErrors((prev) => ({ ...prev, [kwantId]: err instanceof Error ? err.message : t('Failed') }));
     } finally {
       threadsLoadingRef.current.delete(kwantId);
     }
@@ -1306,7 +1307,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
       }
     } catch (err) {
       console.error('Failed cancelling chat/discussion:', err);
-      pushToast('Could not stop the reply.', err instanceof Error ? err.message : undefined);
+      pushToast(t('Could not stop the reply.'), err instanceof Error ? err.message : undefined);
       return;
     }
     if (ctx === streamingContextIdRef.current) {
@@ -1327,7 +1328,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
     const threadId = openThreadId;
     const isTargetChannel = isChannel;
     const targetTeam = selectedTeamId;
-    const speakerName = !isTargetChannel ? (currentKwant?.name || 'Bot') : chatTitle;
+    const speakerName = !isTargetChannel ? (currentKwant?.name || t('Bot')) : chatTitle;
 
     if (!threadId) {
       discussionInProgressRef.current = false;
@@ -1402,7 +1403,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
       const rest = (messagesCacheRef.current[targetId] || []).filter((m) => m.id !== tempId);
       messagesCacheRef.current[targetId] = rest;
       if (openCtxRef.current === targetId) setMessages(rest);
-      pushToast('Message not sent.', err instanceof Error ? err.message : undefined);
+      pushToast(t('Message not sent.'), err instanceof Error ? err.message : undefined);
       if (turnsIn(turnsRef.current, targetId).length === 0) clearLive(targetId);
       if (streamingContextIdRef.current === targetId) {
         setRoutingState(null);
@@ -1430,9 +1431,9 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
       }
     } catch (err) {
       haptic('warning');
-      return err instanceof Error ? err.message : 'Couldn’t change it.';
+      return err instanceof Error ? err.message : t('Couldn’t change it.');
     }
-    if (prompt && !(await handleSendMessage(prompt))) return 'Your choice is saved, but the bot wasn’t told. Ask it in this chat to redo it with your choice.';
+    if (prompt && !(await handleSendMessage(prompt))) return t('Your choice is saved, but the bot wasn’t told. Ask it in this chat to redo it with your choice.');
   };
 
   const handleResolveApproval = async (
@@ -1450,24 +1451,24 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
       if (res.ok || res.status === 409 || res.status === 404) {
         const card = pendingApprovals.find((a) => a.id === ticketId);
         dropApproval(ticketId);
-        if (!res.ok) pushToast('This request expired', 'The bot is no longer waiting for this answer.');
+        if (!res.ok) pushToast(t('This request expired'), t('The bot is no longer waiting for this answer.'));
         else if (card?.waiting && decision !== 'deny') {
           const bot = typeof card.details.kwant_name === 'string' ? card.details.kwant_name : null;
           const text = lateAnswerText(await res.json().catch(() => null), bot);
-          if (text) pushToast('Card answered', text);
+          if (text) pushToast(t('Card answered'), text);
         }
         refreshAwayCount(300);
       } else if (res.status === 401) {
         // Person-only: the token dialog is open; the card stays so the person can answer again.
-        pushToast('Enter your access token', 'Answering approval cards needs your token. Then answer the card again.');
+        pushToast(t('Enter your access token'), t('Answering approval cards needs your token. Then answer the card again.'));
       } else {
         haptic('warning');
-        pushToast("Couldn't send your answer", `Request failed (HTTP ${res.status}). Try again.`);
+        pushToast(t("Couldn't send your answer"), t('Request failed (HTTP {status}). Try again.', { status: res.status }));
       }
     } catch (err) {
       console.error('Failed resolving approval:', err);
       haptic('warning');
-      pushToast("Couldn't send your answer", 'Check the connection and try again.');
+      pushToast(t("Couldn't send your answer"), t('Check the connection and try again.'));
     }
   };
 
@@ -1590,7 +1591,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
   const openThread = (kwantId: string, threadId: string) => {
     const kwant = kwants.find((k) => k.id === kwantId);
     if (!kwant) {
-      pushToast('That bot no longer exists.');
+      pushToast(t('That bot no longer exists.'));
       return;
     }
     knownThreadsRef.current.add(threadId);
@@ -1603,10 +1604,10 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
 
   /** Opens the thread, channel or direct chat an away item links to. */
   const openAwayItem = (item: AwayItem) => {
-    const t = awayTarget(item);
-    if ('thread' in t) return openThread(t.kwant, t.thread);
-    const ok = 'channel' in t ? openTarget({ channel_id: t.channel, kwant_id: null }) : openTarget({ channel_id: null, kwant_id: t.direct });
-    if (!ok) return pushToast('That chat no longer exists.');
+    const target = awayTarget(item);
+    if ('thread' in target) return openThread(target.kwant, target.thread);
+    const ok = 'channel' in target ? openTarget({ channel_id: target.channel, kwant_id: null }) : openTarget({ channel_id: null, kwant_id: target.direct });
+    if (!ok) return pushToast(t('That chat no longer exists.'));
     setPage('chat');
   };
 
@@ -1616,7 +1617,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
     playSfx('click');
   };
 
-  const errText = (err: unknown) => (err instanceof Error ? err.message : 'Something went wrong.');
+  const errText = (err: unknown) => (err instanceof Error ? err.message : t('Something went wrong.'));
   /** The server's own `error` text, e.g. why a team name isn't allowed. */
   const serverError = async (res: Response): Promise<string | null> => {
     try {
@@ -1632,41 +1633,41 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
   const handleNewThread = async (): Promise<string | void> => {
     const kwantId = selectedIdRef.current;
     try {
-      const t = await threadsApi.create(kwantId);
-      knownThreadsRef.current.add(t.id);
-      messagesCacheRef.current[t.id] = [];
-      setThreadsByKwant((prev) => ({ ...prev, [kwantId]: upsertThread(prev[kwantId], t) }));
-      if (selectedIdRef.current === kwantId) setOpenThreadId(t.id);
+      const thread = await threadsApi.create(kwantId);
+      knownThreadsRef.current.add(thread.id);
+      messagesCacheRef.current[thread.id] = [];
+      setThreadsByKwant((prev) => ({ ...prev, [kwantId]: upsertThread(prev[kwantId], thread) }));
+      if (selectedIdRef.current === kwantId) setOpenThreadId(thread.id);
     } catch (err) {
-      return `Couldn't start a conversation: ${errText(err)}`;
+      return t("Couldn't start a conversation: {error}", { error: errText(err) });
     }
   };
 
   /** Stops a thread's work: its delegation when one is open (so the lead hears), else its turns. */
-  const handleStopThread = async (t: Thread): Promise<string | void> => {
-    const d = t.delegation ? delegationsRef.current[t.delegation.id] ?? t.delegation : null;
+  const handleStopThread = async (thread: Thread): Promise<string | void> => {
+    const d = thread.delegation ? delegationsRef.current[thread.delegation.id] ?? thread.delegation : null;
     try {
       if (d && (d.status === 'queued' || d.status === 'running')) {
         const next = await threadsApi.cancelDelegation(d.id);
         setDelegations((prev) => ({ ...prev, [next.id]: next }));
       } else {
-        await threadsApi.cancel(t.id);
+        await threadsApi.cancel(thread.id);
       }
     } catch (err) {
-      return `Couldn't stop it: ${errText(err)}`;
+      return t("Couldn't stop it: {error}", { error: errText(err) });
     }
   };
 
-  const handleArchiveThread = async (t: Thread, archived: boolean): Promise<string | void> => {
+  const handleArchiveThread = async (thread: Thread, archived: boolean): Promise<string | void> => {
     try {
-      const next = await threadsApi.patch(t.id, { archived });
+      const next = await threadsApi.patch(thread.id, { archived });
       setThreadsByKwant((prev) => ({ ...prev, [next.kwant_id]: upsertThread(prev[next.kwant_id], next) }));
-      if (archived && openThreadId === t.id) {
+      if (archived && openThreadId === thread.id) {
         setOpenThreadId(null);
-        pushToast(`Archived “${t.title}”`, 'Find it under Archived in the conversation list.');
+        pushToast(t('Archived “{title}”', { title: thread.title }), t('Find it under Archived in the conversation list.'));
       }
     } catch (err) {
-      return `Couldn't ${archived ? 'archive' : 'unarchive'} it: ${errText(err)}`;
+      return t(archived ? "Couldn't archive it: {error}" : "Couldn't unarchive it: {error}", { error: errText(err) });
     }
   };
 
@@ -1675,7 +1676,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
       const next = await threadsApi.cancelDelegation(id);
       setDelegations((prev) => ({ ...prev, [next.id]: next }));
     } catch (err) {
-      return `Couldn't stop it: ${errText(err)}`;
+      return t("Couldn't stop it: {error}", { error: errText(err) });
     }
   };
 
@@ -1689,13 +1690,13 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
       try {
         const { question } = await questionsApi.get(id);
         setQuestions((prev) => applyQuestion(prev, question));
-        if (question.status === 'answered') return 'This was already answered.';
-        if (question.status === 'cancelled') return 'This question was closed.';
+        if (question.status === 'answered') return t('This was already answered.');
+        if (question.status === 'cancelled') return t('This question was closed.');
       } catch {
         // keep the first error
       }
       haptic('warning');
-      return `Couldn't send your answer: ${errText(err)}`;
+      return t("Couldn't send your answer: {error}", { error: errText(err) });
     }
   };
   const handleDismissQuestion = async (id: string): Promise<string | void> => {
@@ -1703,7 +1704,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
       const q = await questionsApi.cancel(id);
       setQuestions((prev) => applyQuestion(prev, q));
     } catch (err) {
-      return `Couldn't skip it: ${errText(err)}`;
+      return t("Couldn't skip it: {error}", { error: errText(err) });
     }
   };
   const renderQuestion = (msg: ChatMessage, meta: QuestionMeta, flash: boolean) => {
@@ -1736,14 +1737,14 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
       try {
         const { step } = await humanStepsApi.get(id);
         setHumanSteps((prev) => applyHumanStep(prev, step));
-        if (step.status === 'done') return 'This was already marked done.';
-        if (step.status === 'declined') return 'This was already skipped.';
-        if (step.status === 'cancelled') return 'This was closed: the reply was stopped.';
+        if (step.status === 'done') return t('This was already marked done.');
+        if (step.status === 'declined') return t('This was already skipped.');
+        if (step.status === 'cancelled') return t('This was closed: the reply was stopped.');
       } catch {
         // keep the first error
       }
       haptic('warning');
-      return `Couldn't send that: ${errText(err)}`;
+      return t("Couldn't send that: {error}", { error: errText(err) });
     }
   };
   const renderHumanStep = (msg: ChatMessage, meta: HumanStepMeta, flash: boolean) => {
@@ -1788,7 +1789,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
       const sg = await suggestionsApi.dismiss(id);
       setSuggestions((prev) => applySuggestion(prev, sg));
     } catch (err) {
-      return `Couldn't dismiss it: ${errText(err)}`;
+      return t("Couldn't dismiss it: {error}", { error: errText(err) });
     }
   };
   // Same flow as the servers screen: the window opens inside the click, the address comes after.
@@ -1805,12 +1806,12 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
         body: JSON.stringify({ origin: window.location.origin }),
       });
       const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(typeof data?.error === 'string' ? data.error : `Request failed (HTTP ${res.status}).`);
-      if (typeof data?.authorize_url !== 'string' || !/^https?:\/\//.test(data.authorize_url)) throw new Error('The server didn’t return a sign-in page.');
+      if (!res.ok) throw new Error(typeof data?.error === 'string' ? data.error : t('Request failed (HTTP {status}).', { status: res.status }));
+      if (typeof data?.authorize_url !== 'string' || !/^https?:\/\//.test(data.authorize_url)) throw new Error(t('The server didn’t return a sign-in page.'));
       url = data.authorize_url;
     } catch (err) {
       popup?.close();
-      return `Couldn't start the sign-in: ${errText(err)}`;
+      return t("Couldn't start the sign-in: {error}", { error: errText(err) });
     }
     if (!popup || popup.closed) {
       leaveForSignIn(url);
@@ -1820,7 +1821,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
           onTimeout: () => resolve(false),
         });
       });
-      if (!finished) return 'The sign-in didn’t finish in your browser. Try again.';
+      if (!finished) return t('The sign-in didn’t finish in your browser. Try again.');
     } else {
       popup.location.href = url;
       popup.focus();
@@ -1839,7 +1840,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
         setNeedsSignIn((prev) => ({ ...prev, [serverId]: false }));
         return;
       }
-      return test.auth_required ? 'The sign-in didn’t finish.' : test.error || 'The server still isn’t answering.';
+      return test.auth_required ? t('The sign-in didn’t finish.') : test.error || t('The server still isn’t answering.');
     } catch (err) {
       return errText(err);
     }
@@ -1911,7 +1912,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
   const handleHireDecision = async (hire: HireMeta, d: HireDecision): Promise<string | void> => {
     try {
       if (d === 'undo') {
-        if (!hire.action_id) return 'Couldn’t undo it: this hire has nothing to undo.';
+        if (!hire.action_id) return t('Couldn’t undo it: this hire has nothing to undo.');
         await botActionsApi.undo(hire.action_id);
         refreshHires();
       } else {
@@ -1986,8 +1987,8 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
       return err;
     }
     const name = kwants.find((k) => k.id === kwantId)?.name;
-    if (!name) return 'That bot is gone.';
-    if (!(await handleSendMessage(`@${name} ${question.text}`))) return `Routing learned, but ${name} wasn’t asked. Send it again with @${name}.`;
+    if (!name) return t('That bot is gone.');
+    if (!(await handleSendMessage(`@${name} ${question.text}`))) return t('Routing learned, but {name} wasn’t asked. Send it again with @{name}.', { name });
   };
 
   const renderDelegation = (msg: ChatMessage, meta: DelegationMeta, flash: boolean) => {
@@ -2011,7 +2012,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
   const handleJump = async (hit: SearchHit) => {
     const targetId = hit.channel_id ?? hit.kwant_id;
     if (!targetId || !openTarget(hit)) {
-      pushToast('That chat no longer exists.');
+      pushToast(t('That chat no longer exists.'));
       return;
     }
     try {
@@ -2029,7 +2030,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
         `/api/channels/${encodeURIComponent(targetId)}/messages?around=${encodeURIComponent(hit.message_id)}`,
       );
       if (around.status === 404) {
-        pushToast('Opened the chat', 'That message is no longer there.');
+        pushToast(t('Opened the chat'), t('That message is no longer there.'));
         return;
       }
       if (!around.ok) throw new Error(`HTTP ${around.status}`);
@@ -2038,7 +2039,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
       setHistoryWindow({ ctx: targetId, messages: older });
       setHighlightMessageId(hit.message_id);
     } catch {
-      pushToast('Could not load that chat.');
+      pushToast(t('Could not load that chat.'));
     }
   };
 
@@ -2060,7 +2061,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
       const updated = await continuityApi.setChannelInstructions(channel.id, text);
       setChannels((prev) => prev.map((c) => (c.id === channel.id ? { ...c, instructions: updated.instructions } : c)));
     } catch (err) {
-      return err instanceof Error ? err.message : 'Could not save.';
+      return err instanceof Error ? err.message : t('Could not save.');
     }
   };
 
@@ -2071,7 +2072,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ server_ids: serverIds }),
     });
-    if (!res.ok) return `Saved, but the tool servers couldn't be updated (HTTP ${res.status}).`;
+    if (!res.ok) return t("Saved, but the tool servers couldn't be updated (HTTP {status}).", { status: res.status });
   };
 
   const handleUpdateAgent = async (kwant: Kwant, agentData: AgentFormData): Promise<string | void> => {
@@ -2082,9 +2083,9 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(kwantData),
       });
-      if (res.status === 409) return (await serverError(res)) ?? `Another bot in ${space.name} is already named "${agentData.name}".`;
-      if (res.status === 400) return (await serverError(res)) ?? 'Check the name (no spaces or @) and that the account belongs to the chosen engine.';
-      if (!res.ok) return (await serverError(res)) ?? `Couldn't save the bot (HTTP ${res.status}).`;
+      if (res.status === 409) return (await serverError(res)) ?? t('Another bot in {space} is already named "{name}".', { space: space.name, name: agentData.name });
+      if (res.status === 400) return (await serverError(res)) ?? t('Check the name (no spaces or @) and that the account belongs to the chosen engine.');
+      if (!res.ok) return (await serverError(res)) ?? t("Couldn't save the bot (HTTP {status}).", { status: res.status });
 
       const updated: Kwant = await res.json();
       setKwants((prev) => prev.map((k) => (k.id === updated.id ? updated : k)));
@@ -2103,7 +2104,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
       playSfx('click');
     } catch (err) {
       console.error('Failed updating bot:', err);
-      return 'Could not reach the server.';
+      return t('Could not reach the server.');
     }
   };
 
@@ -2159,12 +2160,12 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
         setMessages([]);
         return;
       }
-      if (res.status === 409) return (await serverError(res)) ?? `Another bot in ${space.name} is already named "${agentData.name}".`;
-      if (res.status === 400) return (await serverError(res)) ?? 'Check the name (no spaces or @) and that the account belongs to the chosen engine.';
-      return (await serverError(res)) ?? `Couldn't create the bot (HTTP ${res.status}).`;
+      if (res.status === 409) return (await serverError(res)) ?? t('Another bot in {space} is already named "{name}".', { space: space.name, name: agentData.name });
+      if (res.status === 400) return (await serverError(res)) ?? t('Check the name (no spaces or @) and that the account belongs to the chosen engine.');
+      return (await serverError(res)) ?? t("Couldn't create the bot (HTTP {status}).", { status: res.status });
     } catch (err) {
       console.error('Failed creating bot:', err);
-      return 'Could not reach the server.';
+      return t('Could not reach the server.');
     }
   };
 
@@ -2178,7 +2179,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
       });
       if (!res.ok) {
         const data = await res.json().catch(() => null);
-        return typeof data?.error === 'string' ? data.error : `Could not create the channel (HTTP ${res.status}).`;
+        return typeof data?.error === 'string' ? data.error : t('Could not create the channel (HTTP {status}).', { status: res.status });
       }
       const created: Channel = await res.json();
       setChannels((prev) => (prev.some((c) => c.id === created.id) ? prev : [...prev, created]));
@@ -2189,7 +2190,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
       onSpacesChanged();
       return null;
     } catch {
-      return 'Could not reach the server.';
+      return t('Could not reach the server.');
     }
   };
 
@@ -2244,10 +2245,10 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
         onSpacesChanged();
         return;
       }
-      throw new Error((await serverError(res)) ?? `Couldn't create the team (HTTP ${res.status}).`);
+      throw new Error((await serverError(res)) ?? t("Couldn't create the team (HTTP {status}).", { status: res.status }));
     } catch (err) {
       console.error('Failed creating team:', err);
-      throw err instanceof Error ? err : new Error('Could not reach the server.');
+      throw err instanceof Error ? err : new Error(t('Could not reach the server.'));
     }
   };
 
@@ -2291,10 +2292,10 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
         playSfx('fanfare');
         return;
       }
-      throw new Error((await serverError(res)) ?? `Couldn't save the team (HTTP ${res.status}).`);
+      throw new Error((await serverError(res)) ?? t("Couldn't save the team (HTTP {status}).", { status: res.status }));
     } catch (err) {
       console.error('Failed updating team:', err);
-      throw err instanceof Error ? err : new Error('Could not reach the server.');
+      throw err instanceof Error ? err : new Error(t('Could not reach the server.'));
     }
   };
 
@@ -2323,7 +2324,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
     } catch (err) {
       console.error('Failed updating team members:', err);
       setTeams(previous);
-      pushToast("Couldn't change the team.", err instanceof Error ? err.message : undefined);
+      pushToast(t("Couldn't change the team."), err instanceof Error ? err.message : undefined);
     }
   };
 
@@ -2331,7 +2332,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
   const handleDeleteTeam = async (id: string) => {
     // Person-only: after "Confirm it's you" the delete goes through without pressing it again.
     const res = await personFetch(`/api/teams/${encodeURIComponent(id)}`, { method: 'DELETE' });
-    if (!res.ok && res.status !== 404) throw new Error(`Couldn’t delete the team (HTTP ${res.status}).`);
+    if (!res.ok && res.status !== 404) throw new Error(t('Couldn’t delete the team (HTTP {status}).', { status: res.status }));
     setTeams((prev) => prev.filter((t) => t.id !== id));
     if (selectedTeamId === id) {
       setSelectedTeamId(null);
@@ -2372,7 +2373,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
     : null;
 
   const activeSandboxId = currentTeam?.id || currentKwant?.id || selectedTeamId || (isChannel ? selectedId : 'default');
-  const activeSandboxName = currentTeam?.name || currentKwant?.name || (isChannel ? currentChannel?.name.replace(/^team-/, '') : 'Sandbox');
+  const activeSandboxName = currentTeam?.name || currentKwant?.name || (isChannel ? currentChannel?.name.replace(/^team-/, '') : t('Sandbox'));
 
   activeTeamIdRef.current = activeSandboxId;
   activeSandboxIdRef.current = activeSandboxId;
@@ -2392,7 +2393,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
     : [];
 
   const chatTitle = !isChannel
-    ? currentKwant?.name || 'Bot'
+    ? currentKwant?.name || t('Bot')
     : currentTeam
     ? `@${currentTeam.name}`
     : currentChannel?.name.startsWith('team-')
@@ -2401,10 +2402,10 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
 
   const isGeneral = isChannel && !currentTeam && currentChannel?.name === 'general';
   const chatSubtitle = !isChannel
-    ? currentKwant?.title || 'Kwant bot'
+    ? currentKwant?.title || t('Kwant bot')
     : isGeneral
-      ? `Laya picks who answers, from the ${kwants.length} ${kwants.length === 1 ? 'bot' : 'bots'} in ${space.name}`
-      : currentTeam?.description || currentChannel?.description || `A team in ${space.name}`;
+      ? t(kwants.length === 1 ? 'Laya picks who answers, from the {n} bot in {space}' : 'Laya picks who answers, from the {n} bots in {space}', { n: kwants.length, space: space.name })
+      : currentTeam?.description || currentChannel?.description || t('A team in {space}', { space: space.name });
 
   // "Suggested:" prompts from who is in this chat, so a kitchen team isn't offered developer prompts
   const idsOf = (v: string[] | string | undefined): string[] => {
@@ -2468,7 +2469,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
     fetch(`/api/sandbox/${sid}/screenshot`)
       .then(async (r) => {
         const data = await r.json();
-        if (!r.ok) throw new Error(data.error || 'Could not load the sandbox browser.');
+        if (!r.ok) throw new Error(data.error || t('Could not load the sandbox browser.'));
         return data;
       })
       .then((data) => {
@@ -2486,7 +2487,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
       .catch((err) => {
         if (!cancelled) {
           setIsVmRunning(false);
-          setBrowserError(err instanceof Error ? err.message : 'Could not reach the sandbox browser.');
+          setBrowserError(err instanceof Error ? err.message : t('Could not reach the sandbox browser.'));
         }
       });
     return () => { cancelled = true; };
@@ -2499,7 +2500,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
       const res = await fetch(`/api/sandbox/${sid}/screenshot`);
       const data = await res.json();
       if (activeSandboxIdRef.current !== sid) return;
-      if (!res.ok) throw new Error(data.error || 'Could not load the sandbox browser.');
+      if (!res.ok) throw new Error(data.error || t('Could not load the sandbox browser.'));
       setBrowserError(null);
       setIsVmRunning(true);
       if (data.image_base64 || data.screenshot) {
@@ -2512,7 +2513,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
       if (activeSandboxIdRef.current !== sid) return;
       setScreenshotBase64(null);
       setIsVmRunning(false);
-      setBrowserError(err instanceof Error ? err.message : 'Could not reach the sandbox browser.');
+      setBrowserError(err instanceof Error ? err.message : t('Could not reach the sandbox browser.'));
     }
   };
 
@@ -2527,13 +2528,13 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
       });
       const data = await res.json();
       if (activeSandboxIdRef.current !== sid) return;
-      if (!res.ok || !data.is_running) throw new Error(data.error || 'Sandbox could not start. Check Docker and try again.');
+      if (!res.ok || !data.is_running) throw new Error(data.error || t('Sandbox could not start. Check Docker and try again.'));
       setIsVmRunning(true);
       setTerminalLogs((prev) => [
         ...prev,
         {
           command: 'docker restart sandbox',
-          output: `Sandbox container (@${activeSandboxName}) reset and restarted.`,
+          output: t('Sandbox container (@{name}) reset and restarted.', { name: activeSandboxName ?? '' }),
           timestamp: new Date().toLocaleTimeString(),
         },
       ]);
@@ -2543,7 +2544,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
     } catch (err) {
       if (activeSandboxIdRef.current !== sid) return;
       setIsVmRunning(false);
-      setBrowserError(err instanceof Error ? err.message : 'Could not restart the sandbox browser.');
+      setBrowserError(err instanceof Error ? err.message : t('Could not restart the sandbox browser.'));
     }
   };
 
@@ -2560,14 +2561,14 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
       });
       const data = await res.json();
       if (activeSandboxIdRef.current !== sid) return;
-      if (!res.ok) throw new Error(data.error || 'Browser navigation failed.');
+      if (!res.ok) throw new Error(data.error || t('Browser navigation failed.'));
       if (data.url) setActiveUrl(data.url);
       if (data.title) setPageTitle(data.title);
       setIsVmPaneOpen(true);
       handleRefreshVm();
     } catch (err) {
       if (activeSandboxIdRef.current !== sid) return;
-      setBrowserError(err instanceof Error ? err.message : 'Browser navigation failed.');
+      setBrowserError(err instanceof Error ? err.message : t('Browser navigation failed.'));
     }
   };
 
@@ -2594,7 +2595,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
   const needsYouByKwant = openStepsByKwant(humanSteps);
   const waiting = openTurns.some((t) => t.state === 'running') ? undefined : openTurns.find((t) => t.state === 'queued');
   const queuedHere: QueuedState | null = waiting
-    ? { position: queuePosition(turns, waiting.turn_id), reason: waiting.reason ?? 'agent_busy', speaker: kwantName(waiting.kwant_id) ?? live[openCtx] ?? 'The bot' }
+    ? { position: queuePosition(turns, waiting.turn_id), reason: waiting.reason ?? 'agent_busy', speaker: kwantName(waiting.kwant_id) ?? live[openCtx] ?? t('The bot') }
     : null;
 
   // The bot's conversations, the open thread's controls, and "working on…" elsewhere.
@@ -2603,7 +2604,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
   const elsewhere = currentKwant ? backgroundTurns(turns, currentKwant.id).filter((t) => t.context_id !== openCtx) : [];
   const describeContext = (ctx: string, kwantId: string): string =>
     threadsByKwant[kwantId]?.find((t) => t.id === ctx)?.title ??
-    (ctx === kwantId ? 'the direct chat' : channels.find((c) => c.id === ctx) ? channelLabel(channels.find((c) => c.id === ctx)!.name) : 'another conversation');
+    (ctx === kwantId ? t('the direct chat') : channels.find((c) => c.id === ctx) ? channelLabel(channels.find((c) => c.id === ctx)!.name) : t('another conversation'));
   const workingBadge =
     currentKwant && elsewhere.length > 0 ? (
       <button
@@ -2623,16 +2624,24 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
           <Loader2 size={10} className="shrink-0 animate-spin motion-reduce:animate-none" aria-hidden="true" />
         )}
         <span className="truncate">
-          {elsewhere[0].state === 'queued' ? 'Waiting to work on ' : browserTurns.has(elsewhere[0].turn_id) ? 'Needs you in the browser in ' : awaitingTurns.has(elsewhere[0].turn_id) ? 'Asked you a question in ' : 'Working on '}
-          {describeContext(elsewhere[0].context_id, elsewhere[0].kwant_id)}
+          {t(
+            elsewhere[0].state === 'queued'
+              ? 'Waiting to work on {where}'
+              : browserTurns.has(elsewhere[0].turn_id)
+                ? 'Needs you in the browser in {where}'
+                : awaitingTurns.has(elsewhere[0].turn_id)
+                  ? 'Asked you a question in {where}'
+                  : 'Working on {where}',
+            { where: describeContext(elsewhere[0].context_id, elsewhere[0].kwant_id) },
+          )}
         </span>
-        {elsewhere.length > 1 && <span className="shrink-0 text-sky-300/80">+{elsewhere.length - 1} more</span>}
+        {elsewhere.length > 1 && <span className="shrink-0 text-sky-300/80">{t('+{n} more', { n: elsewhere.length - 1 })}</span>}
       </button>
     ) : null;
   const pendingSkillCounts = pendingByKwant(pendingSkills);
   const pendingHere = currentKwant ? pendingSkillCounts[currentKwant.id] ?? 0 : 0;
   const approvalsBadge = approvalsOff(currentKwant) ? (
-    <ApprovalsOffBadge onClick={() => currentKwant && openAgentSettings(currentKwant)} title={`${currentKwant?.name} acts without asking, including deletions, publishing and sign-ins. Payments still ask you. Open its settings to change it.`} />
+    <ApprovalsOffBadge onClick={() => currentKwant && openAgentSettings(currentKwant)} title={t('{name} acts without asking, including deletions, publishing and sign-ins. Payments still ask you. Open its settings to change it.', { name: currentKwant?.name ?? '' })} />
   ) : null;
   const skillsBadge =
     currentKwant && pendingHere > 0 ? (
@@ -2642,7 +2651,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
         className="inline-flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-full border border-amber-500/30 bg-amber-500/10 text-[11px] text-amber-200 hover:bg-amber-500/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-400"
       >
         <ListChecks size={11} aria-hidden="true" />
-        {pendingHere === 1 ? '1 skill to review' : `${pendingHere} skills to review`}
+        {t(pendingHere === 1 ? '{n} skill to review' : '{n} skills to review', { n: pendingHere })}
       </button>
     ) : null;
   // Sidebar: what busy bots are doing, "here" for the open chat.
@@ -2673,7 +2682,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
       /* the next refresh picks it up */
     }
     playSfx('click');
-    pushToast(gone ? `Deleted ${gone.name}.` : 'Bot deleted.');
+    pushToast(gone ? t('Deleted {name}.', { name: gone.name }) : t('Bot deleted.'));
   };
 
   const viewingHistory = !!historyWindow && historyWindow.ctx === openCtx;
@@ -2685,7 +2694,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
         onClick={() => refreshContext(openCtx)}
         className="px-2 py-0.5 rounded border border-rose-500/30 hover:bg-rose-500/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-rose-500"
       >
-        Retry
+        {t('Retry')}
       </button>
     </div>
   ) : null;
@@ -2726,9 +2735,9 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
     errorBar
   );
   const pinned: PinnedItem[] = [];
-  if (currentTeam?.instructions?.trim()) pinned.push({ label: `Team @${currentTeam.name}`, text: currentTeam.instructions });
+  if (currentTeam?.instructions?.trim()) pinned.push({ label: t('Team @{name}', { name: currentTeam.name }), text: currentTeam.instructions });
   if (isChannel && currentChannel?.instructions?.trim())
-    pinned.push({ label: `Channel ${channelLabel(currentChannel.name)}`, text: currentChannel.instructions });
+    pinned.push({ label: t('Channel {name}', { name: channelLabel(currentChannel.name) }), text: currentChannel.instructions });
 
   const isDiscussionActiveHere =
     discussionState.inProgress &&
@@ -2749,8 +2758,8 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
       >
         <Sparkles size={15} className="shrink-0 text-violet-300" aria-hidden="true" />
         <div className="flex-1 min-w-[12rem]">
-          <p className="text-xs font-medium text-zinc-100">One step left: add an account</p>
-          <p className="text-[11px] text-zinc-400">Sign in with Claude or ChatGPT, or paste an API key, and your bots can start answering.</p>
+          <p className="text-xs font-medium text-zinc-100">{t('One step left: add an account')}</p>
+          <p className="text-[11px] text-zinc-400">{t('Sign in with Claude or ChatGPT, or paste an API key, and your bots can start answering.')}</p>
         </div>
         <button
           type="button"
@@ -2758,7 +2767,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
           className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-violet-600 hover:bg-violet-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300"
         >
           <KeyRound size={13} aria-hidden="true" />
-          {offerClaude ? 'Sign in with Claude' : 'Add an account'}
+          {offerClaude ? t('Sign in with Claude') : t('Add an account')}
         </button>
       </div>
     ) : null;
@@ -2768,8 +2777,8 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
         <div className="flex items-center gap-3">
           <SpaceTile space={space} size={40} />
           <div className="min-w-0">
-            <h1 className="text-base font-semibold text-zinc-100 truncate">Get {space.name} ready</h1>
-            <p className="text-xs text-zinc-400">Bots, teams and accounts here stay in {space.name}.</p>
+            <h1 className="text-base font-semibold text-zinc-100 truncate">{t('Get {space} ready', { space: space.name })}</h1>
+            <p className="text-xs text-zinc-400">{t('Bots, teams and accounts here stay in {space}.', { space: space.name })}</p>
           </div>
         </div>
         <ol className="space-y-2">
@@ -2779,22 +2788,22 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
                   done: true,
                   // Still offered once This machine is ready: more accounts and API keys go here too.
                   keepAction: true,
-                  title: readyAccounts === 1 ? '1 account ready' : `${readyAccounts} accounts ready`,
-                  detail: 'Add another Claude, Codex or Grok sign-in, or an API key.',
-                  action: { label: 'Add an account', icon: <KeyRound size={13} />, onClick: () => openSpaceSettings('accounts') },
+                  title: t(readyAccounts === 1 ? '{n} account ready' : '{n} accounts ready', { n: readyAccounts }),
+                  detail: t('Add another Claude, Codex or Grok sign-in, or an API key.'),
+                  action: { label: t('Add an account'), icon: <KeyRound size={13} />, onClick: () => openSpaceSettings('accounts') },
                 }
               : {
                   done: false,
-                  title: 'Add an account',
-                  detail: 'Sign in with Claude, Codex or Grok, add an API key, or use this machine.',
-                  action: { label: 'Add an account', icon: <KeyRound size={13} />, onClick: () => openSpaceSettings('accounts') },
+                  title: t('Add an account'),
+                  detail: t('Sign in with Claude, Codex or Grok, add an API key, or use this machine.'),
+                  action: { label: t('Add an account'), icon: <KeyRound size={13} />, onClick: () => openSpaceSettings('accounts') },
                 },
             {
               done: kwants.length > 0,
-              title: 'Add your first bot',
-              detail: `${space.name}'s #general opens with it.`,
+              title: t('Add your first bot'),
+              detail: t("{space}'s #general opens with it.", { space: space.name }),
               action: {
-                label: 'New bot',
+                label: t('New bot'),
                 icon: <Bot size={13} />,
                 onClick: () => {
                   setNewAgentTeam(null);
@@ -2803,7 +2812,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
                 },
               },
             },
-            { done: false, title: 'Message #general', detail: `Laya picks who answers, only from ${space.name}'s bots.` },
+            { done: false, title: t('Message #general'), detail: t("Laya picks who answers, only from {space}'s bots.", { space: space.name }) },
           ].map((step: { done: boolean; keepAction?: boolean; title: string; detail: string; action?: { label: string; icon: React.ReactNode; onClick: () => void } }, i) => (
             <li key={step.title} className="flex items-start gap-3 rounded-xl border border-zinc-800 bg-zinc-950/50 p-3">
               <span
@@ -2817,7 +2826,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
               <span className="flex-1 min-w-0">
                 <span className={`block text-xs font-medium ${step.done ? (step.keepAction ? 'text-zinc-300' : 'text-zinc-400 line-through') : 'text-zinc-100'}`}>
                   {step.title}
-                  {step.done && <span className="sr-only"> (done)</span>}
+                  {step.done && <span className="sr-only"> {t('(done)')}</span>}
                 </span>
                 <span className="block text-[11px] text-zinc-500">{step.detail}</span>
               </span>
@@ -2938,11 +2947,11 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
       names={missionNames}
       avatars={missionAvatars}
       onBack={backToList}
-      onOpenChat={(t, place) => {
-        const c = place ?? sourceChat(t);
+      onOpenChat={(task, place) => {
+        const c = place ?? sourceChat(task);
         if (!c) return;
         if (c.kwantId && c.threadId) return openThread(c.kwantId, c.threadId);
-        if (!openTarget({ channel_id: c.channelId, kwant_id: c.kwantId })) pushToast('That chat no longer exists.');
+        if (!openTarget({ channel_id: c.channelId, kwant_id: c.kwantId })) pushToast(t('That chat no longer exists.'));
       }}
       turns={missionTurns}
       teams={teams}
@@ -2950,7 +2959,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
       threadTitles={missionThreadTitles}
       onOpenPlace={(c) => {
         if (c.kwantId && c.threadId) return openThread(c.kwantId, c.threadId);
-        if (!openTarget({ channel_id: c.channelId, kwant_id: c.kwantId })) pushToast('That chat no longer exists.');
+        if (!openTarget({ channel_id: c.channelId, kwant_id: c.kwantId })) pushToast(t('That chat no longer exists.'));
       }}
     />
   );
@@ -3029,7 +3038,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
             setupBanner && isChannel ? (
               <FirstRunWelcome
                 bots={kwants}
-                actionLabel={offerClaude ? 'Sign in with Claude' : 'Add an account'}
+                actionLabel={offerClaude ? t('Sign in with Claude') : t('Add an account')}
                 onAction={offerClaude ? openClaudeSignIn : openSettings}
               />
             ) : undefined
@@ -3100,15 +3109,15 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
 
   const mainPane = needsSetup ? setupChecklist : page === 'parallel' ? parallel : page === 'board' && missionBoard ? missionsPage : page === 'inbox' ? inbox : !loaded ? (
     <main className="flex-1 flex items-center justify-center text-xs text-zinc-500">
-      <Loader2 size={14} className="mr-2 animate-spin motion-reduce:animate-none" aria-hidden="true" /> Opening {space.name}…
+      <Loader2 size={14} className="mr-2 animate-spin motion-reduce:animate-none" aria-hidden="true" /> {t('Opening {space}…', { space: space.name })}
     </main>
   ) : chat;
 
   const phoneTabs: Array<{ id: PhoneTab; label: string; icon: React.ReactNode; badge?: number }> = [
-    { id: 'chats', label: 'Chats', icon: <MessageSquare size={18} /> },
-    { id: 'bots', label: 'Bots', icon: <Bot size={18} /> },
-    { id: 'inbox', label: 'Inbox', icon: <Inbox size={18} />, badge: awayCount },
-    { id: 'space', label: 'Space', icon: <Settings size={18} /> },
+    { id: 'chats', label: t('Chats'), icon: <MessageSquare size={18} /> },
+    { id: 'bots', label: t('Bots'), icon: <Bot size={18} /> },
+    { id: 'inbox', label: t('Inbox'), icon: <Inbox size={18} />, badge: awayCount },
+    { id: 'space', label: t('Space'), icon: <Settings size={18} /> },
   ];
   const showPhoneList = isPhone && phoneView === 'list' && !needsSetup;
 
@@ -3135,7 +3144,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
               <div className="flex-1 min-h-0 flex">{mainPane}</div>
             )}
             {(showPhoneList || needsSetup) && (
-              <nav aria-label={`${space.name} sections`} className="shrink-0 grid grid-cols-4 border-t border-zinc-800 bg-zinc-900/95 pb-[env(safe-area-inset-bottom)]">
+              <nav aria-label={t('{space} sections', { space: space.name })} className="shrink-0 grid grid-cols-4 border-t border-zinc-800 bg-zinc-900/95 pb-[env(safe-area-inset-bottom)]">
                 {phoneTabs.map((t) => {
                   const active = t.id === phoneTab;
                   return (
@@ -3226,7 +3235,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
         {deletingKwant && (
           <DeleteBotDialog
             kwant={deletingKwant}
-            busy={workingKwants.has(deletingKwant.id) ? busyKwants[deletingKwant.id] ?? 'Working' : null}
+            busy={workingKwants.has(deletingKwant.id) ? busyKwants[deletingKwant.id] ?? t('Working') : null}
             onClose={() => setDeletingKwant(null)}
             onDeleted={handleKwantDeleted}
           />
@@ -3294,7 +3303,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
             <Suspense
               fallback={
                 <p className="flex items-center gap-2 text-xs text-zinc-400">
-                  <Loader2 size={13} className="animate-spin motion-reduce:animate-none" /> Loading…
+                  <Loader2 size={13} className="animate-spin motion-reduce:animate-none" /> {t('Loading…')}
                 </p>
               }
             >

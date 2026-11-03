@@ -3,6 +3,7 @@ import { AlertTriangle, CheckCircle2, ExternalLink, Globe, KeyRound, Loader2, Mi
 import { ModernAvatar } from './ModernAvatar';
 import { Suggestion, SuggestionMeta, failureText, inputKey, inputLabel, installPayload, runsLine, suggestionView } from '../mcpSuggestions';
 import { inDesktopApp } from '../externalLinks';
+import { t, tj } from '../i18n';
 
 export interface McpSuggestionCardProps {
   meta: SuggestionMeta;
@@ -56,7 +57,7 @@ export const McpSuggestionCard: React.FC<McpSuggestionCardProps> = ({
     if (!pending || busy) return;
     const { body, missing } = installPayload(view.inputs, values);
     if (missing.length) {
-      setError(`Fill in ${missing.join(', ')} first.`);
+      setError(t('Fill in {fields} first.', { fields: missing.join(', ') }));
       return;
     }
     setBusy('install');
@@ -95,7 +96,7 @@ export const McpSuggestionCard: React.FC<McpSuggestionCardProps> = ({
         <div className="px-4 pt-3 pb-2 space-y-1.5">
           <span className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-400">
             <Plug size={12} className="text-sky-300" aria-hidden="true" />
-            <span className="text-zinc-200">{kwantName}</span> suggests a tool
+            {tj('{name} suggests a tool', { name: <span className="text-zinc-200">{kwantName}</span> })}
           </span>
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
             <h3 id={headingId} className="text-sm font-semibold text-zinc-100 break-words leading-snug">
@@ -106,7 +107,7 @@ export const McpSuggestionCard: React.FC<McpSuggestionCardProps> = ({
           {view.description && <p className="text-sm text-zinc-300 break-words leading-relaxed">{view.description}</p>}
           {view.reason && (
             <p className="text-sm text-zinc-300 break-words leading-relaxed">
-              <span className="text-zinc-500">Why: </span>
+              <span className="text-zinc-500">{t('Why: ')}</span>
               {view.reason}
             </p>
           )}
@@ -116,11 +117,11 @@ export const McpSuggestionCard: React.FC<McpSuggestionCardProps> = ({
           <div className="flex flex-wrap items-center gap-2 text-[11px]">
             {local ? (
               <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 font-medium text-amber-200">
-                <Monitor size={11} aria-hidden="true" /> Runs on your computer
+                <Monitor size={11} aria-hidden="true" /> {t('Runs on your computer')}
               </span>
             ) : (
               <span className="inline-flex items-center gap-1 rounded-full border border-sky-500/30 bg-sky-500/10 px-2 py-0.5 font-medium text-sky-200">
-                <Globe size={11} aria-hidden="true" /> Online service
+                <Globe size={11} aria-hidden="true" /> {t('Online service')}
               </span>
             )}
             {view.repository_url && (
@@ -130,16 +131,16 @@ export const McpSuggestionCard: React.FC<McpSuggestionCardProps> = ({
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-zinc-400 hover:text-zinc-200 underline-offset-2 hover:underline rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400"
               >
-                Source code <ExternalLink size={11} aria-hidden="true" />
-                <span className="sr-only">(opens in a new tab)</span>
+                {t('Source code')} <ExternalLink size={11} aria-hidden="true" />
+                <span className="sr-only">{t('(opens in a new tab)')}</span>
               </a>
             )}
           </div>
-          <p className="text-[11px] text-zinc-500">{local ? 'Installing runs this command:' : 'Installing connects to:'}</p>
-          <code className="block text-xs text-zinc-200 font-mono break-all whitespace-pre-wrap">{runs || 'Unknown'}</code>
+          <p className="text-[11px] text-zinc-500">{local ? t('Installing runs this command:') : t('Installing connects to:')}</p>
+          <code className="block text-xs text-zinc-200 font-mono break-all whitespace-pre-wrap">{runs || t('Unknown')}</code>
           {(view.fixed_env.length > 0 || view.fixed_headers.length > 0) && (
             <p className="text-[11px] text-zinc-500 break-words">
-              Also sets: {[...view.fixed_env, ...view.fixed_headers].join(', ')}
+              {t('Also sets: {names}', { names: [...view.fixed_env, ...view.fixed_headers].join(', ') })}
             </p>
           )}
         </div>
@@ -162,7 +163,7 @@ export const McpSuggestionCard: React.FC<McpSuggestionCardProps> = ({
                   <label htmlFor={id} className="flex flex-wrap items-center gap-1.5 text-xs text-zinc-300">
                     {i.secret && <KeyRound size={11} className="text-zinc-500" aria-hidden="true" />}
                     <span className={code ? 'font-mono' : 'font-medium'}>{label}</span>
-                    {!i.required && <span className="text-zinc-500">(optional)</span>}
+                    {!i.required && <span className="text-zinc-500">{t('(optional)')}</span>}
                   </label>
                   {(i.description || note) && (
                     <p id={`${id}-hint`} className="text-[11px] text-zinc-500 break-words">
@@ -181,7 +182,7 @@ export const McpSuggestionCard: React.FC<McpSuggestionCardProps> = ({
                     aria-invalid={!!failure || undefined}
                     disabled={installing || busy !== null}
                     value={values[key] ?? ''}
-                    placeholder={i.placeholder && !i.secret ? i.placeholder : i.secret ? 'Paste it here' : ''}
+                    placeholder={i.placeholder && !i.secret ? i.placeholder : i.secret ? t('Paste it here') : ''}
                     onChange={(e) => setValues((v) => ({ ...v, [key]: e.target.value }))}
                     className="w-full min-h-[40px] sm:min-h-[34px] rounded-lg bg-zinc-950 border border-zinc-800 px-2.5 py-1.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-sky-500/60 disabled:opacity-60"
                   />
@@ -191,7 +192,7 @@ export const McpSuggestionCard: React.FC<McpSuggestionCardProps> = ({
             {failure && (
               <p role="alert" className="flex items-start gap-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 px-2.5 py-1.5 text-xs text-rose-200 break-words">
                 <AlertTriangle size={13} className="mt-px shrink-0" aria-hidden="true" />
-                <span>It didn’t install. {failureText(failure, view.inputs.length > 0)}</span>
+                <span>{t('It didn’t install. {reason}', { reason: failureText(failure, view.inputs.length > 0) })}</span>
               </p>
             )}
             <div className="flex flex-wrap items-center gap-2 pt-0.5">
@@ -201,7 +202,7 @@ export const McpSuggestionCard: React.FC<McpSuggestionCardProps> = ({
                 className="inline-flex items-center justify-center gap-1.5 min-h-[40px] sm:min-h-[34px] px-3.5 rounded-xl text-sm font-medium bg-sky-500 text-zinc-950 hover:bg-sky-400 disabled:bg-zinc-800 disabled:text-zinc-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
               >
                 {installing && <Loader2 size={13} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />}
-                {installing ? 'Installing and testing…' : failure ? 'Try again' : 'Install'}
+                {installing ? t('Installing and testing…') : failure ? t('Try again') : t('Install')}
               </button>
               <button
                 type="button"
@@ -209,7 +210,7 @@ export const McpSuggestionCard: React.FC<McpSuggestionCardProps> = ({
                 disabled={busy !== null || installing}
                 className="min-h-[40px] sm:min-h-[34px] px-3 rounded-xl text-sm text-zinc-300 border border-zinc-700 hover:bg-zinc-800 disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-zinc-500"
               >
-                {busy === 'dismiss' ? 'Saying no…' : 'Not now'}
+                {busy === 'dismiss' ? t('Saying no…') : t('Not now')}
               </button>
             </div>
           </form>
@@ -220,21 +221,21 @@ export const McpSuggestionCard: React.FC<McpSuggestionCardProps> = ({
             {view.status === 'installed' ? (
               needsSignIn ? (
                 <span className="inline-flex items-center gap-1.5 text-amber-200">
-                  <KeyRound size={13} aria-hidden="true" /> Installed. Sign in to {view.title} so {kwantName} can use it.
+                  <KeyRound size={13} aria-hidden="true" /> {t('Installed. Sign in to {title} so {name} can use it.', { title: view.title, name: kwantName })}
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-1.5 text-emerald-300">
-                  <CheckCircle2 size={13} aria-hidden="true" /> Ready. {kwantName} can use it from its next reply.
+                  <CheckCircle2 size={13} aria-hidden="true" /> {t('Ready. {name} can use it from its next reply.', { name: kwantName })}
                 </span>
               )
             ) : view.status === 'dismissed' ? (
               <span className="inline-flex items-center gap-1.5 text-zinc-400">
-                <MinusCircle size={13} aria-hidden="true" /> Not installed. {kwantName} carries on without it.
+                <MinusCircle size={13} aria-hidden="true" /> {t('Not installed. {name} carries on without it.', { name: kwantName })}
               </span>
             ) : installing ? (
-              <span className="sr-only">Installing and testing…</span>
+              <span className="sr-only">{t('Installing and testing…')}</span>
             ) : (
-              <span className="text-zinc-500">Only you can install it. Keys you type are saved hidden and never appear in the chat.</span>
+              <span className="text-zinc-500">{t('Only you can install it. Keys you type are saved hidden and never appear in the chat.')}</span>
             )}
           </p>
           {view.status === 'installed' && needsSignIn && view.server_id && (
@@ -246,7 +247,7 @@ export const McpSuggestionCard: React.FC<McpSuggestionCardProps> = ({
                 className="inline-flex items-center gap-1.5 min-h-[40px] sm:min-h-[34px] px-3.5 rounded-xl text-sm font-medium bg-amber-500 text-zinc-950 hover:bg-amber-400 disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400"
               >
                 {busy === 'signin' && <Loader2 size={13} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />}
-                {busy === 'signin' ? (inDesktopApp() ? 'Finish signing in in your browser…' : 'Waiting for sign-in…') : signInError ? 'Try signing in again' : 'Sign in'}
+                {busy === 'signin' ? (inDesktopApp() ? t('Finish signing in in your browser…') : t('Waiting for sign-in…')) : signInError ? t('Try signing in again') : t('Sign in')}
               </button>
               {signInError && (
                 <span role="alert" className="text-rose-300 break-words">

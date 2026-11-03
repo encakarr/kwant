@@ -1,6 +1,7 @@
 import React, { useId, useState } from 'react';
 import { X } from 'lucide-react';
 import { PHRASE_LIMITS, TagLimits, addTags } from '../tagList';
+import { t } from '../i18n';
 
 /** A list of short phrases: type and press Enter (or a comma) to add one, × or Backspace to remove. */
 export const TagListInput: React.FC<{
@@ -47,13 +48,13 @@ export const TagListInput: React.FC<{
           error ? 'border-rose-500/60' : 'border-zinc-800'
         }`}
       >
-        {value.map((t) => (
-          <span key={t} className={`inline-flex items-center gap-1 max-w-full rounded-md border pl-2 pr-0.5 text-[11px] ${chip}`}>
-            <span className="truncate">{t}</span>
+        {value.map((tag) => (
+          <span key={tag} className={`inline-flex items-center gap-1 max-w-full rounded-md border pl-2 pr-0.5 text-[11px] ${chip}`}>
+            <span className="truncate">{tag}</span>
             <button
               type="button"
-              onClick={() => onChange(value.filter((x) => x !== t))}
-              aria-label={`Remove ${t}`}
+              onClick={() => onChange(value.filter((x) => x !== tag))}
+              aria-label={t('Remove {name}', { name: tag })}
               className="p-1 rounded text-zinc-400 hover:text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500"
             >
               <X size={11} aria-hidden="true" />

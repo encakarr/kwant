@@ -1,5 +1,6 @@
 // File attachments in chats: uploads from the composer and files agents share (batch 2 / D).
 import { parseMetaObject } from './questions';
+import { t } from './i18n';
 
 export const MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024;
 export const MAX_ATTACHMENTS = 10;
@@ -46,9 +47,9 @@ export function fileKind(mime: string, name: string): string {
   if (m === 'application/json') return 'JSON';
   if (m === 'text/csv') return 'CSV';
   if (m === 'text/markdown') return 'Markdown';
-  if (m.startsWith('text/')) return 'Text';
+  if (m.startsWith('text/')) return t('Text');
   const ext = /\.([a-z0-9]{1,6})$/i.exec(name)?.[1];
-  return ext ? ext.toUpperCase() : 'File';
+  return ext ? ext.toUpperCase() : t('File');
 }
 
 /** The files on a message (user uploads or an agent's `share_file`), skipping malformed entries. */
@@ -67,8 +68,8 @@ export const isSharedFileMessage = (meta: unknown) => parseMetaObject(meta)?.kin
 
 /** Checked before uploading, so a too-big file never leaves the browser. */
 export function preflightFile(f: { name: string; size: number }): string | null {
-  if (f.size === 0) return `${f.name || 'That file'} is empty.`;
-  if (f.size > MAX_ATTACHMENT_BYTES) return `${f.name || 'That file'} is too big (${(f.size / (1024 * 1024)).toFixed(1)} MB). Max 20 MB.`;
+  if (f.size === 0) return t('{name} is empty.', { name: f.name || t('That file') });
+  if (f.size > MAX_ATTACHMENT_BYTES) return t('{name} is too big ({size} MB). Max 20 MB.', { name: f.name || t('That file'), size: (f.size / (1024 * 1024)).toFixed(1) });
   return null;
 }
 
@@ -76,18 +77,18 @@ export function preflightFile(f: { name: string; size: number }): string | null 
 export function uploadErrorText(status: number, serverMessage?: string): string {
   switch (status) {
     case 413:
-      return 'Too big. Max 20 MB.';
+      return t('Too big. Max 20 MB.');
     case 415:
-      return "That file type isn't supported. Images, PDFs and text files work.";
+      return t("That file type isn't supported. Images, PDFs and text files work.");
     case 400:
-      return serverMessage || 'The file is empty or its name is not allowed.';
+      return serverMessage || t('The file is empty or its name is not allowed.');
     case 401:
     case 403:
-      return 'Your session ended. Sign in again.';
+      return t('Your session ended. Sign in again.');
     case 0:
-      return 'Upload interrupted. Check the connection and retry.';
+      return t('Upload interrupted. Check the connection and retry.');
     default:
-      return serverMessage || `Upload failed (HTTP ${status}).`;
+      return serverMessage || t('Upload failed (HTTP {status}).', { status });
   }
 }
 
@@ -103,8 +104,8 @@ export class UploadError extends Error {
 
 /** Why `/chat/send` refused a message's files, or null when the status isn't about them. */
 export function sendAttachmentErrorText(status: number): string | null {
-  if (status === 409) return 'A file here was already sent. Attach it again to resend.';
-  if (status === 400) return `Couldn't attach the files (unknown file, or more than ${MAX_ATTACHMENTS}).`;
+  if (status === 409) return t('A file here was already sent. Attach it again to resend.');
+  if (status === 400) return t("Couldn't attach the files (unknown file, or more than {max}).", { max: MAX_ATTACHMENTS });
   return null;
 }
 

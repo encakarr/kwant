@@ -3,6 +3,7 @@
 // token; the code only ever goes in a POST body.
 
 import type { EngineInfo } from './engines';
+import { t } from './i18n';
 
 export type ClaudeLoginState = 'starting' | 'waiting_for_code' | 'verifying' | 'done' | 'failed' | 'expired' | 'cancelled';
 
@@ -38,7 +39,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
       body: body === undefined ? undefined : JSON.stringify(body),
     });
   } catch {
-    throw new ClaudeLoginError('Couldn’t reach the server.', 0);
+    throw new ClaudeLoginError(t('Couldn’t reach the server.'), 0);
   }
   if (r.status === 204) return undefined as T;
   const d = await r.json().catch(() => null);
@@ -64,9 +65,9 @@ export const isLoginActive = (s: ClaudeLoginState) => s === 'starting' || s === 
 export function loginFailure(s: Pick<ClaudeLoginSession, 'state' | 'detail'>): string | null {
   switch (s.state) {
     case 'failed':
-      return s.detail || 'Sign-in failed. Start it again.';
+      return s.detail || t('Sign-in failed. Start it again.');
     case 'expired':
-      return s.detail || 'Sign-in timed out. Start it again.';
+      return s.detail || t('Sign-in timed out. Start it again.');
     default:
       return null;
   }

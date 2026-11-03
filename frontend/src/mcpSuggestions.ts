@@ -3,6 +3,7 @@
 import { parseMetaObject } from './questions';
 import { McpServer, McpTestResult, joinCommandLine } from './mcp';
 import { request } from './threads';
+import { t } from './i18n';
 
 export type SuggestionStatus = 'pending' | 'installing' | 'installed' | 'dismissed';
 
@@ -171,7 +172,12 @@ export function inputLabel(i: SuggestionInput): { label: string; code: boolean; 
   const slot = templateSlot(i.template);
   if (slot) {
     const label = humanizeSlot(slot);
-    return { label, code: false, note: `Sent as the ${i.name} ${i.kind === 'header' ? 'header' : 'setting'}: ${i.template!.replace(`{${slot}}`, `<${label.toLowerCase()}>`)}` };
+    const sent = i.template!.replace(`{${slot}}`, `<${label.toLowerCase()}>`);
+    return {
+      label,
+      code: false,
+      note: t(i.kind === 'header' ? 'Sent as the {name} header: {value}' : 'Sent as the {name} setting: {value}', { name: i.name, value: sent }),
+    };
   }
   return { label: i.name, code: true, note: null };
 }
@@ -202,8 +208,9 @@ export function installPayload(
 
 /** A failed install in plain words: a refused key says so instead of the server's transport error. */
 export function failureText(raw: string, asksForKeys: boolean): string {
-  if (asksForKeys && /\b(401|403)\b|unauthori[sz]ed|forbidden/i.test(raw)) return 'The server turned down the key. Check it and try again.';
-  return `${raw.trim().replace(/\.?$/, '.')}${asksForKeys ? ' Check what you typed and try again.' : ' You can try again.'}`;
+  if (asksForKeys && /\b(401|403)\b|unauthori[sz]ed|forbidden/i.test(raw)) return t('The server turned down the key. Check it and try again.');
+  const error = raw.trim().replace(/\.?$/, '.');
+  return t(asksForKeys ? '{error} Check what you typed and try again.' : '{error} You can try again.', { error });
 }
 
 const enc = encodeURIComponent;

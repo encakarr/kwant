@@ -2,6 +2,7 @@ import React, { useEffect, useState, useSyncExternalStore } from 'react';
 import { ExternalLink, Star } from 'lucide-react';
 import { INSTALL_HINT_DISMISSED_KEY, installHintKind, isIos, isStandalone } from '../pwa';
 import { useInstall } from '../useInstall';
+import { t, tj } from '../i18n';
 import { STAR_REPO_URL, StarAskBlockers, StarAskStore, shouldAskForStar, starAskStore } from '../starAsk';
 
 const PHONE_QUERY = '(max-width: 767px)';
@@ -25,9 +26,9 @@ export const StarAskView: React.FC<ViewProps> = ({ onStar, onLater, onNever }) =
     <img src="/icons/icon-192.png" alt="" width={36} height={36} className="shrink-0 rounded-lg [image-rendering:pixelated]" />
     <div className="flex-1 min-w-0">
       <p id="star-ask-title" className="font-medium text-zinc-100">
-        kwant bots run on coffee and GitHub stars <span aria-hidden="true">⭐</span>
+        {tj('kwant bots run on coffee and GitHub stars {star}', { star: <span aria-hidden="true">⭐</span> })}
       </p>
-      <p className="mt-0.5 text-zinc-400 leading-relaxed">If your bots have been handy, toss one our way? It helps other people find kwant bots.</p>
+      <p className="mt-0.5 text-zinc-400 leading-relaxed">{t('If your bots have been handy, toss one our way? It helps other people find kwant bots.')}</p>
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <a
           href={STAR_REPO_URL}
@@ -36,13 +37,13 @@ export const StarAskView: React.FC<ViewProps> = ({ onStar, onLater, onNever }) =
           onClick={onStar}
           className={`${btn} bg-amber-400 text-zinc-950 hover:bg-amber-300`}
         >
-          <Star size={14} className="fill-current" aria-hidden="true" /> Star on GitHub
+          <Star size={14} className="fill-current" aria-hidden="true" /> {t('Star on GitHub')}
         </a>
         <button type="button" onClick={onLater} className={`${btn} text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100`}>
-          Maybe later
+          {t('Maybe later')}
         </button>
         <button type="button" onClick={onNever} className={`${btn} text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300`}>
-          Don’t ask again
+          {t('Don’t ask again')}
         </button>
       </div>
     </div>
@@ -96,7 +97,7 @@ export const StarAskSettingsLink: React.FC<{ store?: StarAskStore }> = ({ store 
   >
     <Star size={15} className="text-amber-300" aria-hidden="true" />
     <span className="flex-1">
-      Star kwant bots on GitHub<span className="sr-only"> (opens in your browser)</span>
+      {t('Star kwant bots on GitHub')}<span className="sr-only">{` ${t('(opens in your browser)')}`}</span>
     </span>
     <ExternalLink size={13} className="text-zinc-500" aria-hidden="true" />
   </a>

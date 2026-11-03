@@ -58,6 +58,7 @@ import {
   sourceStatusText,
   tabOf,
 } from '../looseEnds';
+import { t, tj } from '../i18n';
 
 const TONES: Record<Tone, string> = {
   amber: 'border-amber-500/30 bg-amber-500/10 text-amber-200',
@@ -80,13 +81,13 @@ const quietBtn = `${actionBtn} border border-zinc-700 bg-zinc-800/80 text-zinc-1
 const field =
   'w-full min-h-[36px] px-2.5 py-1.5 bg-zinc-950 border border-zinc-800 rounded-lg text-xs text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-sky-500';
 
-const NOTHING_SENT = 'Draft only — copy it and send it yourself. Nothing here is ever sent for you.';
+const NOTHING_SENT = t('Draft only — copy it and send it yourself. Nothing here is ever sent for you.');
 
 /** Snooze lengths offered on a card. */
 const SNOOZES: Array<{ days: number; label: string }> = [
-  { days: 3, label: '3 days' },
-  { days: 7, label: '1 week' },
-  { days: 30, label: '1 month' },
+  { days: 3, label: t('3 days') },
+  { days: 7, label: t('1 week') },
+  { days: 30, label: t('1 month') },
 ];
 
 export interface LooseCaseCardProps {
@@ -144,10 +145,10 @@ export const LooseCaseCard: React.FC<LooseCaseCardProps> = ({ c, busy, now = Dat
             {sourceLabel(c.source)}
           </span>
           <span className={`px-1.5 py-px rounded-full border ${TONES[kind.tone]}`}>{kind.label}</span>
-          {c.status === 'snoozed' && c.snoozed_until && <span className={`px-1.5 py-px rounded-full border ${TONES.zinc}`}>Snoozed until {shortDate(c.snoozed_until)}</span>}
-          {c.status === 'waiting_reply' && <span className={`px-1.5 py-px rounded-full border ${TONES.sky}`}>You followed up</span>}
-          {c.status === 'closed' && <span className={`px-1.5 py-px rounded-full border ${TONES.emerald}`}>Done</span>}
-          {c.status === 'dismissed' && <span className={`px-1.5 py-px rounded-full border ${TONES.zinc}`}>Dismissed</span>}
+          {c.status === 'snoozed' && c.snoozed_until && <span className={`px-1.5 py-px rounded-full border ${TONES.zinc}`}>{t('Snoozed until {date}', { date: shortDate(c.snoozed_until) })}</span>}
+          {c.status === 'waiting_reply' && <span className={`px-1.5 py-px rounded-full border ${TONES.sky}`}>{t('You followed up')}</span>}
+          {c.status === 'closed' && <span className={`px-1.5 py-px rounded-full border ${TONES.emerald}`}>{t('Done')}</span>}
+          {c.status === 'dismissed' && <span className={`px-1.5 py-px rounded-full border ${TONES.zinc}`}>{t('Dismissed')}</span>}
           <time dateTime={c.last_activity_at} title={new Date(c.last_activity_at).toLocaleString()} className="ml-auto shrink-0 text-zinc-500">
             {ageText(c.age_days)}
           </time>
@@ -159,7 +160,7 @@ export const LooseCaseCard: React.FC<LooseCaseCardProps> = ({ c, busy, now = Dat
           </h4>
           {who && (
             <p className="text-xs text-zinc-400 break-words">
-              With {c.counterpart_name && c.counterpart && c.counterpart_name !== c.counterpart ? `${c.counterpart_name} (${c.counterpart})` : who}
+              {t('With {who}', { who: c.counterpart_name && c.counterpart && c.counterpart_name !== c.counterpart ? `${c.counterpart_name} (${c.counterpart})` : who })}
             </p>
           )}
         </div>
@@ -173,13 +174,13 @@ export const LooseCaseCard: React.FC<LooseCaseCardProps> = ({ c, busy, now = Dat
                 <CalendarClock size={12} aria-hidden="true" /> {due.text}
               </span>
             )}
-            {c.reference && <span className="text-zinc-400 break-all">Reference: {c.reference}</span>}
+            {c.reference && <span className="text-zinc-400 break-all">{t('Reference: {reference}', { reference: c.reference })}</span>}
           </div>
         )}
 
         {c.evidence.length > 0 && (
           <div className="space-y-1.5">
-            <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Evidence</p>
+            <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">{t('Evidence')}</p>
             {c.evidence.map((e, i) => (
               <figure key={i} className="rounded-lg border border-zinc-800 bg-zinc-950/60 px-3 py-2">
                 <blockquote className="flex gap-2 text-xs text-zinc-200 whitespace-pre-wrap break-words">
@@ -187,13 +188,13 @@ export const LooseCaseCard: React.FC<LooseCaseCardProps> = ({ c, busy, now = Dat
                   <span>{e.quote}</span>
                 </blockquote>
                 <figcaption className="mt-1 text-[11px] text-zinc-500 break-words">
-                  {e.outbound ? 'You' : e.from}, <time dateTime={e.at}>{shortDate(e.at)}</time>
+                  {tj('{who}, {when}', { who: e.outbound ? t('You') : e.from, when: <time dateTime={e.at}>{shortDate(e.at)}</time> })}
                 </figcaption>
               </figure>
             ))}
             {link && (
               <a href={link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[11px] text-sky-300 hover:text-sky-200 underline-offset-2 hover:underline">
-                <ExternalLink size={12} aria-hidden="true" /> Open the original
+                <ExternalLink size={12} aria-hidden="true" /> {t('Open the original')}
               </a>
             )}
           </div>
@@ -201,7 +202,7 @@ export const LooseCaseCard: React.FC<LooseCaseCardProps> = ({ c, busy, now = Dat
 
         {c.source === 'document' && onOpenLetter && (
           <button type="button" onClick={() => onOpenLetter(c.id)} className={`${actionBtn} bg-sky-500 hover:bg-sky-400 text-zinc-950 font-semibold`} data-open-letter>
-            <FileText size={13} aria-hidden="true" /> Open letter
+            <FileText size={13} aria-hidden="true" /> {t('Open letter')}
           </button>
         )}
 
@@ -211,7 +212,7 @@ export const LooseCaseCard: React.FC<LooseCaseCardProps> = ({ c, busy, now = Dat
             onClick={() => onOpenChat?.(chat.kwantId, chat.threadId)}
             className="inline-flex min-h-[32px] items-center gap-1 text-[11px] text-sky-300 hover:text-sky-200 underline-offset-2 hover:underline"
           >
-            <MessageSquare size={12} aria-hidden="true" /> Open chat
+            <MessageSquare size={12} aria-hidden="true" /> {t('Open chat')}
           </button>
         )}
 
@@ -219,21 +220,21 @@ export const LooseCaseCard: React.FC<LooseCaseCardProps> = ({ c, busy, now = Dat
           <div className="rounded-lg border border-sky-500/20 bg-sky-500/5 p-3 space-y-2">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <p className="text-[11px] font-semibold text-sky-200">
-                Draft {c.draft.to ? `to ${c.draft.to}` : ''}
-                {c.draft.generated_by === 'model' && <span className="ml-1 font-normal text-zinc-500">(written by a model)</span>}
+                {c.draft.to ? t('Draft to {to}', { to: c.draft.to }) : t('Draft')}
+                {c.draft.generated_by === 'model' && <span className="ml-1 font-normal text-zinc-500">{t('(written by a model)')}</span>}
               </p>
             </div>
             <p className="text-[11px] text-amber-200" data-nothing-sent>
               {NOTHING_SENT}
             </p>
-            {c.draft.subject && <p className="text-xs text-zinc-300 break-words">Subject: {c.draft.subject}</p>}
+            {c.draft.subject && <p className="text-xs text-zinc-300 break-words">{t('Subject: {subject}', { subject: c.draft.subject })}</p>}
             <pre className="max-h-48 overflow-y-auto whitespace-pre-wrap break-words font-sans text-xs text-zinc-100 bg-zinc-950/60 border border-zinc-800 rounded-lg p-2.5 select-text">
               {c.draft.body}
             </pre>
             <div className="flex flex-wrap items-center gap-2">
               <button type="button" onClick={copy} className={quietBtn}>
                 {copied === 'ok' ? <Check size={13} aria-hidden="true" /> : <Copy size={13} aria-hidden="true" />}
-                {copied === 'ok' ? 'Copied' : 'Copy draft'}
+                {copied === 'ok' ? t('Copied') : t('Copy draft')}
               </button>
               {open && (
                 <a href={open.href} target={open.href.startsWith('mailto:') ? undefined : '_blank'} rel="noopener noreferrer" className={quietBtn}>
@@ -241,13 +242,13 @@ export const LooseCaseCard: React.FC<LooseCaseCardProps> = ({ c, busy, now = Dat
                 </a>
               )}
               <span role="status" className="text-[11px] text-zinc-400">
-                {copied === 'failed' ? 'Couldn’t copy here: select the text above and copy it.' : ''}
+                {copied === 'failed' ? t('Couldn’t copy here: select the text above and copy it.') : ''}
               </span>
             </div>
           </div>
         )}
 
-        <div role="group" aria-label={`What to do with: ${c.title}`} className="flex flex-wrap gap-2">
+        <div role="group" aria-label={t('What to do with: {title}', { title: c.title })} className="flex flex-wrap gap-2">
           {actionsFor(c).map((a) => (
             <button
               key={a}
@@ -264,14 +265,14 @@ export const LooseCaseCard: React.FC<LooseCaseCardProps> = ({ c, busy, now = Dat
           ))}
           {busy && (
             <span className="inline-flex items-center gap-1.5 text-[11px] text-zinc-400">
-              <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> Saving…
+              <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> {t('Saving…')}
             </span>
           )}
         </div>
 
         {choice === 'snooze' && (
-          <div role="group" aria-label="Snooze for" className="flex flex-wrap items-center gap-2 text-xs">
-            <span className="text-zinc-400">Bring it back in</span>
+          <div role="group" aria-label={t('Snooze for')} className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="text-zinc-400">{t('Bring it back in')}</span>
             {SNOOZES.map((s) => (
               <button key={s.days} type="button" disabled={busy} className={quietBtn} onClick={() => (setChoice(null), onAction(c, 'snooze', { days: s.days }))}>
                 {s.label}
@@ -280,13 +281,13 @@ export const LooseCaseCard: React.FC<LooseCaseCardProps> = ({ c, busy, now = Dat
           </div>
         )}
         {choice === 'dismiss' && (
-          <div role="group" aria-label="Dismiss" className="flex flex-wrap items-center gap-2 text-xs">
+          <div role="group" aria-label={t('Dismiss')} className="flex flex-wrap items-center gap-2 text-xs">
             <button type="button" disabled={busy} className={quietBtn} onClick={() => (setChoice(null), onAction(c, 'dismiss', { scope: 'thread' }))}>
-              Just this one
+              {t('Just this one')}
             </button>
             {c.counterpart && (
               <button type="button" disabled={busy} className={quietBtn} onClick={() => (setChoice(null), onAction(c, 'dismiss', { scope: 'sender' }))}>
-                Everything from {c.counterpart_name || c.counterpart}
+                {t('Everything from {who}', { who: c.counterpart_name || c.counterpart })}
               </button>
             )}
           </div>
@@ -314,21 +315,21 @@ export const NeedsBitwarden: React.FC<{ message: string; locked: boolean; onRead
       if (local > 0) await storeApi.migrate();
       onReady();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Couldn’t move the passwords.');
+      setError(e instanceof Error ? e.message : t('Couldn’t move the passwords.'));
     }
   };
 
   return (
     <div role="alert" className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 space-y-2" data-needs-bitwarden>
-      <p className="text-xs text-amber-100">{locked ? 'Bitwarden is locked. Unlock it to save this login there.' : message}</p>
-      <p className="text-[11px] text-amber-100/80">Your login stays in this form until it’s saved. Nothing was saved yet.</p>
+      <p className="text-xs text-amber-100">{locked ? t('Bitwarden is locked. Unlock it to save this login there.') : message}</p>
+      <p className="text-[11px] text-amber-100/80">{t('Your login stays in this form until it’s saved. Nothing was saved yet.')}</p>
       {!step ? (
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={() => setStep(true)} disabled={!s} className={`${actionBtn} bg-sky-500 hover:bg-sky-400 text-zinc-950 font-semibold`}>
-            {mode === 'unlock' ? 'Unlock Bitwarden' : 'Move to Bitwarden'}
+            {mode === 'unlock' ? t('Unlock Bitwarden') : t('Move to Bitwarden')}
           </button>
           <button type="button" onClick={onCancel} className={quietBtn}>
-            Not now
+            {t('Not now')}
           </button>
         </div>
       ) : (
@@ -383,7 +384,7 @@ export const AddSourceForm: React.FC<{ onAdded: (s: LooseSource) => void; onCanc
       onAdded(r.source);
     } catch (err) {
       if (err instanceof LooseEndsError && (err.needsBitwarden || err.locked)) setVault({ message: err.message, locked: err.locked });
-      else setError(err instanceof Error ? err.message : 'Couldn’t add it.');
+      else setError(err instanceof Error ? err.message : t('Couldn’t add it.'));
     } finally {
       setBusy(false);
     }
@@ -400,13 +401,13 @@ export const AddSourceForm: React.FC<{ onAdded: (s: LooseSource) => void; onCanc
     <form onSubmit={submit} className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3 sm:p-4 space-y-3" aria-labelledby={`${id}-h`}>
       <div className="flex items-center justify-between gap-2">
         <h4 id={`${id}-h`} className="text-xs font-semibold text-zinc-200">
-          Add a source
+          {t('Add a source')}
         </h4>
-        <button type="button" onClick={onCancel} aria-label="Close" className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800">
+        <button type="button" onClick={onCancel} aria-label={t('Close')} className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800">
           <X size={14} />
         </button>
       </div>
-      <div role="radiogroup" aria-label="Kind of source" className="grid grid-cols-2 gap-2">
+      <div role="radiogroup" aria-label={t('Kind of source')} className="grid grid-cols-2 gap-2">
         {(['imap', 'github'] as const).map((k) => (
           <button
             key={k}
@@ -416,7 +417,7 @@ export const AddSourceForm: React.FC<{ onAdded: (s: LooseSource) => void; onCanc
             onClick={() => (setKind(k), setError(null), setVault(null))}
             className={`${actionBtn} justify-center border ${kind === k ? 'border-sky-500/50 bg-sky-500/10 text-sky-200' : 'border-zinc-700 bg-zinc-800/60 text-zinc-300 hover:bg-zinc-800'}`}
           >
-            {SOURCE_ICON[k]} {k === 'imap' ? 'Email (IMAP)' : 'GitHub'}
+            {SOURCE_ICON[k]} {k === 'imap' ? t('Email (IMAP)') : 'GitHub'}
           </button>
         ))}
       </div>
@@ -424,64 +425,64 @@ export const AddSourceForm: React.FC<{ onAdded: (s: LooseSource) => void; onCanc
       {kind === 'imap' ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="sm:col-span-2">
-            {label(`${id}-host`, 'Mail server')}
+            {label(`${id}-host`, t('Mail server'))}
             <input id={`${id}-host`} className={field} value={imap.host} onChange={(e) => set('host', e.target.value)} placeholder="imap.gmail.com" autoComplete="off" spellCheck={false} />
           </div>
           <div>
-            {label(`${id}-sec`, 'Connection')}
+            {label(`${id}-sec`, t('Connection'))}
             <select id={`${id}-sec`} className={field} value={imap.security} onChange={(e) => set('security', e.target.value as ImapFields['security'])}>
-              <option value="tls">Encrypted (TLS, port 993)</option>
-              <option value="starttls">STARTTLS (port 143)</option>
+              <option value="tls">{t('Encrypted (TLS, port 993)')}</option>
+              <option value="starttls">{t('STARTTLS (port 143)')}</option>
               <option value="plain" disabled={!local}>
-                Not encrypted (this computer only)
+                {t('Not encrypted (this computer only)')}
               </option>
             </select>
           </div>
           <div>
-            {label(`${id}-port`, 'Port')}
+            {label(`${id}-port`, t('Port'))}
             <input id={`${id}-port`} className={field} inputMode="numeric" value={imap.port} onChange={(e) => set('port', e.target.value.replace(/\D/g, ''))} placeholder={imap.security === 'tls' ? '993' : '143'} />
           </div>
           <div>
-            {label(`${id}-user`, 'Login')}
+            {label(`${id}-user`, t('Login'))}
             <input id={`${id}-user`} className={field} value={imap.username} onChange={(e) => set('username', e.target.value)} placeholder="you@example.com" autoComplete="off" spellCheck={false} />
           </div>
           <div>
-            {label(`${id}-secret`, 'Password or app password')}
+            {label(`${id}-secret`, t('Password or app password'))}
             <input id={`${id}-secret`} ref={secretRef} type="password" className={field} autoComplete="new-password" />
           </div>
           <div>
-            {label(`${id}-label`, 'Name (optional)')}
-            <input id={`${id}-label`} className={field} value={imap.label} onChange={(e) => set('label', e.target.value)} placeholder="Work mail" />
+            {label(`${id}-label`, t('Name (optional)'))}
+            <input id={`${id}-label`} className={field} value={imap.label} onChange={(e) => set('label', e.target.value)} placeholder={t('Work mail')} />
           </div>
           <div>
-            {label(`${id}-folders`, 'Folders (optional)')}
+            {label(`${id}-folders`, t('Folders (optional)'))}
             <input id={`${id}-folders`} className={field} value={imap.folders} onChange={(e) => set('folders', e.target.value)} placeholder="INBOX, Sent" />
           </div>
           {local && (
             <label className="sm:col-span-2 flex items-center gap-2 text-[11px] text-zinc-300">
               <input type="checkbox" checked={imap.accept_invalid_certs} onChange={(e) => set('accept_invalid_certs', e.target.checked)} />
-              Accept this computer’s own certificate (Proton Bridge)
+              {t('Accept this computer’s own certificate (Proton Bridge)')}
             </label>
           )}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="sm:col-span-2">
-            {label(`${id}-tok`, 'Token (read-only access to issues and pull requests is enough)')}
+            {label(`${id}-tok`, t('Token (read-only access to issues and pull requests is enough)'))}
             <input id={`${id}-tok`} ref={secretRef} type="password" className={field} autoComplete="new-password" />
           </div>
           <div>
-            {label(`${id}-glabel`, 'Name (optional)')}
+            {label(`${id}-glabel`, t('Name (optional)'))}
             <input id={`${id}-glabel`} className={field} value={ghLabel} onChange={(e) => setGhLabel(e.target.value)} placeholder="GitHub" />
           </div>
           <div>
-            {label(`${id}-base`, 'API address (GitHub Enterprise only)')}
+            {label(`${id}-base`, t('API address (GitHub Enterprise only)'))}
             <input id={`${id}-base`} className={field} value={ghBase} onChange={(e) => setGhBase(e.target.value)} placeholder="https://api.github.com" spellCheck={false} />
           </div>
         </div>
       )}
 
-      <p className="text-[11px] text-zinc-500">Loose ends only reads this source. It tests the connection first and saves nothing if the test fails. The login goes to your password vault.</p>
+      <p className="text-[11px] text-zinc-500">{t('Loose ends only reads this source. It tests the connection first and saves nothing if the test fails. The login goes to your password vault.')}</p>
 
       {vault && <NeedsBitwarden message={vault.message} locked={vault.locked} onReady={() => submit()} onCancel={() => setVault(null)} />}
       {error && (
@@ -492,11 +493,11 @@ export const AddSourceForm: React.FC<{ onAdded: (s: LooseSource) => void; onCanc
 
       <div className="flex flex-wrap justify-end gap-2">
         <button type="button" onClick={onCancel} className={quietBtn}>
-          Cancel
+          {t('Cancel')}
         </button>
         <button type="submit" disabled={busy} className={`${actionBtn} bg-sky-500 hover:bg-sky-400 text-zinc-950 font-semibold`}>
           {busy ? <Loader2 size={13} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Plus size={13} aria-hidden="true" />}
-          {busy ? 'Testing…' : 'Test and add'}
+          {busy ? t('Testing…') : t('Test and add')}
         </button>
       </div>
     </form>
@@ -522,17 +523,20 @@ export const LooseSources: React.FC<{
     try {
       if (what === 'test') {
         await looseApi.testSource(s.id);
-        setNote({ text: `${s.label}: connected.`, error: false });
+        setNote({ text: t('{name}: connected.', { name: s.label }), error: false });
       } else if (what === 'toggle') {
         await looseApi.setEnabled(s.id, !s.enabled);
       } else {
         const r = await looseApi.removeSource(s.id);
         setConfirmRemove(null);
-        setNote({ text: `Removed ${s.label}, its saved login and ${r.cases_removed} ${r.cases_removed === 1 ? 'case' : 'cases'}.`, error: false });
+        setNote({
+          text: t(r.cases_removed === 1 ? 'Removed {name}, its saved login and {n} case.' : 'Removed {name}, its saved login and {n} cases.', { name: s.label, n: r.cases_removed }),
+          error: false,
+        });
       }
       onChanged();
     } catch (e) {
-      setNote({ text: `${s.label}: ${e instanceof Error ? e.message : 'something went wrong.'}`, error: true });
+      setNote({ text: t('{name}: {error}', { name: s.label, error: e instanceof Error ? e.message : t('something went wrong.') }), error: true });
     } finally {
       setBusy(null);
     }
@@ -542,11 +546,11 @@ export const LooseSources: React.FC<{
     <section aria-labelledby="loose-sources" className="space-y-2">
       <div className="flex items-center justify-between gap-2">
         <h3 id="loose-sources" className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
-          Where to look
+          {t('Where to look')}
         </h3>
         {!adding && (
           <button type="button" onClick={() => setAdding(true)} className={quietBtn}>
-            <Plus size={13} aria-hidden="true" /> Add a source
+            <Plus size={13} aria-hidden="true" /> {t('Add a source')}
           </button>
         )}
       </div>
@@ -559,7 +563,7 @@ export const LooseSources: React.FC<{
           onCancel={() => setAdding(false)}
           onAdded={(s) => {
             setAdding(false);
-            setNote({ text: `Added ${s.label}. It’s read at the next scan.`, error: false });
+            setNote({ text: t('Added {name}. It’s read at the next scan.', { name: s.label }), error: false });
             onChanged();
           }}
         />
@@ -573,33 +577,33 @@ export const LooseSources: React.FC<{
                 <div className="flex items-start gap-2 min-w-0">
                   <span className="mt-0.5 text-zinc-400">{SOURCE_ICON[s.kind] ?? <Search size={12} aria-hidden="true" />}</span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium text-zinc-100 break-words">{s.builtin ? 'Your bot chats, tasks and questions' : s.label}</p>
+                    <p className="text-xs font-medium text-zinc-100 break-words">{s.builtin ? t('Your bot chats, tasks and questions') : s.label}</p>
                     <p className={`text-[11px] break-words ${st.error ? 'text-rose-300' : 'text-zinc-500'}`}>
                       {sourceLabel(s.kind)}
-                      {s.builtin ? ' · built in' : ''} · {st.text}
+                      {s.builtin ? t(' · built in') : ''} · {st.text}
                     </p>
                   </div>
                 </div>
                 {!s.builtin && (
                   <div className="flex flex-wrap gap-2">
                     <button type="button" disabled={busy !== null} onClick={() => run(s, 'test')} className={quietBtn}>
-                      {busy === s.id ? <Loader2 size={13} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : null} Test
+                      {busy === s.id ? <Loader2 size={13} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : null} {t('Test')}
                     </button>
                     <button type="button" disabled={busy !== null} aria-pressed={s.enabled} onClick={() => run(s, 'toggle')} className={quietBtn}>
-                      {s.enabled ? 'Pause' : 'Resume'}
+                      {s.enabled ? t('Pause') : t('Resume')}
                     </button>
                     {confirmRemove === s.id ? (
                       <>
                         <button type="button" disabled={busy !== null} onClick={() => run(s, 'remove')} className={`${actionBtn} bg-rose-600 hover:bg-rose-500 text-white`}>
-                          <Trash2 size={13} aria-hidden="true" /> Remove it and its cases
+                          <Trash2 size={13} aria-hidden="true" /> {t('Remove it and its cases')}
                         </button>
                         <button type="button" onClick={() => setConfirmRemove(null)} className={quietBtn}>
-                          Keep
+                          {t('Keep')}
                         </button>
                       </>
                     ) : (
                       <button type="button" disabled={busy !== null} onClick={() => setConfirmRemove(s.id)} className={`${actionBtn} text-rose-300 hover:bg-rose-500/10`}>
-                        <Trash2 size={13} aria-hidden="true" /> Remove
+                        <Trash2 size={13} aria-hidden="true" /> {t('Remove')}
                       </button>
                     )}
                   </div>
@@ -626,14 +630,14 @@ export const LooseOwnerView: React.FC<{
   return (
     <section aria-labelledby={`${id}-h`} className="space-y-2">
       <h3 id={`${id}-h`} className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
-        Who prepares drafts
+        {t('Who prepares drafts')}
       </h3>
       {!owner ? (
         error ? (
-          <p className="text-xs text-rose-300">Couldn’t load this setting: {error}</p>
+          <p className="text-xs text-rose-300">{t('Couldn’t load this setting: {error}', { error })}</p>
         ) : (
           <p className="flex items-center gap-2 text-xs text-zinc-400">
-            <Loader2 size={13} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> Loading…
+            <Loader2 size={13} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> {t('Loading…')}
           </p>
         )
       ) : (
@@ -646,12 +650,12 @@ export const LooseOwnerView: React.FC<{
               onChange={(e) => onChange(ownerChange(owner, { enabled: e.target.checked }))}
               className="mt-0.5 h-4 w-4 shrink-0 accent-sky-500"
             />
-            <span>When a review finds loose ends or a letter deadline comes up, a bot starts preparing drafts and next steps.</span>
+            <span>{t('When a review finds loose ends or a letter deadline comes up, a bot starts preparing drafts and next steps.')}</span>
           </label>
           <div className="flex flex-wrap items-center gap-2 sm:pl-6">
             <Bot size={14} className="text-sky-400 shrink-0" aria-hidden="true" />
             <label htmlFor={`${id}-bot`} className="text-xs text-zinc-400">
-              Bot
+              {t('Bot')}
             </label>
             <select
               id={`${id}-bot`}
@@ -660,20 +664,20 @@ export const LooseOwnerView: React.FC<{
               onChange={(e) => onChange(ownerChange(owner, { kwant_id: e.target.value || null }))}
               className={`${field} w-auto min-w-0 max-w-full flex-1 sm:flex-none sm:min-w-[14rem]`}
             >
-              <option value="">{lead ? `The space lead (${lead.name})` : 'The space lead'}</option>
+              <option value="">{lead ? t('The space lead ({name})', { name: lead.name }) : t('The space lead')}</option>
               {bots.map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.name}
                 </option>
               ))}
             </select>
-            {busy && <Loader2 size={13} className="animate-spin motion-reduce:animate-none text-zinc-400" aria-label="Saving" />}
+            {busy && <Loader2 size={13} className="animate-spin motion-reduce:animate-none text-zinc-400" aria-label={t('Saving')} />}
           </div>
           <p className={`text-[11px] sm:pl-6 ${owner.enabled ? 'text-zinc-400' : 'text-zinc-500'}`} data-owner-summary>
             {ownerSummary(owner)}
           </p>
           <div role="status" aria-live="polite">
-            {error && <p className="text-xs text-rose-300 sm:pl-6">Couldn’t save: {error}</p>}
+            {error && <p className="text-xs text-rose-300 sm:pl-6">{t('Couldn’t save: {error}', { error })}</p>}
           </div>
         </div>
       )}
@@ -691,7 +695,7 @@ export const LooseOwnerSetting: React.FC = () => {
     let cancelled = false;
     looseApi.owner().then(
       (o) => !cancelled && setOwner(o),
-      (e) => !cancelled && setError(e instanceof Error ? e.message : 'something went wrong.'),
+      (e) => !cancelled && setError(e instanceof Error ? e.message : t('something went wrong.')),
     );
     looseApi.bots().then(
       (list) => !cancelled && setBots(Array.isArray(list) ? list.map((k) => ({ id: k.id, name: k.name })) : []),
@@ -708,7 +712,7 @@ export const LooseOwnerSetting: React.FC = () => {
     try {
       setOwner(await looseApi.setOwner(next));
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'something went wrong.');
+      setError(e instanceof Error ? e.message : t('something went wrong.'));
     } finally {
       setBusy(false);
     }
@@ -776,16 +780,20 @@ export const LooseEndsView: React.FC<LooseEndsViewProps> = ({
           <button
             type="button"
             onClick={onBack}
-            aria-label="Back to chats"
+            aria-label={t('Back to chats')}
             className="shrink-0 p-2 -ml-0.5 -mr-2 rounded-lg text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500"
           >
             <ChevronLeft size={18} />
           </button>
         )}
         <div className="min-w-0 flex-1">
-          <h2 className="text-sm font-semibold text-zinc-100 truncate">Loose ends</h2>
+          <h2 className="text-sm font-semibold text-zinc-100 truncate">{t('Loose ends')}</h2>
           <p className="text-[11px] text-zinc-400 truncate mt-0.5">
-            {running ? 'Looking for loose ends…' : nextReviewAt ? `Next weekly review ${shortDate(nextReviewAt)}` : 'Things you started and never finished'}
+            {running
+              ? t('Looking for loose ends…')
+              : nextReviewAt
+                ? t('Next weekly review {date}', { date: shortDate(nextReviewAt) })
+                : t('Things you started and never finished')}
           </p>
         </div>
         <button
@@ -795,28 +803,28 @@ export const LooseEndsView: React.FC<LooseEndsViewProps> = ({
           className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs text-zinc-300 border border-zinc-700/60 hover:bg-zinc-800 disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500"
         >
           <RefreshCw size={12} className={running ? 'animate-spin motion-reduce:animate-none' : ''} aria-hidden="true" />
-          {running ? 'Scanning…' : 'Scan now'}
+          {running ? t('Scanning…') : t('Scan now')}
         </button>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-6" aria-busy={loading || running}>
         <div className="max-w-3xl mx-auto space-y-5">
-          <p className="text-[11px] text-zinc-500">Your bots read your conversations without changing them and never send anything. Each loose end comes with a draft you send yourself.</p>
+          <p className="text-[11px] text-zinc-500">{t('Your bots read your conversations without changing them and never send anything. Each loose end comes with a draft you send yourself.')}</p>
 
           {needsToken && (
             <div role="alert" className="px-3 py-2 rounded-lg border border-amber-500/30 bg-amber-500/10 flex flex-wrap items-center gap-2 text-xs text-amber-100">
-              <span>Only you can see loose ends. Confirm it’s you to open them.</span>
+              <span>{t('Only you can see loose ends. Confirm it’s you to open them.')}</span>
               <button type="button" onClick={requestPersonToken} className="ml-auto px-2 py-0.5 rounded border border-amber-500/40 hover:bg-amber-500/10">
-                Confirm it’s you
+                {t('Confirm it’s you')}
               </button>
             </div>
           )}
 
           {error && !needsToken && (
             <div role="alert" className="px-3 py-2 rounded-lg border border-rose-500/20 bg-rose-500/5 flex items-center gap-2 text-xs text-rose-300">
-              <span>Couldn’t load loose ends: {error}</span>
+              <span>{t('Couldn’t load loose ends: {error}', { error })}</span>
               <button type="button" onClick={onRefresh} className="ml-auto px-2 py-0.5 rounded border border-rose-500/30 hover:bg-rose-500/10">
-                Retry
+                {t('Retry')}
               </button>
             </div>
           )}
@@ -831,7 +839,7 @@ export const LooseEndsView: React.FC<LooseEndsViewProps> = ({
 
           {!cases && loading && (
             <p className="flex items-center gap-2 text-xs text-zinc-400">
-              <Loader2 size={14} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> Loading…
+              <Loader2 size={14} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> {t('Loading…')}
             </p>
           )}
 
@@ -839,19 +847,19 @@ export const LooseEndsView: React.FC<LooseEndsViewProps> = ({
 
           {cases && (
             <>
-              <div role="tablist" aria-label="Loose ends by status" className="flex gap-1 overflow-x-auto -mx-1 px-1">
-                {CASE_TABS.map((t) => (
+              <div role="tablist" aria-label={t('Loose ends by status')} className="flex gap-1 overflow-x-auto -mx-1 px-1">
+                {CASE_TABS.map((ct) => (
                   <button
-                    key={t.key}
+                    key={ct.key}
                     type="button"
                     role="tab"
-                    aria-selected={tab === t.key}
-                    onClick={() => onTab(t.key)}
+                    aria-selected={tab === ct.key}
+                    onClick={() => onTab(ct.key)}
                     className={`shrink-0 min-h-[36px] sm:min-h-[30px] px-3 rounded-lg text-xs font-medium border ${
-                      tab === t.key ? 'border-sky-500/40 bg-sky-500/10 text-sky-200' : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'
+                      tab === ct.key ? 'border-sky-500/40 bg-sky-500/10 text-sky-200' : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'
                     }`}
                   >
-                    {t.label} <span className="font-mono text-zinc-500">{counts[t.key]}</span>
+                    {ct.label} <span className="font-mono text-zinc-500">{counts[ct.key]}</span>
                   </button>
                 ))}
               </div>
@@ -860,7 +868,7 @@ export const LooseEndsView: React.FC<LooseEndsViewProps> = ({
                 {shown.length === 0 ? (
                   <div className="py-12 flex flex-col items-center text-center gap-2" data-empty>
                     <CheckCircle2 size={28} className="text-emerald-400" aria-hidden="true" />
-                    <p className="text-sm font-medium text-zinc-200">{tab === 'open' ? 'No loose ends' : `Nothing ${current.label.toLowerCase()}`}</p>
+                    <p className="text-sm font-medium text-zinc-200">{tab === 'open' ? t('No loose ends') : t('Nothing {status}', { status: current.label.toLowerCase() })}</p>
                     <p className="text-xs text-zinc-500 max-w-xs">{current.empty}</p>
                   </div>
                 ) : (
@@ -885,9 +893,9 @@ export const LooseEndsView: React.FC<LooseEndsViewProps> = ({
 export const AddLetterButton: React.FC<{ onClick: () => void }> = ({ onClick }) => (
   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-dashed border-zinc-700 p-3">
     <button type="button" onClick={onClick} className={`${actionBtn} bg-sky-500 hover:bg-sky-400 text-zinc-950 font-semibold`} data-add-letter-button>
-      <FileText size={13} aria-hidden="true" /> Add a letter
+      <FileText size={13} aria-hidden="true" /> {t('Add a letter')}
     </button>
-    <p className="text-[11px] text-zinc-500 min-w-0 flex-1">Photograph or upload a bill or form to get its deadline and a reply draft. Nothing is sent.</p>
+    <p className="text-[11px] text-zinc-500 min-w-0 flex-1">{t('Photograph or upload a bill or form to get its deadline and a reply draft. Nothing is sent.')}</p>
   </div>
 );
 
@@ -913,7 +921,7 @@ export const LooseEndsPage: React.FC<{ onBack?: () => void; onOpenChat?: (kwantI
       const r = await looseApi.sources();
       if (alive.current) (setSources(r.sources), setSourcesError(null));
     } catch (e) {
-      if (alive.current) setSourcesError(e instanceof Error ? e.message : 'Couldn’t load the sources.');
+      if (alive.current) setSourcesError(e instanceof Error ? e.message : t('Couldn’t load the sources.'));
     }
   }, []);
 
@@ -932,7 +940,7 @@ export const LooseEndsPage: React.FC<{ onBack?: () => void; onOpenChat?: (kwantI
     } catch (e) {
       if (!alive.current) return null;
       if (e instanceof LooseEndsError && e.status === 401) setNeedsToken(true);
-      else setError(e instanceof Error ? e.message : 'Something went wrong.');
+      else setError(e instanceof Error ? e.message : t('Something went wrong.'));
       return null;
     } finally {
       if (alive.current) setLoading(false);
@@ -953,19 +961,19 @@ export const LooseEndsPage: React.FC<{ onBack?: () => void; onOpenChat?: (kwantI
   // While a scan runs, look again every few seconds until it's done.
   useEffect(() => {
     if (!running) return;
-    const t = window.setInterval(async () => {
+    const timer = window.setInterval(async () => {
       try {
         const s = await looseApi.status();
         if (!s.running) {
           setRunning(false);
           const r = await load();
-          if (r) setNotice({ text: 'Scan finished.', error: false });
+          if (r) setNotice({ text: t('Scan finished.'), error: false });
         }
       } catch {
         // the next tick tries again
       }
     }, 2500);
-    return () => window.clearInterval(t);
+    return () => window.clearInterval(timer);
   }, [running, load]);
 
   const act = async (c: LooseCase, action: CaseAction, body?: unknown) => {
@@ -978,7 +986,7 @@ export const LooseEndsPage: React.FC<{ onBack?: () => void; onOpenChat?: (kwantI
       setNotice({ text: actionDoneText(action, next), error: false });
       if (action === 'dismiss' && (body as { scope?: string } | undefined)?.scope === 'sender') load();
     } catch (e) {
-      setNotice({ text: `${e instanceof Error ? e.message : 'Something went wrong.'} “${c.title}” is unchanged.`, error: true });
+      setNotice({ text: t('{error} “{title}” is unchanged.', { error: e instanceof Error ? e.message : t('Something went wrong.'), title: c.title }), error: true });
     } finally {
       setBusy(null);
     }
@@ -991,7 +999,7 @@ export const LooseEndsPage: React.FC<{ onBack?: () => void; onOpenChat?: (kwantI
       setRunning(true);
     } catch (e) {
       if (e instanceof LooseEndsError && e.status === 409) setRunning(true);
-      else setNotice({ text: `Couldn’t start a scan: ${e instanceof Error ? e.message : 'something went wrong.'}`, error: true });
+      else setNotice({ text: t('Couldn’t start a scan: {error}', { error: e instanceof Error ? e.message : t('something went wrong.') }), error: true });
     }
   };
 
@@ -1002,7 +1010,7 @@ export const LooseEndsPage: React.FC<{ onBack?: () => void; onOpenChat?: (kwantI
         onBack={() => (setLetter(null), load())}
         onDeleted={(title) => {
           setLetter(null);
-          setNotice({ text: `Deleted “${title}”, its pages and everything read from it.`, error: false });
+          setNotice({ text: t('Deleted “{title}”, its pages and everything read from it.', { title }), error: false });
           load();
         }}
       />

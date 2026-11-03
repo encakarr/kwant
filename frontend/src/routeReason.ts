@@ -1,5 +1,6 @@
 // The line under "Sending your question to X" on Laya's routing card: why that bot, in words that
 // match how it was actually picked.
+import { t } from './i18n';
 
 export type RouteBasis =
   | 'skills'
@@ -33,16 +34,16 @@ const handbackName = (reason?: string) => reason?.match(/^(\S+) handed this back
 /** The fixed line for the router's newer picks (Concierge, ask card, hand-back, learned), or null for
  *  any other basis. These always use the app's own wording, never the server's longer sentence. */
 export function pickedLine(r: RouteReasonInput): string | null {
-  const name = r.kwantName || 'another bot';
+  const name = r.kwantName || t('another bot');
   switch (r.basis) {
     case 'concierge':
-      return 'No specialist fits, answering generally.';
+      return t('No specialist fits, answering generally.');
     case 'ask':
-      return `You picked ${name}.`;
+      return t('You picked {name}.', { name });
     case 'handback':
-      return `${r.handedBackBy || handbackName(r.reason) || 'The first bot'} said it’s not their area, so ${name} took it.`;
+      return t('{by} said it’s not their area, so {name} took it.', { by: r.handedBackBy || handbackName(r.reason) || t('The first bot'), name });
     case 'learned':
-      return `You sent a message like this to ${name} before.`;
+      return t('You sent a message like this to {name} before.', { name });
     default:
       return null;
   }
@@ -61,17 +62,17 @@ export function routeReasonText(r: RouteReasonInput): string | null {
   if (picked) return picked;
   const own = serverReason(r);
   if (own) return own;
-  const name = r.kwantName || 'the team lead';
+  const name = r.kwantName || t('the team lead');
   const terms = (r.matchedTerms ?? []).filter(Boolean).slice(0, 4);
   switch (r.basis) {
     case 'lead':
-      return `No one’s role matched this, so it went to the team lead, ${name}.`;
+      return t('No one’s role matched this, so it went to the team lead, {name}.', { name });
     case 'only':
-      return `${name} is the only bot here that can answer.`;
+      return t('{name} is the only bot here that can answer.', { name });
     case 'team':
-      return `This asks to put a team of bots together, so it went to the lead, ${name}, to propose them for you to approve.`;
+      return t('This asks to put a team of bots together, so it went to the lead, {name}, to propose them for you to approve.', { name });
     case 'keywords':
-      return terms.length ? `Picked by matching words: ${terms.join(', ')}.` : 'Picked by matching words in your message.';
+      return terms.length ? t('Picked by matching words: {terms}.', { terms: terms.join(t(', ')) }) : t('Picked by matching words in your message.');
     default:
       // Older servers phrase every pick, even the lead fallback, as "Laya picked …".
       return r.reason || null;

@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import { AUDITOR_MODELS, AuditorModel, MODEL_HINT, auditorModelLabel, isAuditorModel } from '../auditor';
 
 /** Settings → the model audit turns run on (`auditor_model`, §18). A 400 about it shows right here. */
@@ -6,7 +7,7 @@ export function AuditorModelSetting({ value, error, onChange }: { value: string;
     <div className="mt-2" data-testid="auditor-model">
       <div className="flex flex-wrap items-center gap-2">
         <label htmlFor="auditor-model" className="text-[11px] text-zinc-300">
-          Audit model
+          {t('Audit model')}
         </label>
         <select
           id="auditor-model"

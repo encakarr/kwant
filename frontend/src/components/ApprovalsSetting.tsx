@@ -21,15 +21,16 @@ import {
 } from '../approvalMode';
 import { StoreStatus, moveFirstLabel, moveFirstText } from '../passwordStore';
 import { ExposedBanner, MoveToBitwardenFirst, PasswordStoreState, usePasswordStore } from './PasswordStorePanel';
+import { t } from '../i18n';
 
 /** "Approvals off": in a chat header (full) or a sidebar row (icon, with the words for screen readers). */
 export const ApprovalsOffBadge: React.FC<{ compact?: boolean; onClick?: () => void; title?: string }> = ({ compact, onClick, title }) => {
-  const tip = title ?? 'Approvals are off: this bot acts without asking. Payments still ask you.';
+  const tip = title ?? t('Approvals are off: this bot acts without asking. Payments still ask you.');
   if (compact) {
     return (
       <span className="shrink-0 inline-flex items-center text-amber-300" title={tip}>
         <ShieldOff size={11} aria-hidden="true" />
-        <span className="sr-only">Approvals off</span>
+        <span className="sr-only">{t('Approvals off')}</span>
       </span>
     );
   }
@@ -38,7 +39,7 @@ export const ApprovalsOffBadge: React.FC<{ compact?: boolean; onClick?: () => vo
   const body = (
     <>
       <ShieldOff size={11} aria-hidden="true" />
-      Approvals off
+      {t('Approvals off')}
     </>
   );
   return onClick ? (
@@ -107,7 +108,7 @@ export const OffConfirm: React.FC<{
       ) : (
         <>
           <p className="text-[11px] font-medium text-amber-100">{OFF_ADVICE}</p>
-          <p className="text-[11px] text-amber-100/80">Bots can’t change this. You can turn approvals back on here at any time.</p>
+          <p className="text-[11px] text-amber-100/80">{t('Bots can’t change this. You can turn approvals back on here at any time.')}</p>
         </>
       )}
       <div className="flex flex-wrap gap-2">
@@ -117,7 +118,7 @@ export const OffConfirm: React.FC<{
           autoFocus
           className="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-200 border border-zinc-700/60 bg-zinc-800/60 hover:bg-zinc-700/70"
         >
-          Cancel
+          {t('Cancel')}
         </button>
         {!mustMove && (
           <button
@@ -127,7 +128,7 @@ export const OffConfirm: React.FC<{
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-rose-600 hover:bg-rose-500 disabled:opacity-50"
           >
             {(busy || checking) && <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />}
-            {checking ? 'Checking saved passwords…' : 'Turn off approvals'}
+            {checking ? t('Checking saved passwords…') : t('Turn off approvals')}
           </button>
         )}
       </div>
@@ -181,7 +182,7 @@ export const SpaceApprovalsSetting: React.FC<{
       onChanged(next);
       storeReload();
     } catch (err) {
-      setError(v === 'off' ? refusedOff(err, passwords) : err instanceof Error ? err.message : 'Couldn’t change approvals.');
+      setError(v === 'off' ? refusedOff(err, passwords) : err instanceof Error ? err.message : t('Couldn’t change approvals.'));
     } finally {
       setBusy(false);
     }
@@ -197,8 +198,8 @@ export const SpaceApprovalsSetting: React.FC<{
     <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-4 space-y-3">
       <p className="flex items-center gap-2 text-xs font-medium text-zinc-200">
         {current === 'off' ? <ShieldOff size={14} className="text-amber-300" aria-hidden="true" /> : <ShieldCheck size={14} className="text-zinc-400" aria-hidden="true" />}
-        Approvals
-        {current === 'off' && <ApprovalsOffBadge title={`Approvals are off in ${spaceName}. Payments still ask you.`} />}
+        {t('Approvals')}
+        {current === 'off' && <ApprovalsOffBadge title={t('Approvals are off in {space}. Payments still ask you.', { space: spaceName })} />}
       </p>
       <ExposedBanner
         store={passwords}
@@ -207,7 +208,7 @@ export const SpaceApprovalsSetting: React.FC<{
           onChanged('ask');
         }}
       />
-      <div role="radiogroup" aria-label={`Approvals in ${spaceName}`} className="space-y-1.5">
+      <div role="radiogroup" aria-label={t('Approvals in {space}', { space: spaceName })} className="space-y-1.5">
         {SPACE_OPTIONS.map((o) => (
           <label key={o.value} className={radioCls(current === o.value)}>
             <input
@@ -222,7 +223,7 @@ export const SpaceApprovalsSetting: React.FC<{
             <span className="min-w-0">
               <span className="block text-xs font-medium text-zinc-200">
                 {o.label}
-                {o.value === 'ask' && <span className="ml-1 text-zinc-500 font-normal">(default)</span>}
+                {o.value === 'ask' && <span className="ml-1 text-zinc-500 font-normal">{t('(default)')}</span>}
               </span>
               <span className="block text-[11px] text-zinc-500">{o.hint}</span>
             </span>
@@ -235,13 +236,12 @@ export const SpaceApprovalsSetting: React.FC<{
       {current === 'off' && !confirming && <OffHint />}
       {exceptions.length > 0 && !confirming && (
         <p className="text-[11px] text-zinc-500">
-          {current === 'off' ? 'Still asks, set on the bot: ' : 'Runs without asking, set on the bot: '}
-          {exceptions.join(', ')}.
+          {t(current === 'off' ? 'Still asks, set on the bot: {names}.' : 'Runs without asking, set on the bot: {names}.', { names: exceptions.join(', ') })}
         </p>
       )}
       {busy && !confirming && (
         <p role="status" className="text-[11px] text-zinc-400">
-          Saving…
+          {t('Saving…')}
         </p>
       )}
       {error && (
@@ -284,7 +284,7 @@ export const BotApprovalsSetting: React.FC<{
     };
   }, [kwantId, initial]);
 
-  if (state === undefined) return <p className="text-[11px] text-zinc-500">Loading approvals…</p>;
+  if (state === undefined) return <p className="text-[11px] text-zinc-500">{t('Loading approvals…')}</p>;
   // An older server without the switch: show nothing rather than a control that can't save.
   if (state === null) return null;
 
@@ -298,7 +298,7 @@ export const BotApprovalsSetting: React.FC<{
       onChanged?.(next);
       storeReload();
     } catch (err) {
-      setError(pending ? refusedOff(err, passwords) : err instanceof Error ? err.message : 'Couldn’t change this bot’s approvals.');
+      setError(pending ? refusedOff(err, passwords) : err instanceof Error ? err.message : t('Couldn’t change this bot’s approvals.'));
     } finally {
       setBusy(false);
     }
@@ -314,9 +314,9 @@ export const BotApprovalsSetting: React.FC<{
     <div className="space-y-1.5">
       <div className="flex items-center justify-between gap-2">
         <label htmlFor={selectId} className="text-xs font-medium text-zinc-400">
-          Approvals
+          {t('Approvals')}
         </label>
-        {state.approvals_effective === 'off' && <ApprovalsOffBadge title={`${kwantName} acts without asking. Payments still ask you.`} />}
+        {state.approvals_effective === 'off' && <ApprovalsOffBadge title={t('{name} acts without asking. Payments still ask you.', { name: kwantName })} />}
       </div>
       <select
         id={selectId}
@@ -331,7 +331,7 @@ export const BotApprovalsSetting: React.FC<{
           </option>
         ))}
       </select>
-      <p className="text-[11px] text-zinc-500">Saved as soon as you change it.</p>
+      <p className="text-[11px] text-zinc-500">{t('Saved as soon as you change it.')}</p>
       {state.approvals_effective === 'off' && !pending && <OffHint />}
       <ExposedBanner
         store={passwords}

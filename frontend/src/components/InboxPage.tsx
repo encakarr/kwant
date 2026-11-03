@@ -5,10 +5,11 @@ import { ChevronLeft } from 'lucide-react';
 import type { InboxTab } from '../nav';
 import { playSfx } from '../audio/chiptune';
 import { badgeText } from '../away';
+import { t, tc } from '../i18n';
 
 const TABS: { id: InboxTab; label: string }[] = [
-  { id: 'new', label: 'New' },
-  { id: 'loose', label: 'Loose ends' },
+  { id: 'new', label: tc('inbox tab', 'New') },
+  { id: 'loose', label: t('Loose ends') },
 ];
 
 export const InboxPage: React.FC<{
@@ -27,28 +28,28 @@ export const InboxPage: React.FC<{
         <button
           type="button"
           onClick={onBack}
-          aria-label="Back to chats"
+          aria-label={t('Back to chats')}
           className="shrink-0 mb-1.5 p-2 -ml-0.5 rounded-lg text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500"
         >
           <ChevronLeft size={18} />
         </button>
       )}
-      <div role="tablist" aria-label="Inbox" className="flex items-end gap-1">
-        {TABS.map((t) => {
-          const on = t.id === tab;
+      <div role="tablist" aria-label={t('Inbox')} className="flex items-end gap-1">
+        {TABS.map((item) => {
+          const on = item.id === tab;
           return (
             <button
-              key={t.id}
+              key={item.id}
               type="button"
               role="tab"
-              id={`inbox-tab-${t.id}`}
+              id={`inbox-tab-${item.id}`}
               aria-selected={on}
               aria-controls="inbox-panel"
-              data-inbox-tab={t.id}
+              data-inbox-tab={item.id}
               onClick={() => {
                 if (on) return;
                 playSfx('click');
-                onTab(t.id);
+                onTab(item.id);
               }}
               onKeyDown={(e) => {
                 if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
@@ -62,11 +63,11 @@ export const InboxPage: React.FC<{
                 on ? 'border-sky-400 text-zinc-100' : 'border-transparent text-zinc-400 hover:text-zinc-200'
               }`}
             >
-              {t.label}
-              {t.id === 'new' && count > 0 && (
+              {item.label}
+              {item.id === 'new' && count > 0 && (
                 <span className="min-w-[16px] px-1 rounded-full bg-amber-500 text-zinc-950 text-[9px] font-semibold text-center">
                   {badgeText(count)}
-                  <span className="sr-only"> new</span>
+                  <span className="sr-only">{` ${t('new')}`}</span>
                 </span>
               )}
             </button>

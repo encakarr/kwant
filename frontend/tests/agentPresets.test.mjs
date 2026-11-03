@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import ts from 'typescript';
+import { loadBundled } from './bundle.mjs';
 
 const load = async (path) => {
   const source = await readFile(new URL(path, import.meta.url), 'utf8');
@@ -11,7 +12,8 @@ const load = async (path) => {
   return outputText;
 };
 
-const presets = await import(`data:text/javascript;base64,${Buffer.from(await load('../src/agentPresets.ts')).toString('base64')}`);
+// Bundled, since the preset labels go through t() (src/i18n).
+const presets = await loadBundled(`export * from './src/agentPresets';`);
 const { AGENT_PRESETS, PRESET_GROUPS, uniqueAgentName } = presets;
 
 test('picks a free name when the preset name is taken', () => {

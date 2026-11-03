@@ -1,6 +1,7 @@
 import React, { useId, useState } from 'react';
 import { ChevronDown, ChevronRight, Pencil, Pin } from 'lucide-react';
 import { MAX_INSTRUCTIONS } from '../continuity';
+import { t } from '../i18n';
 
 /** Instructions textarea with a live character counter; turns red past the limit. */
 export const InstructionsField: React.FC<{
@@ -31,13 +32,13 @@ export const InstructionsField: React.FC<{
         onChange={(e) => onChange(e.target.value)}
         aria-describedby={`${id}-hint ${id}-count`}
         aria-invalid={over}
-        placeholder="e.g. Answer in British English. Our repo is acme-web; never push to main."
+        placeholder={t('e.g. Answer in British English. Our repo is acme-web; never push to main.')}
         className={`w-full bg-zinc-950 border rounded-lg px-3 py-2 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none transition-colors resize-y ${
           over ? 'border-rose-500/70 focus:border-rose-500' : 'border-zinc-800 focus:border-sky-500'
         }`}
       />
       <p id={`${id}-hint`} className="mt-1 text-[11px] text-zinc-500">
-        {over ? `${value.length - MAX_INSTRUCTIONS} characters over the limit.` : hint}
+        {over ? t('{n} characters over the limit.', { n: value.length - MAX_INSTRUCTIONS }) : hint}
       </p>
     </div>
   );
@@ -67,15 +68,15 @@ export const PinnedInstructions: React.FC<{ items: PinnedItem[]; onEdit?: () => 
           >
             {open ? <ChevronDown size={13} className="shrink-0 text-amber-300" /> : <ChevronRight size={13} className="shrink-0 text-amber-300" />}
             <Pin size={12} className="shrink-0 text-amber-300" aria-hidden="true" />
-            <span className="font-medium shrink-0">Pinned</span>
+            <span className="font-medium shrink-0">{t('Pinned')}</span>
             {!open && <span className="truncate text-zinc-400">{preview}</span>}
           </button>
           {onEdit && (
             <button
               type="button"
               onClick={onEdit}
-              aria-label="Edit pinned instructions"
-              title="Edit pinned instructions"
+              aria-label={t('Edit pinned instructions')}
+              title={t('Edit pinned instructions')}
               className="mr-1.5 p-1.5 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
             >
               <Pencil size={12} />

@@ -26,6 +26,7 @@ import {
   toClass,
   validClass,
 } from '../flightSchool';
+import { t } from '../i18n';
 import { ago, capabilitiesApi, onMission } from '../missions';
 import { ProposalCard, ScorecardDisclosure, useProposalDecisions } from './TierProposals';
 
@@ -46,9 +47,9 @@ const revokeBtn =
 
 const TierSelect: React.FC<{ id?: string; label: string; value: Tier; disabled: boolean; onChange: (t: Tier) => void }> = ({ id, label, value, disabled, onChange }) => (
   <select id={id} aria-label={id ? undefined : label} value={value} disabled={disabled} onChange={(e) => isTier(e.target.value) && onChange(e.target.value)} className={select}>
-    {TIERS.map((t) => (
-      <option key={t} value={t}>
-        {TIER_LABELS[t]}
+    {TIERS.map((x) => (
+      <option key={x} value={x}>
+        {TIER_LABELS[x]}
       </option>
     ))}
   </select>
@@ -58,8 +59,8 @@ const RevokeButton: React.FC<{ what: string; tier: Tier; disabled: boolean; onRe
   const to = revokeTarget(tier);
   if (!to) return null;
   return (
-    <button type="button" disabled={disabled} onClick={() => onRevoke(to)} className={revokeBtn} aria-label={`Revoke ${what} to ${TIER_LABELS[to]}`} data-revoke={to}>
-      Revoke to {TIER_LABELS[to]}
+    <button type="button" disabled={disabled} onClick={() => onRevoke(to)} className={revokeBtn} aria-label={t('Revoke {what} to {tier}', { what, tier: TIER_LABELS[to] })} data-revoke={to}>
+      {t('Revoke to {tier}', { tier: TIER_LABELS[to] })}
     </button>
   );
 };
@@ -150,10 +151,10 @@ export const FlightSchoolPanel: React.FC<{
     try {
       const r = await run();
       setCaps(r.capabilities);
-      setNote(r.unchanged ? 'It already had that tier.' : done);
+      setNote(r.unchanged ? t('It already had that tier.') : done);
       return true;
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Couldn’t change the tier.');
+      setError(e instanceof Error ? e.message : t('Couldn’t change the tier.'));
       // Read them again so the screen shows what holds.
       reload();
       return false;
@@ -161,9 +162,9 @@ export const FlightSchoolPanel: React.FC<{
       setBusy(false);
     }
   };
-  const setTier = (cls: string, tier: Tier) => change(() => api.set(kwantId, cls, tier), `${classLabel(cls)} is now ${TIER_LABELS[tier]}.`);
+  const setTier = (cls: string, tier: Tier) => change(() => api.set(kwantId, cls, tier), t('{work} is now {tier}.', { work: classLabel(cls), tier: TIER_LABELS[tier] }));
   const revoke = (cls: string, to: Tier) =>
-    change(() => api.revoke(kwantId, cls, to), `Revoked: ${classLabel(cls)} is now ${TIER_LABELS[to]}. A running task is held to it from its next action.`);
+    change(() => api.revoke(kwantId, cls, to), t('Revoked: {work} is now {tier}. A running task is held to it from its next action.', { work: classLabel(cls), tier: TIER_LABELS[to] }));
 
   const slug = toClass(newClass);
   const addClass = async () => {
@@ -181,23 +182,23 @@ export const FlightSchoolPanel: React.FC<{
   return (
     <section aria-labelledby={`${allId}-h`} className="space-y-2 rounded-xl border border-sky-500/20 bg-sky-950/10 p-3" data-flight-school>
       <h3 id={`${allId}-h`} className="flex items-center gap-1.5 text-xs font-medium text-zinc-200">
-        <GraduationCap size={14} className="text-sky-300" aria-hidden="true" /> Flight School tier
+        <GraduationCap size={14} className="text-sky-300" aria-hidden="true" /> {t('Flight School tier')}
       </h3>
       <p className="text-[11px] text-zinc-500">
-        How much {kwantName} may do on its own, per kind of work. A tier only adds approval cards. Payments always ask you.
+        {t('How much {name} may do on its own, per kind of work. A tier only adds approval cards. Payments always ask you.', { name: kwantName })}
       </p>
 
       <div className="flex flex-wrap items-center gap-2">
         <label htmlFor={allId} className="text-[11px] text-zinc-300">
-          All work
+          {t('All work')}
         </label>
-        <TierSelect id={allId} label="All work" value={caps.default_tier} disabled={busy} onChange={(t) => setTier(ANY_CLASS, t)} />
-        <RevokeButton what="all work" tier={caps.default_tier} disabled={busy} onRevoke={(to) => revoke(ANY_CLASS, to)} />
+        <TierSelect id={allId} label={t('All work')} value={caps.default_tier} disabled={busy} onChange={(x) => setTier(ANY_CLASS, x)} />
+        <RevokeButton what={t('all work')} tier={caps.default_tier} disabled={busy} onRevoke={(to) => revoke(ANY_CLASS, to)} />
       </div>
       <p className="text-[11px] text-zinc-500">{TIER_HINTS[caps.default_tier]}</p>
 
       {asking.length > 0 && (
-        <ul className="space-y-2" aria-label={`Tiers ${kwantName} is asking for`} data-bot-proposals={asking.filter(isOpenProposal).length}>
+        <ul className="space-y-2" aria-label={t('Tiers {name} is asking for', { name: kwantName })} data-bot-proposals={asking.filter(isOpenProposal).length}>
           {asking.map((p) => (
             <ProposalCard
               key={p.id}
@@ -213,14 +214,14 @@ export const FlightSchoolPanel: React.FC<{
         </ul>
       )}
 
-      <ul className="divide-y divide-zinc-800 rounded-lg border border-zinc-800" aria-label="Tier per kind of work">
+      <ul className="divide-y divide-zinc-800 rounded-lg border border-zinc-800" aria-label={t('Tier per kind of work')}>
         {caps.effective.map((e) => (
           <li key={e.task_class} className="flex flex-wrap items-center gap-2 px-2.5 py-2" data-class={e.task_class} data-tier={e.tier} data-from={e.from}>
             <span className="flex-1 min-w-[8rem]">
               <span className="block text-xs text-zinc-200 break-all">{classLabel(e.task_class)}</span>
               <span className="block text-[11px] text-zinc-500">{fromText(e.from)}</span>
             </span>
-            <TierSelect label={`Tier for ${classLabel(e.task_class)}`} value={e.tier} disabled={busy} onChange={(t) => setTier(e.task_class, t)} />
+            <TierSelect label={t('Tier for {work}', { work: classLabel(e.task_class) })} value={e.tier} disabled={busy} onChange={(x) => setTier(e.task_class, x)} />
             <RevokeButton what={classLabel(e.task_class)} tier={e.tier} disabled={busy} onRevoke={(to) => revoke(e.task_class, to)} />
             {e.task_class !== ANY_CLASS && <ScorecardDisclosure kwantId={kwantId} taskClass={e.task_class} api={api} version={version} />}
           </li>
@@ -229,31 +230,31 @@ export const FlightSchoolPanel: React.FC<{
 
       <div className="flex flex-wrap items-center gap-2" data-add-class>
         <label htmlFor={newId} className="sr-only">
-          Another kind of work
+          {t('Another kind of work')}
         </label>
         <input
           id={newId}
           value={newClass}
           onChange={(e) => setNewClass(e.target.value)}
           onKeyDown={onNewClassKey}
-          placeholder="Another kind of work, e.g. release"
+          placeholder={t('Another kind of work, e.g. release')}
           className="flex-1 min-w-[10rem] bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 min-h-[36px] text-xs text-zinc-100 placeholder-zinc-600 focus:border-sky-500 focus:outline-none"
         />
-        <TierSelect label="Tier for the new kind of work" value={newTier} disabled={busy} onChange={setNewTier} />
+        <TierSelect label={t('Tier for the new kind of work')} value={newTier} disabled={busy} onChange={setNewTier} />
         <button
           type="button"
           onClick={() => void addClass()}
           disabled={busy || !validClass(slug)}
           className="px-2.5 py-1 min-h-[36px] rounded-lg bg-zinc-800 text-[11px] font-medium text-zinc-100 hover:bg-zinc-700 disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400"
         >
-          Set
+          {t('Set')}
         </button>
       </div>
 
       <p aria-live="polite" className="min-h-[1rem] text-[11px]">
         {busy ? (
           <span className="inline-flex items-center gap-1 text-zinc-400">
-            <Loader2 size={11} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> Saving…
+            <Loader2 size={11} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> {t('Saving…')}
           </span>
         ) : note ? (
           <span className="text-emerald-300">{note}</span>
@@ -267,7 +268,7 @@ export const FlightSchoolPanel: React.FC<{
 
       {caps.events.length > 0 && (
         <details className="text-[11px]">
-          <summary className="cursor-pointer text-zinc-400 hover:text-zinc-200">Recent tier changes ({Math.min(caps.events.length, 5)})</summary>
+          <summary className="cursor-pointer text-zinc-400 hover:text-zinc-200">{t('Recent tier changes ({n})', { n: Math.min(caps.events.length, 5) })}</summary>
           <ul className="mt-1 space-y-0.5" data-tier-events>
             {caps.events.slice(0, 5).map((ev) => (
               <li key={ev.id} className="text-zinc-400">

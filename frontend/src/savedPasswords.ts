@@ -6,6 +6,7 @@
 
 import { isPersonOnlyBody, requestPersonToken } from './auth';
 import { needsBitwardenFrom } from './passwordStore';
+import { t } from './i18n';
 
 /** GET /api/sandbox/:id/passwords → passwords[] */
 export interface SavedLogin {
@@ -130,11 +131,11 @@ export function problemFor(status: number, body: unknown): PasswordsProblem {
 }
 
 export const PROBLEM_TEXT: Record<PasswordsProblem, string> = {
-  'needs-token': 'Saved passwords need your access token, even on this computer, so a bot can’t reach them.',
-  locked: 'Bitwarden is locked. Unlock it to see saved passwords and fill them in.',
-  unavailable: 'The password store isn’t available right now. Try again in a moment.',
-  'wrong-password': 'That master password isn’t right. After five wrong tries in a row Bitwarden stays locked.',
-  error: 'Couldn’t load saved passwords.',
+  'needs-token': t('Saved passwords need your access token, even on this computer, so a bot can’t reach them.'),
+  locked: t('Bitwarden is locked. Unlock it to see saved passwords and fill them in.'),
+  unavailable: t('The password store isn’t available right now. Try again in a moment.'),
+  'wrong-password': t('That master password isn’t right. After five wrong tries in a row Bitwarden stays locked.'),
+  error: t('Couldn’t load saved passwords.'),
 };
 
 export class PasswordsError extends Error {
@@ -175,7 +176,7 @@ export const passwordsApi = {
   reveal: async (sandboxId: string, id: string, masterPassword?: string): Promise<string> => {
     const init = { ...json('POST', masterPassword === undefined ? undefined : { master_password: masterPassword }), kwntQuiet: true, kwntAskToken: true } as RequestInit;
     const body = (await call(`${base(sandboxId)}/${encodeURIComponent(id)}/reveal`, init)) as { password?: unknown } | null;
-    if (typeof body?.password !== 'string') throw new PasswordsError('error', 200, 'The server sent no password.');
+    if (typeof body?.password !== 'string') throw new PasswordsError('error', 200, t('The server sent no password.'));
     return body.password;
   },
   add: (sandboxId: string, origin: string, username: string, password: string) => call(base(sandboxId), json('POST', { origin, username, password })),

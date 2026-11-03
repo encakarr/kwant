@@ -1,5 +1,6 @@
 // Skills: short written procedures an agent proposes and a person reviews (batch 2 / B).
 import { request } from './threads';
+import { t } from './i18n';
 
 export type SkillStatus = 'pending' | 'enabled' | 'disabled' | 'rejected' | 'superseded';
 
@@ -52,12 +53,12 @@ const NAME_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 /** First problem with a draft (same rules as the server), or null when it can be saved. */
 export function skillDraftError(d: SkillDraft): string | null {
   const name = d.name.trim();
-  if (!name) return 'Give it a name.';
-  if (name.length > SKILL_LIMITS.name) return `Names are at most ${SKILL_LIMITS.name} characters.`;
-  if (!NAME_RE.test(name)) return 'Use lowercase letters, digits and dashes, e.g. weekly-report.';
-  if (d.description.trim().length > SKILL_LIMITS.description) return `Descriptions are at most ${SKILL_LIMITS.description} characters.`;
-  if (!d.body.trim()) return 'Write the steps.';
-  if (d.body.length > SKILL_LIMITS.body) return `The steps are at most ${SKILL_LIMITS.body} characters.`;
+  if (!name) return t('Give it a name.');
+  if (name.length > SKILL_LIMITS.name) return t('Names are at most {n} characters.', { n: SKILL_LIMITS.name });
+  if (!NAME_RE.test(name)) return t('Use lowercase letters, digits and dashes, e.g. weekly-report.');
+  if (d.description.trim().length > SKILL_LIMITS.description) return t('Descriptions are at most {n} characters.', { n: SKILL_LIMITS.description });
+  if (!d.body.trim()) return t('Write the steps.');
+  if (d.body.length > SKILL_LIMITS.body) return t('The steps are at most {n} characters.', { n: SKILL_LIMITS.body });
   return null;
 }
 

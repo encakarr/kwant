@@ -3,6 +3,7 @@
 import { personFetch, PersonCancelledError } from './auth';
 import { classLabel } from './flightSchool';
 import { formatTokens } from './missions';
+import { t } from './i18n';
 
 export type PerfBy = 'bot' | 'model';
 export type PerfSince = '30d' | '90d' | 'all';
@@ -44,9 +45,9 @@ export interface PerfQuery {
 }
 
 export const SINCE_OPTIONS: Array<{ value: PerfSince; label: string }> = [
-  { value: '30d', label: 'Last 30 days' },
-  { value: '90d', label: 'Last 90 days' },
-  { value: 'all', label: 'All time' },
+  { value: '30d', label: t('Last 30 days') },
+  { value: '90d', label: t('Last 90 days') },
+  { value: 'all', label: t('All time') },
 ];
 
 /** "All time" is a date before any kwant data; the server caps `Nd` at 365. */
@@ -74,13 +75,13 @@ export async function loadPerformance(q: PerfQuery): Promise<PerfReport> {
     res = await personFetch(perfUrl(q), { cache: 'no-store' });
   } catch (e) {
     if (e instanceof PersonCancelledError) throw new PerfError(e.message, 401);
-    throw new PerfError('Couldn’t reach the server. Check your connection and try again.', 0);
+    throw new PerfError(t('Couldn’t reach the server. Check your connection and try again.'), 0);
   }
   const body = await res.json().catch(() => null);
   if (res.ok && body && Array.isArray(body.groups)) return body as PerfReport;
-  if (res.ok) throw new PerfError('The server sent a report this app can’t read.', res.status);
-  if (res.status === 404) throw new PerfError('This server doesn’t have performance numbers yet. Update the app.', 404);
-  const err = body && typeof body.error === 'string' && body.error.trim() ? body.error.trim() : `Something went wrong (HTTP ${res.status}).`;
+  if (res.ok) throw new PerfError(t('The server sent a report this app can’t read.'), res.status);
+  if (res.status === 404) throw new PerfError(t('This server doesn’t have performance numbers yet. Update the app.'), 404);
+  const err = body && typeof body.error === 'string' && body.error.trim() ? body.error.trim() : t('Something went wrong (HTTP {status}).', { status: res.status });
   throw new PerfError(err, res.status);
 }
 
@@ -104,20 +105,19 @@ export function rateText(rate: number, ci: [number, number] | null | undefined):
 
 /** Screen-reader form: "56% verified, likely between 27% and 81%". */
 export function rateLabel(rate: number, ci: [number, number] | null | undefined): string {
-  const r = `${pct(rate)}% verified`;
-  if (!ci || ci.length !== 2) return r;
-  return `${r}, likely between ${pct(ci[0])}% and ${pct(ci[1])}%`;
+  if (!ci || ci.length !== 2) return t('{rate}% verified', { rate: pct(rate) });
+  return t('{rate}% verified, likely between {low}% and {high}%', { rate: pct(rate), low: pct(ci[0]), high: pct(ci[1]) });
 }
 
 /** "45 s", "3.5 min", "1.2 h"; "—" when unknown. */
 export function latencyText(ms: number | null | undefined): string {
   if (ms === null || ms === undefined || !Number.isFinite(ms) || ms < 0) return '—';
   const s = ms / 1000;
-  if (s < 60) return `${Math.max(1, Math.round(s))} s`;
+  if (s < 60) return t('{n} s', { n: Math.max(1, Math.round(s)) });
   const m = s / 60;
-  if (m < 60) return `${m < 10 ? m.toFixed(1).replace(/\.0$/, '') : Math.round(m)} min`;
+  if (m < 60) return t('{n} min', { n: m < 10 ? m.toFixed(1).replace(/\.0$/, '') : Math.round(m) });
   const h = m / 60;
-  return `${h < 10 ? h.toFixed(1).replace(/\.0$/, '') : Math.round(h)} h`;
+  return t('{n} h', { n: h < 10 ? h.toFixed(1).replace(/\.0$/, '') : Math.round(h) });
 }
 
 export function tokensText(n: number | null | undefined): string {
@@ -138,15 +138,15 @@ export function perTaskText(x: number | null | undefined): string {
   return x === 0 ? '0' : x < 10 ? x.toFixed(1).replace(/\.0$/, '') : String(Math.round(x));
 }
 
-export const FEW_TASKS = 'few tasks';
+export const FEW_TASKS = t('few tasks');
 
 export function botName(g: Pick<PerfGroup, 'kwant_name' | 'kwant_id'>, names: Record<string, string> = {}): string {
-  return g.kwant_name || names[g.kwant_id] || 'Removed bot';
+  return g.kwant_name || names[g.kwant_id] || t('Removed bot');
 }
 
 /** "Claude Opus" style labels aren't known here; show the model id, or say no usage matched. */
 export function modelText(m: string | undefined): string {
-  if (!m || m === 'unknown' || m === 'auto') return 'Not reported';
+  if (!m || m === 'unknown' || m === 'auto') return t('Not reported');
   return m;
 }
 

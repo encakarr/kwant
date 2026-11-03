@@ -1,4 +1,5 @@
 import { personFetch } from './auth';
+import { t } from './i18n';
 
 // The ask card (docs/channel-routing.md, "Ask band"): when a channel message is a close call between
 // two bots, the router posts a card instead of answering, and nothing runs until the person taps who
@@ -75,16 +76,16 @@ export function applyRouteChoice(map: Record<string, RouteChoiceMeta>, raw: unkn
 /** "You picked Nutritionist." / "You asked for a general answer." once settled, else null. */
 export function routeChoiceOutcome(c: RouteChoiceMeta): string | null {
   if (c.status !== 'resolved') return null;
-  if (c.chose_general) return c.general.name ? `You asked for a general answer, so ${c.general.name} answers.` : 'You asked for a general answer.';
+  if (c.chose_general) return c.general.name ? t('You asked for a general answer, so {name} answers.', { name: c.general.name }) : t('You asked for a general answer.');
   const bot = c.choices.find((b) => b.kwant_id === c.chosen_kwant_id);
-  return bot ? `You picked ${bot.name}.` : 'Already answered.';
+  return bot ? t('You picked {name}.', { name: bot.name }) : t('Already answered.');
 }
 
 /** What "Answer generally" will do, under its button. */
 export function generalHint(c: RouteChoiceMeta): string {
   const { name, kwant_id } = c.general;
   if (!name) return '';
-  return kwant_id ? `${name} answers` : `Adds ${name}, a generalist, to answer`;
+  return kwant_id ? t('{name} answers', { name }) : t('Adds {name}, a generalist, to answer', { name });
 }
 
 export type ResolvePick = { kwant_id: string } | { general: true };
@@ -105,15 +106,15 @@ export async function resolveResult(res: Response): Promise<ResolveResult> {
   }
   if (res.status === 409 && (!message || /already/i.test(message))) return { kind: 'already' };
   if (res.status === 409) return { kind: 'error', message: sentence(message) };
-  if (res.status === 401) return { kind: 'error', message: 'Enter your access token, then tap again.' };
-  if (res.status === 403) return { kind: 'error', message: 'Only you can choose who answers.' };
-  if (res.status === 404) return { kind: 'error', message: 'This choice is gone. Send your message again.' };
-  return { kind: 'error', message: message ? sentence(message) : `Couldn’t send your choice (HTTP ${res.status}).` };
+  if (res.status === 401) return { kind: 'error', message: t('Enter your access token, then tap again.') };
+  if (res.status === 403) return { kind: 'error', message: t('Only you can choose who answers.') };
+  if (res.status === 404) return { kind: 'error', message: t('This choice is gone. Send your message again.') };
+  return { kind: 'error', message: message ? sentence(message) : t('Couldn’t send your choice (HTTP {status}).', { status: res.status }) };
 }
 
 const sentence = (s: string) => {
-  const t = s.trim();
-  return t ? `${t[0].toUpperCase()}${t.slice(1)}${/[.!?]$/.test(t) ? '' : '.'}` : t;
+  const x = s.trim();
+  return x ? `${x[0].toUpperCase()}${x.slice(1)}${/[.!?]$/.test(x) ? '' : '.'}` : x;
 };
 
 export async function resolveRouteChoice(id: string, pick: ResolvePick): Promise<ResolveResult> {
@@ -125,7 +126,7 @@ export async function resolveRouteChoice(id: string, pick: ResolvePick): Promise
     });
     return await resolveResult(res);
   } catch {
-    return { kind: 'error', message: 'Could not reach the server.' };
+    return { kind: 'error', message: t('Could not reach the server.') };
   }
 }
 
@@ -192,9 +193,9 @@ export async function correctRoute(messageId: string, kwantId: string): Promise<
     if (res.ok) return null;
     const body = await res.json().catch(() => null);
     const msg = body && typeof body.error === 'string' ? body.error : '';
-    if (res.status === 403) return 'Only you can change who answers.';
-    return msg ? sentence(msg) : `Couldn’t change who answers (HTTP ${res.status}).`;
+    if (res.status === 403) return t('Only you can change who answers.');
+    return msg ? sentence(msg) : t('Couldn’t change who answers (HTTP {status}).', { status: res.status });
   } catch {
-    return 'Could not reach the server.';
+    return t('Could not reach the server.');
   }
 }

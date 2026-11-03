@@ -16,6 +16,7 @@ import {
   triggerLabel,
   unresolved,
 } from '../auditor';
+import { t } from '../i18n';
 import { formatTokens } from '../missions';
 
 const TONE: Record<string, string> = {
@@ -27,7 +28,7 @@ const TONE: Record<string, string> = {
 const btn =
   'inline-flex items-center justify-center gap-1.5 min-h-[40px] sm:min-h-[32px] px-3 rounded-lg text-xs font-medium disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500';
 
-export const WAITING_TITLE = 'Audit waiting for your answer';
+export const WAITING_TITLE = t('Audit waiting for your answer');
 
 const RiskItem: React.FC<{
   r: Risk;
@@ -45,18 +46,18 @@ const RiskItem: React.FC<{
         <p className={`flex-1 min-w-0 break-words ${open ? 'text-zinc-100' : 'text-zinc-400'}`}>{r.risk}</p>
       </div>
       <p className="text-[11px] text-zinc-400 break-words">
-        <span className="font-medium text-zinc-300">Evidence: </span>
+        <span className="font-medium text-zinc-300">{t('Evidence: ')}</span>
         {r.evidence}
       </p>
       {r.answer && (
         <div className="text-[11px] text-zinc-400 break-words border-l-2 border-zinc-700 pl-2" data-rebuttal>
           <span className="font-medium text-zinc-300">
-            {owner} {r.stance === 'disputed' ? 'disputes it' : 'accepts it'}:{' '}
+            {r.stance === 'disputed' ? t('{owner} disputes it:', { owner }) : t('{owner} accepts it:', { owner })}{' '}
           </span>
           {r.answer}
           {r.answer_evidence && (
             <span className="block mt-0.5">
-              <span className="font-medium text-zinc-300">Their evidence: </span>
+              <span className="font-medium text-zinc-300">{t('Their evidence: ')}</span>
               {r.answer_evidence}
             </span>
           )}
@@ -64,16 +65,22 @@ const RiskItem: React.FC<{
       )}
       {!open && (
         <p className="text-[11px] text-zinc-500" data-closed>
-          You {r.status === 'dismissed' ? 'dismissed' : 'resolved'} it{r.note ? `: ${r.note}` : '.'}
+          {r.status === 'dismissed'
+            ? r.note
+              ? t('You dismissed it: {note}', { note: r.note })
+              : t('You dismissed it.')
+            : r.note
+              ? t('You resolved it: {note}', { note: r.note })
+              : t('You resolved it.')}
         </p>
       )}
       {open && canResolve && onResolve && (
         <div className="flex flex-wrap gap-2 pt-0.5" data-risk-actions>
           <button type="button" disabled={busy} onClick={() => onResolve(r, 'resolved')} className={`${btn} bg-emerald-600 text-white hover:bg-emerald-500`}>
-            Resolve
+            {t('Resolve')}
           </button>
           <button type="button" disabled={busy} onClick={() => onResolve(r, 'dismissed')} className={`${btn} border border-zinc-700 bg-zinc-800/80 text-zinc-100 hover:bg-zinc-700`}>
-            Dismiss
+            {t('Dismiss')}
           </button>
         </div>
       )}
@@ -88,15 +95,15 @@ const AuditBlock: React.FC<{
   busy: boolean;
   onResolve?: (r: Risk, resolution: RiskResolution) => void;
 }> = ({ a, names, canResolve, busy, onResolve }) => {
-  const challenger = names[a.challenger_kwant_id] || 'A bot';
-  const owner = names[a.owner_kwant_id] || 'The owner';
+  const challenger = names[a.challenger_kwant_id] || t('A bot');
+  const owner = names[a.owner_kwant_id] || t('The owner');
   const tokens = auditTokens(a);
   return (
     <li className="space-y-2" data-audit={a.id} data-audit-status={a.status}>
       <div className="text-[11px] text-zinc-400 break-words">
-        <span className="font-medium text-zinc-200">Audit by {challenger}</span>
+        <span className="font-medium text-zinc-200">{t('Audit by {name}', { name: challenger })}</span>
         <span> · {triggerLabel(a.trigger)}</span>
-        {tokens > 0 && <span className="tabular-nums"> · {formatTokens(tokens)} tokens</span>}
+        {tokens > 0 && <span className="tabular-nums"> · {t('{n} tokens', { n: formatTokens(tokens) })}</span>}
         <span className="block" data-audit-line>
           {auditStatusText(a, names)}
         </span>
@@ -129,7 +136,7 @@ export const RisksSection: React.FC<{
     <section aria-labelledby="risks-h" className="space-y-2" data-risks>
       <h4 id="risks-h" className="flex items-center gap-1.5 text-xs font-semibold text-zinc-200">
         <ShieldAlert size={13} className={open > 0 ? 'text-amber-300' : 'text-zinc-400'} aria-hidden="true" />
-        Open risks
+        {t('Open risks')}
         <span className={`min-w-[18px] px-1 rounded-full text-[10px] text-center tabular-nums ${open > 0 ? 'bg-amber-500 text-zinc-950' : 'bg-zinc-800 text-zinc-300'}`} data-open-risks={open}>
           {open}
         </span>
@@ -139,12 +146,12 @@ export const RisksSection: React.FC<{
           <span className="flex-1 min-w-[10rem]">
             <span className="block font-medium">{WAITING_TITLE}</span>
             <span className="block text-[11px] text-amber-200/80">
-              {names[waiting.kwant_id] || 'A bot'} asked for your OK. The audit stays paused until you answer.
+              {t('{name} asked for your OK. The audit stays paused until you answer.', { name: names[waiting.kwant_id] || t('A bot') })}
             </span>
           </span>
           {onOpenWaiting && (
             <button type="button" onClick={() => onOpenWaiting(waiting)} className={`${btn} border border-amber-500/40 hover:bg-amber-500/10`} data-open-audit-card>
-              <MessageSquare size={13} aria-hidden="true" /> Answer in chat
+              <MessageSquare size={13} aria-hidden="true" /> {t('Answer in chat')}
             </button>
           )}
         </div>

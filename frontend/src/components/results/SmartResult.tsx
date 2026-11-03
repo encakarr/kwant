@@ -6,6 +6,7 @@ import { playSfx } from '../../audio/chiptune';
 import { ReplySource, resolveBlock } from './registry';
 import { blockCsv, blockJson, blockMarkdown } from './exporters';
 import { SmartActions, actionClass } from './SmartActions';
+import { t } from '../../i18n';
 
 /** "Ask about this": ChatView puts `text` in the composer and focuses it. Nothing is sent. */
 export const COMPOSE_PREFILL_EVENT = 'kwnt:compose-prefill';
@@ -35,25 +36,29 @@ const saveAsText = (messageId: string, on: boolean) => {
 };
 
 const TYPE_LABEL: Record<SmartBlock['type'], string> = {
-  comparison: 'Comparison',
-  chart: 'Chart',
-  metrics: 'Key numbers',
-  facts: 'Facts',
-  steps: 'Steps',
-  cards: 'Links',
-  findings: 'Findings',
-  verification: 'Checks',
-  files: 'Files',
+  comparison: t('Comparison'),
+  chart: t('Chart'),
+  metrics: t('Key numbers'),
+  facts: t('Facts'),
+  steps: t('Steps'),
+  cards: t('Links'),
+  findings: t('Findings'),
+  verification: t('Checks'),
+  files: t('Files'),
 };
 
 /** Where the block's data came from, in plain words (plan §A.6). */
 export function evidenceText(block: SmartBlock): string {
   const p = block.provenance;
-  if (p.kind !== 'kwant_data') return 'From this reply';
-  if (p.ref.startsWith('task:')) return 'From task checks';
+  if (p.kind !== 'kwant_data') return t('From this reply');
+  if (p.ref.startsWith('task:')) return t('From task checks');
   const id = p.ref.slice('attachment:'.length);
   const file = block.type === 'files' ? block.items.find((f) => f.attachment_id === id) : undefined;
-  return file ? `From attachment ${file.name}` : block.type === 'files' && block.items.length > 1 ? 'From attachments' : 'From an attachment';
+  return file
+    ? t('From attachment {name}', { name: file.name })
+    : block.type === 'files' && block.items.length > 1
+      ? t('From attachments')
+      : t('From an attachment');
 }
 
 /** A block that throws while rendering shows the reply's markdown instead. */
@@ -115,10 +120,10 @@ const CopyData: React.FC<{ block: SmartBlock; messageId: string }> = ({ block, m
       f === 'CSV' ? blockCsv(block) : f === 'JSON' ? blockJson(block) : blockMarkdown(block, block.type === 'steps' && block.variant === 'checklist' ? readDoneSteps(messageId, block) : undefined);
     try {
       await navigator.clipboard.writeText(text);
-      setSaid({ ok: true, text: `Copied as ${f}` });
+      setSaid({ ok: true, text: t('Copied as {format}', { format: f }) });
       playSfx('click');
     } catch {
-      setSaid({ ok: false, text: 'Could not copy' });
+      setSaid({ ok: false, text: t('Could not copy') });
     }
     window.clearTimeout(timer.current);
     timer.current = window.setTimeout(() => setSaid(null), 2000);
@@ -159,7 +164,7 @@ const CopyData: React.FC<{ block: SmartBlock; messageId: string }> = ({ block, m
         className={actionClass}
       >
         {said?.ok ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
-        <span className={said?.ok ? 'font-medium text-emerald-400' : said ? 'text-rose-300' : ''}>{said?.ok ? 'Copied' : said ? 'Copy failed' : 'Copy data'}</span>
+        <span className={said?.ok ? 'font-medium text-emerald-400' : said ? 'text-rose-300' : ''}>{said?.ok ? t('Copied') : said ? t('Copy failed') : t('Copy data')}</span>
         <ChevronDown size={11} aria-hidden="true" />
       </button>
       <span className="sr-only" aria-live="polite">
@@ -170,7 +175,7 @@ const CopyData: React.FC<{ block: SmartBlock; messageId: string }> = ({ block, m
           ref={menu}
           id={menuId}
           role="menu"
-          aria-label="Copy data as"
+          aria-label={t('Copy data as')}
           onKeyDown={onMenuKey}
           className={`absolute bottom-full ${flip ? 'right-0' : 'left-0'} z-20 mb-1 flex min-w-[8rem] flex-col rounded-lg border border-zinc-800 bg-zinc-900 p-1 shadow-lg`}
         >
@@ -200,7 +205,7 @@ const Footer: React.FC<{ block: SmartBlock; messageId: string; asText: boolean; 
       {evidenceText(block)}
     </span>
     <button type="button" aria-pressed={asText} onClick={onToggle} className={`${actionClass} ${asText ? 'bg-zinc-900 text-zinc-300' : ''}`}>
-      Show as text
+      {t('Show as text')}
     </button>
     <CopyData block={block} messageId={messageId} />
   </SmartActions>

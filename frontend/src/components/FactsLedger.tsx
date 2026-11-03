@@ -6,6 +6,7 @@
 
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { AlertTriangle, BookOpenCheck, Check, ChevronDown, Loader2, Scale } from 'lucide-react';
+import { t } from '../i18n';
 import { MissionError, ago, factsApi, newIdempotencyKey, onMission } from '../missions';
 import {
   Dispute,
@@ -72,7 +73,7 @@ export const DisputeCard: React.FC<{
         <Scale size={16} className={`mt-0.5 shrink-0 ${open ? 'text-amber-300' : 'text-zinc-500'}`} aria-hidden="true" />
         <div className="min-w-0 flex-1">
           <p id={`${id}-t`} className="text-xs font-medium text-zinc-100">
-            Two facts disagree
+            {t('Two facts disagree')}
           </p>
           <p className="text-[11px] text-zinc-400">
             {causeText(d.cause)} <span className="text-zinc-600">· {ago(d.created_at, now)}</span>
@@ -88,7 +89,7 @@ export const DisputeCard: React.FC<{
               {f ? (
                 <>
                   <p className="text-xs text-zinc-100 break-words">
-                    <span className="sr-only">{i === 0 ? 'First fact: ' : 'Second fact: '}</span>“{f.statement}”
+                    <span className="sr-only">{i === 0 ? t('First fact: ') : t('Second fact: ')}</span>“{f.statement}”
                   </p>
                   <p className="text-[11px] text-zinc-500 break-words">
                     {scopeText(f, names, teams)} · {sourceText(f, names)} · {ago(f.created_at, now)}
@@ -98,17 +99,17 @@ export const DisputeCard: React.FC<{
                       type="button"
                       disabled={busy}
                       onClick={() => onKeep(d, f)}
-                      aria-label={`Keep “${f.statement}” and replace the other`}
+                      aria-label={t('Keep “{statement}” and replace the other', { statement: f.statement })}
                       className={`${btn} w-full sm:w-auto border border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10`}
                       data-keep={f.id}
                     >
                       {busy ? <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Check size={12} aria-hidden="true" />}
-                      Keep this one
+                      {t('Keep this one')}
                     </button>
                   )}
                 </>
               ) : (
-                <p className="text-[11px] text-zinc-500">This fact is gone.</p>
+                <p className="text-[11px] text-zinc-500">{t('This fact is gone.')}</p>
               )}
             </div>
           );
@@ -122,9 +123,9 @@ export const DisputeCard: React.FC<{
       {open ? (
         <div className="flex flex-wrap items-center gap-2">
           <button type="button" disabled={busy} onClick={() => onDismiss(d)} className={`${btn} border border-zinc-700 bg-zinc-800/80 text-zinc-100 hover:bg-zinc-700`} data-dismiss>
-            Not a conflict
+            {t('Not a conflict')}
           </button>
-          <span className="text-[10px] text-zinc-500">Until you choose, bots see both, labelled disputed.</span>
+          <span className="text-[10px] text-zinc-500">{t('Until you choose, bots see both, labelled disputed.')}</span>
         </div>
       ) : (
         <p className={`text-[11px] ${d.status === 'resolved' ? 'text-emerald-300' : 'text-zinc-400'}`} data-outcome={d.status}>
@@ -155,7 +156,7 @@ const FactDetails: React.FC<{
     // A refresh keeps any message (a 409 explains itself); Try again clears it first.
     api.get(fact.id).then(
       (d) => live && setDetail(d),
-      (e) => live && setError(errText(e, 'Couldn’t load this fact.')),
+      (e) => live && setError(errText(e, t('Couldn’t load this fact.'))),
     );
     return () => {
       live = false;
@@ -170,10 +171,10 @@ const FactDetails: React.FC<{
     setError(null);
     try {
       setDetail(await (accept ? api.accept : api.reject)(fact.id, key));
-      setNote(accept ? 'Confirmed: bots now read it without the label.' : 'Rejected: bots no longer read it.');
+      setNote(accept ? t('Confirmed: bots now read it without the label.') : t('Rejected: bots no longer read it.'));
       onChanged();
     } catch (e) {
-      setError(e instanceof MissionError && e.status === 409 ? factConflictText(e) : errText(e, 'Couldn’t save that. Try again.'));
+      setError(e instanceof MissionError && e.status === 409 ? factConflictText(e) : errText(e, t('Couldn’t save that. Try again.')));
       if (e instanceof MissionError && e.status === 409) {
         load();
         onChanged();
@@ -186,7 +187,7 @@ const FactDetails: React.FC<{
   if (!detail && !error)
     return (
       <p className="flex items-center gap-1.5 text-[11px] text-zinc-400">
-        <Loader2 size={11} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> Loading…
+        <Loader2 size={11} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> {t('Loading…')}
       </p>
     );
   const f = detail?.fact ?? fact;
@@ -199,9 +200,9 @@ const FactDetails: React.FC<{
             {citationText(detail.citations)}
           </p>
           {tasks.length > 0 && (
-            <ul className="space-y-0.5" aria-label="Tasks that rely on it">
+            <ul className="space-y-0.5" aria-label={t('Tasks that rely on it')}>
               {tasks.slice(0, 8).map((c) => {
-                const title = taskTitles[c.cited_by_id] ?? 'A task';
+                const title = taskTitles[c.cited_by_id] ?? t('A task');
                 return (
                   <li key={c.cited_by_id}>
                     {onOpenTask ? (
@@ -211,7 +212,7 @@ const FactDetails: React.FC<{
                     ) : (
                       <span className="text-zinc-400">{title}</span>
                     )}
-                    <span className="text-zinc-600"> · since {ago(c.created_at, now)}</span>
+                    <span className="text-zinc-600"> · {t('since {when}', { when: ago(c.created_at, now) })}</span>
                   </li>
                 );
               })}
@@ -219,24 +220,27 @@ const FactDetails: React.FC<{
           )}
           {detail.evidence.length > 0 && (
             <p className="text-zinc-400">
-              Backed by {detail.evidence.length} piece{detail.evidence.length === 1 ? '' : 's'} of evidence
-              {detail.evidence.some((e) => e.check_id) ? ', including a check' : ''}.
+              {detail.evidence.some((e) => e.check_id)
+                ? t(detail.evidence.length === 1 ? 'Backed by {n} piece of evidence, including a check.' : 'Backed by {n} pieces of evidence, including a check.', { n: detail.evidence.length })
+                : t(detail.evidence.length === 1 ? 'Backed by {n} piece of evidence.' : 'Backed by {n} pieces of evidence.', { n: detail.evidence.length })}
             </p>
           )}
           {f.valid_until && (
             <p className="text-zinc-500">
-              {Date.parse(f.valid_until) > now ? `Bots stop reading it on ${new Date(f.valid_until).toLocaleDateString()}.` : `Bots stopped reading it ${ago(f.valid_until, now)}.`}
+              {Date.parse(f.valid_until) > now
+                ? t('Bots stop reading it on {date}.', { date: new Date(f.valid_until).toLocaleDateString() })
+                : t('Bots stopped reading it {when}.', { when: ago(f.valid_until, now) })}
             </p>
           )}
         </>
       )}
       {f.status === 'proposed' && (
-        <div className="flex flex-wrap items-center gap-2 pt-0.5" role="group" aria-label={`Unconfirmed: ${f.statement}`}>
+        <div className="flex flex-wrap items-center gap-2 pt-0.5" role="group" aria-label={t('Unconfirmed: {statement}', { statement: f.statement })}>
           <button type="button" disabled={busy} onClick={() => void decide(true)} className={`${btn} bg-emerald-600/90 text-white hover:bg-emerald-500`} data-confirm-fact>
-            {busy ? <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Check size={12} aria-hidden="true" />} Confirm
+            {busy ? <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Check size={12} aria-hidden="true" />} {t('Confirm')}
           </button>
           <button type="button" disabled={busy} onClick={() => void decide(false)} className={`${btn} border border-zinc-700 bg-zinc-800/80 text-zinc-100 hover:bg-zinc-700`} data-reject-fact>
-            Reject
+            {t('Reject')}
           </button>
         </div>
       )}
@@ -255,7 +259,7 @@ const FactDetails: React.FC<{
               }}
               className={`underline hover:text-rose-200 rounded ${focusRing}`}
             >
-              Try again
+              {t('Try again')}
             </button>
           )}
         </p>
@@ -296,8 +300,8 @@ const FactRow: React.FC<{
           className={`shrink-0 inline-flex items-center gap-0.5 px-2 min-h-[40px] sm:min-h-[28px] rounded text-[11px] text-sky-300 hover:text-sky-200 ${focusRing}`}
           data-fact-toggle
         >
-          {open ? 'Less' : 'Details'}
-          <span className="sr-only"> about “{f.statement}”</span>
+          {open ? t('Less') : t('Details')}
+          <span className="sr-only">{t(' about “{statement}”', { statement: f.statement })}</span>
           <ChevronDown size={12} className={open ? 'rotate-180' : ''} aria-hidden="true" />
         </button>
       </div>
@@ -311,9 +315,9 @@ const FactRow: React.FC<{
 };
 
 const FILTERS: Array<{ id: FactFilter; label: string }> = [
-  { id: 'all', label: 'In force' },
-  { id: 'proposed', label: 'Unconfirmed' },
-  { id: 'disputed', label: 'Disputed' },
+  { id: 'all', label: t('In force') },
+  { id: 'proposed', label: t('Unconfirmed') },
+  { id: 'disputed', label: t('Disputed') },
 ];
 
 /**
@@ -369,7 +373,7 @@ export const FactsLedger: React.FC<{
         if (!alive.current) return;
         setReloading(false);
         // Before the first answer an error (an older server's 404) just means: show nothing.
-        setLoadError(errText(e, 'Couldn’t load the facts.'));
+        setLoadError(errText(e, t('Couldn’t load the facts.')));
       },
     );
   }, [api]);
@@ -380,17 +384,17 @@ export const FactsLedger: React.FC<{
 
   // Live: a burst of changes (a dispute moves both facts and their tasks) reads once.
   useEffect(() => {
-    let t: ReturnType<typeof setTimeout> | null = null;
+    let timer: ReturnType<typeof setTimeout> | null = null;
     const soon = () => {
-      if (t) clearTimeout(t);
-      t = setTimeout(reload, 250);
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(reload, 250);
     };
     const offA = onMission('fact_changed', soon);
     const offB = onMission('fact_dispute', soon);
     return () => {
       offA();
       offB();
-      if (t) clearTimeout(t);
+      if (timer) clearTimeout(timer);
     };
   }, [reload]);
 
@@ -423,7 +427,7 @@ export const FactsLedger: React.FC<{
         reload();
       } else {
         // Another press retries with the same key: a lost answer replays rather than repeats.
-        setErrors((x) => ({ ...x, [d.id]: errText(e, 'Couldn’t save that. Try again.') }));
+        setErrors((x) => ({ ...x, [d.id]: errText(e, t('Couldn’t save that. Try again.')) }));
       }
     } finally {
       setBusyId(null);
@@ -446,14 +450,14 @@ export const FactsLedger: React.FC<{
     <section aria-labelledby={headId} className="space-y-2 rounded-xl border border-zinc-800 bg-zinc-900/40 p-3" data-facts-ledger>
       <div className="flex flex-wrap items-center gap-2">
         <h3 id={headId} className="flex items-center gap-1.5 text-xs font-medium text-zinc-200">
-          <BookOpenCheck size={14} className="text-sky-300" aria-hidden="true" /> Facts
+          <BookOpenCheck size={14} className="text-sky-300" aria-hidden="true" /> {t('Facts')}
         </h3>
         <p className="text-[11px] text-zinc-500" data-fact-counts>
-          {inForce.length === 0 ? 'None saved yet' : `${inForce.length} in force`}
-          {unconfirmed > 0 && <span className="text-amber-300"> · {unconfirmed} unconfirmed</span>}
-          {disputed > 0 && <span className="text-rose-300"> · {disputed} disputed</span>}
+          {inForce.length === 0 ? t('None saved yet') : t('{n} in force', { n: inForce.length })}
+          {unconfirmed > 0 && <span className="text-amber-300"> · {t('{n} unconfirmed', { n: unconfirmed })}</span>}
+          {disputed > 0 && <span className="text-rose-300"> · {t('{n} disputed', { n: disputed })}</span>}
         </p>
-        {reloading && <Loader2 size={11} className="animate-spin motion-reduce:animate-none text-zinc-500" aria-label="Updating" />}
+        {reloading && <Loader2 size={11} className="animate-spin motion-reduce:animate-none text-zinc-500" aria-label={t('Updating')} />}
         <button
           type="button"
           aria-expanded={showList}
@@ -462,7 +466,7 @@ export const FactsLedger: React.FC<{
           className={`ml-auto inline-flex items-center gap-0.5 px-2 min-h-[40px] sm:min-h-[28px] rounded text-[11px] text-sky-300 hover:text-sky-200 ${focusRing}`}
           data-facts-toggle
         >
-          {showList ? 'Hide facts' : 'Show facts'}
+          {showList ? t('Hide facts') : t('Show facts')}
           <ChevronDown size={12} className={showList ? 'rotate-180' : ''} aria-hidden="true" />
         </button>
       </div>
@@ -471,7 +475,7 @@ export const FactsLedger: React.FC<{
         <p role="alert" className="flex flex-wrap items-center gap-2 text-[11px] text-rose-300" data-facts-error>
           <AlertTriangle size={12} aria-hidden="true" /> {loadError}
           <button type="button" onClick={reload} className={`underline hover:text-rose-200 rounded ${focusRing}`}>
-            Try again
+            {t('Try again')}
           </button>
         </p>
       )}
@@ -479,7 +483,11 @@ export const FactsLedger: React.FC<{
       {shownDisputes.length > 0 && (
         <div className="space-y-2" data-disputes={openDisputes.length}>
           <h4 className="text-xs font-medium text-amber-200">
-            Needs you: {openDisputes.length === 0 ? 'disputes' : openDisputes.length === 1 ? 'one dispute' : `${openDisputes.length} disputes`} to settle
+            {openDisputes.length === 0
+              ? t('Needs you: disputes to settle')
+              : openDisputes.length === 1
+                ? t('Needs you: one dispute to settle')
+                : t('Needs you: {n} disputes to settle', { n: openDisputes.length })}
           </h4>
           <ul className="space-y-2">
             {shownDisputes.map((d) => (
@@ -498,9 +506,9 @@ export const FactsLedger: React.FC<{
           </ul>
           {openDisputes.length === 0 && (
             <p className="text-[11px] text-zinc-500">
-              All settled.{' '}
+              {t('All settled.')}{' '}
               <button type="button" onClick={() => setDecided([])} className={`underline hover:text-zinc-300 rounded ${focusRing}`}>
-                Hide
+                {t('Hide')}
               </button>
             </p>
           )}
@@ -509,7 +517,7 @@ export const FactsLedger: React.FC<{
 
       {showList && (
         <div id={listId} className="space-y-2">
-          <div role="group" aria-label="Show" className="flex flex-wrap gap-1.5">
+          <div role="group" aria-label={t('Show')} className="flex flex-wrap gap-1.5">
             {FILTERS.map((x) => (
               <button
                 key={x.id}
@@ -526,20 +534,20 @@ export const FactsLedger: React.FC<{
           {listed.length === 0 ? (
             <p className="text-[11px] text-zinc-500" data-facts-empty>
               {filter === 'all'
-                ? 'No facts yet. When a bot saves a note or you write a shared fact, it shows here.'
+                ? t('No facts yet. When a bot saves a note or you write a shared fact, it shows here.')
                 : filter === 'proposed'
-                  ? 'Nothing unconfirmed.'
-                  : 'Nothing disputed.'}
+                  ? t('Nothing unconfirmed.')
+                  : t('Nothing disputed.')}
             </p>
           ) : (
-            <ul className="divide-y divide-zinc-800 rounded-lg border border-zinc-800" aria-label="Facts">
+            <ul className="divide-y divide-zinc-800 rounded-lg border border-zinc-800" aria-label={t('Facts')}>
               {listed.slice(0, 100).map((f) => (
                 <FactRow key={f.id} fact={f} names={names} teams={teams} taskTitles={taskTitles} onOpenTask={onOpenTask} api={api} now={now} version={version} onChanged={reload} />
               ))}
             </ul>
           )}
-          {listed.length > 100 && <p className="text-[11px] text-zinc-500">Showing the first 100 of {listed.length}.</p>}
-          <p className="text-[10px] text-zinc-600">Bots read the facts in force; unconfirmed and disputed ones come with that label.</p>
+          {listed.length > 100 && <p className="text-[11px] text-zinc-500">{t('Showing the first 100 of {n}.', { n: listed.length })}</p>}
+          <p className="text-[10px] text-zinc-600">{t('Bots read the facts in force; unconfirmed and disputed ones come with that label.')}</p>
         </div>
       )}
     </section>
@@ -558,14 +566,14 @@ export const FactNeedsYouAction: React.FC<{
   if (item.kind === 'rests_on_disputed_fact')
     return (
       <span className="text-[11px] text-amber-200/80" data-settle-under-facts>
-        Settle it under Facts on the board.
+        {t('Settle it under Facts on the board.')}
       </span>
     );
   if (item.kind !== 'fact_changed') return null;
   if (done)
     return (
       <span role="status" className="text-[11px] text-emerald-300" data-uncited>
-        Done: this task no longer relies on it.
+        {t('Done: this task no longer relies on it.')}
       </span>
     );
   return (
@@ -580,7 +588,7 @@ export const FactNeedsYouAction: React.FC<{
             await api.uncite(item.fact_id ?? item.id, taskId);
             setDone(true);
           } catch (e) {
-            setError(errText(e, 'Couldn’t save that. Try again.'));
+            setError(errText(e, t('Couldn’t save that. Try again.')));
           } finally {
             setBusy(false);
           }
@@ -588,7 +596,7 @@ export const FactNeedsYouAction: React.FC<{
         className="px-2 py-1 rounded border border-amber-500/40 hover:bg-amber-500/10 min-h-[32px] disabled:opacity-50"
         data-uncite
       >
-        {busy ? 'Saving…' : 'Stop relying on it'}
+        {busy ? t('Saving…') : t('Stop relying on it')}
       </button>
       {error && (
         <span role="alert" className="text-[11px] text-rose-300">

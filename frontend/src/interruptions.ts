@@ -4,6 +4,7 @@
 import type { ChatMessage } from './components/ChatView';
 import { AttachmentRef, parseAttachments } from './attachments';
 import { parseMetaObject } from './questions';
+import { t } from './i18n';
 
 export interface Interruption {
   kind: 'restart' | 'stall';
@@ -19,14 +20,14 @@ export function parseInterruption(msg: ChatMessage): Interruption | null {
   if (msg.sender_role === 'system') {
     const m = parseMetaObject(msg.meta);
     if (m?.kind !== 'turn_interrupted' || m.interrupted !== true) return null;
-    const name = typeof m.kwant_name === 'string' && m.kwant_name.trim() ? m.kwant_name : 'The bot';
+    const name = typeof m.kwant_name === 'string' && m.kwant_name.trim() ? m.kwant_name : t('The bot');
     return { kind: 'restart', botName: name };
   }
   if (msg.sender_role === 'kwant') {
     const m = parseMetaObject(msg.meta);
     if (m?.kind === 'turn_stalled') {
       if (m.stalled !== true) return null;
-      const name = typeof m.kwant_name === 'string' && m.kwant_name.trim() ? m.kwant_name : msg.sender_id || 'The bot';
+      const name = typeof m.kwant_name === 'string' && m.kwant_name.trim() ? m.kwant_name : msg.sender_id || t('The bot');
       const secs = typeof m.stall_secs === 'number' && m.stall_secs > 0 ? m.stall_secs : undefined;
       return { kind: 'stall', botName: name, secs };
     }
@@ -38,10 +39,10 @@ export function parseInterruption(msg: ChatMessage): Interruption | null {
 
 export function interruptionText(i: Interruption): string {
   return i.kind === 'restart'
-    ? `${i.botName}'s reply was cut off when the app restarted.`
+    ? t("{name}'s reply was cut off when the app restarted.", { name: i.botName })
     : i.secs
-      ? `${i.botName} sent nothing for ${i.secs} s, so the reply was stopped.`
-      : `${i.botName} went quiet, so the reply was stopped.`;
+      ? t('{name} sent nothing for {secs} s, so the reply was stopped.', { name: i.botName, secs: i.secs })
+      : t('{name} went quiet, so the reply was stopped.', { name: i.botName });
 }
 
 export interface RetryTarget {

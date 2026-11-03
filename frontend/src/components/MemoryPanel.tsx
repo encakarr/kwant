@@ -5,6 +5,7 @@ import { Bot, Check, Loader2, Pencil, Pin, PinOff, Plus, RefreshCw, Trash2, User
 import { MAX_MEMORIES, MAX_MEMORY, MAX_PINNED, Memory, continuityApi, formatWhen, memoriesForDisplay, onContinuity } from '../continuity';
 import { playSfx } from '../audio/chiptune';
 import { editorProps } from '../escape';
+import { t } from '../i18n';
 
 const smallBtn =
   'inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium border transition-colors disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500';
@@ -15,11 +16,11 @@ const inputClass =
 const SourceBadge: React.FC<{ source: Memory['source'] }> = ({ source }) =>
   source === 'agent' ? (
     <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-violet-500/10 text-violet-300 border border-violet-500/20">
-      <Bot size={10} aria-hidden="true" /> Bot
+      <Bot size={10} aria-hidden="true" /> {t('Bot')}
     </span>
   ) : (
     <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-sky-500/10 text-sky-300 border border-sky-500/20">
-      <User size={10} aria-hidden="true" /> You
+      <User size={10} aria-hidden="true" /> {t('You')}
     </span>
   );
 
@@ -42,10 +43,10 @@ export const MemoryRow: React.FC<{
   }, [memory.text, editing]);
 
   const save = async () => {
-    const t = text.trim();
-    if (!t || t.length > MAX_MEMORY) return;
+    const value = text.trim();
+    if (!value || value.length > MAX_MEMORY) return;
     setBusy(true);
-    const err = await onSave(t);
+    const err = await onSave(value);
     setBusy(false);
     if (err) setError(err);
     else {
@@ -70,7 +71,7 @@ export const MemoryRow: React.FC<{
     });
   };
 
-  if (removal.pending) return <UndoNotice as="li" text="Memory deleted." onUndo={removal.undo} />;
+  if (removal.pending) return <UndoNotice as="li" text={t('Memory deleted.')} onUndo={removal.undo} />;
 
   return (
     <li
@@ -80,12 +81,13 @@ export const MemoryRow: React.FC<{
         <SourceBadge source={memory.source} />
         {memory.pinned && (
           <span className="inline-flex items-center gap-1 text-amber-300">
-            <Pin size={10} aria-hidden="true" /> Pinned
+            <Pin size={10} aria-hidden="true" /> {t('Pinned')}
           </span>
         )}
-        <span title={`Added ${formatWhen(memory.created_at)}`}>
-          {memory.updated_at !== memory.created_at ? 'Edited ' : ''}
-          {formatWhen(memory.updated_at)}
+        <span title={t('Added {when}', { when: formatWhen(memory.created_at) })}>
+          {memory.updated_at !== memory.created_at
+            ? t('Edited {when}', { when: formatWhen(memory.updated_at) })
+            : formatWhen(memory.updated_at)}
         </span>
         <span className="ml-auto flex items-center gap-1">
           {onPin && !editing && (
@@ -94,15 +96,15 @@ export const MemoryRow: React.FC<{
               onClick={togglePin}
               disabled={busy}
               className={quietBtn}
-              aria-label={memory.pinned ? 'Unpin memory' : 'Pin memory'}
+              aria-label={memory.pinned ? t('Unpin memory') : t('Pin memory')}
               aria-pressed={!!memory.pinned}
-              title={memory.pinned ? 'Unpin' : 'Pin: always load this note first'}
+              title={memory.pinned ? t('Unpin') : t('Pin: always load this note first')}
             >
               {memory.pinned ? <PinOff size={11} /> : <Pin size={11} />}
             </button>
           )}
           {!editing && (
-            <button type="button" onClick={() => setEditing(true)} className={quietBtn} aria-label="Edit memory">
+            <button type="button" onClick={() => setEditing(true)} className={quietBtn} aria-label={t('Edit memory')}>
               <Pencil size={11} />
             </button>
           )}
@@ -111,7 +113,7 @@ export const MemoryRow: React.FC<{
             onClick={remove}
             disabled={busy}
             className={`${smallBtn} border-zinc-700/70 bg-zinc-800/70 text-zinc-300 hover:text-rose-200`}
-            aria-label="Delete memory"
+            aria-label={t('Delete memory')}
           >
             <Trash2 size={11} />
           </button>
@@ -124,7 +126,7 @@ export const MemoryRow: React.FC<{
             onChange={(e) => setText(e.target.value)}
             rows={3}
             autoFocus
-            aria-label="Memory text"
+            aria-label={t('Memory text')}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) save();
             }}
@@ -142,7 +144,7 @@ export const MemoryRow: React.FC<{
               }}
               className={`${quietBtn} ml-auto`}
             >
-              <X size={11} /> Cancel
+              <X size={11} /> {t('Cancel')}
             </button>
             <button
               type="button"
@@ -150,7 +152,7 @@ export const MemoryRow: React.FC<{
               disabled={busy || !text.trim() || text.length > MAX_MEMORY}
               className={`${smallBtn} border-sky-500/50 bg-sky-600 text-white hover:bg-sky-500`}
             >
-              <Check size={11} /> Save
+              <Check size={11} /> {t('Save')}
             </button>
           </div>
         </div>
@@ -159,7 +161,7 @@ export const MemoryRow: React.FC<{
       )}
       {(error ?? removal.error) && (
         <p className="text-[11px] text-rose-400" role="alert">
-          {error ?? `Couldn’t delete it: ${removal.error}`}
+          {error ?? t('Couldn’t delete it: {error}', { error: removal.error ?? '' })}
         </p>
       )}
     </li>
@@ -179,7 +181,7 @@ export const MemoryPanel: React.FC<{ kwantId: string; kwantName: string }> = ({ 
       setMemories(await continuityApi.memories(kwantId));
       setLoadError(null);
     } catch (e) {
-      setLoadError(e instanceof Error ? e.message : 'Could not load memories.');
+      setLoadError(e instanceof Error ? e.message : t('Could not load memories.'));
     }
   }, [kwantId]);
 
@@ -193,17 +195,17 @@ export const MemoryPanel: React.FC<{ kwantId: string; kwantName: string }> = ({ 
 
   const add = async (e: React.FormEvent) => {
     e.preventDefault();
-    const t = draft.trim();
-    if (!t || t.length > MAX_MEMORY) return;
+    const value = draft.trim();
+    if (!value || value.length > MAX_MEMORY) return;
     setAdding(true);
     try {
-      await continuityApi.addMemory(kwantId, t);
+      await continuityApi.addMemory(kwantId, value);
       setDraft('');
       setAddError(null);
       playSfx('coin');
       await reload();
     } catch (err) {
-      setAddError(err instanceof Error ? err.message : 'Could not add it.');
+      setAddError(err instanceof Error ? err.message : t('Could not add it.'));
     } finally {
       setAdding(false);
     }
@@ -214,7 +216,7 @@ export const MemoryPanel: React.FC<{ kwantId: string; kwantName: string }> = ({ 
       await fn();
       await reload();
     } catch (err) {
-      return err instanceof Error ? err.message : 'That failed.';
+      return err instanceof Error ? err.message : t('That failed.');
     }
   };
 
@@ -223,13 +225,15 @@ export const MemoryPanel: React.FC<{ kwantId: string; kwantName: string }> = ({ 
   return (
     <div className="space-y-3">
       <p className="text-[11px] text-zinc-500 leading-relaxed">
-        {kwantName} reads these at the start of every turn and can add to them itself. Pinned notes always load first; when the
-        list gets long, the newest of the rest are shown and {kwantName} can search the others.
+        {t(
+          '{name} reads these at the start of every turn and can add to them itself. Pinned notes always load first; when the list gets long, the newest of the rest are shown and {name} can search the others.',
+          { name: kwantName },
+        )}
       </p>
 
       <form onSubmit={add} {...editorProps(!!draft.trim())} className="space-y-1.5">
         <label htmlFor="memory-new" className="block text-xs font-medium text-zinc-400">
-          Add a memory
+          {t('Add a memory')}
         </label>
         <textarea
           id="memory-new"
@@ -237,7 +241,7 @@ export const MemoryPanel: React.FC<{ kwantId: string; kwantName: string }> = ({ 
           onChange={(e) => setDraft(e.target.value)}
           rows={2}
           disabled={full}
-          placeholder={full ? `${MAX_MEMORIES} memories is the limit; delete one first.` : 'e.g. Prefers short answers with a code sample.'}
+          placeholder={full ? t('{n} memories is the limit; delete one first.', { n: MAX_MEMORIES }) : t('e.g. Prefers short answers with a code sample.')}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) add(e);
           }}
@@ -257,7 +261,7 @@ export const MemoryPanel: React.FC<{ kwantId: string; kwantName: string }> = ({ 
             disabled={adding || full || !draft.trim() || draft.length > MAX_MEMORY}
             className={`${smallBtn} ml-auto border-sky-500/50 bg-sky-600 text-white hover:bg-sky-500`}
           >
-            {adding ? <Loader2 size={11} className="animate-spin motion-reduce:animate-none" /> : <Plus size={11} />} Add
+            {adding ? <Loader2 size={11} className="animate-spin motion-reduce:animate-none" /> : <Plus size={11} />} {t('Add')}
           </button>
         </div>
       </form>
@@ -266,31 +270,36 @@ export const MemoryPanel: React.FC<{ kwantId: string; kwantName: string }> = ({ 
         <div className="flex items-center justify-between gap-2 bg-rose-500/10 border border-rose-500/20 text-rose-300 px-3 py-2 rounded-lg text-xs" role="alert">
           <span>{loadError}</span>
           <button type="button" onClick={reload} className={quietBtn}>
-            <RefreshCw size={12} /> Retry
+            <RefreshCw size={12} /> {t('Retry')}
           </button>
         </div>
       )}
       {!memories && !loadError && (
         <p className="flex items-center gap-2 text-xs text-zinc-400" role="status">
-          <Loader2 size={14} className="animate-spin motion-reduce:animate-none" /> Loading memories…
+          <Loader2 size={14} className="animate-spin motion-reduce:animate-none" /> {t('Loading memories…')}
         </p>
       )}
       {memories && memories.length === 0 && (
         <p className="text-xs text-zinc-500 border border-dashed border-zinc-800 rounded-lg p-4 text-center">
-          Nothing remembered yet. Add something above, or ask {kwantName} to remember it.
+          {t('Nothing remembered yet. Add something above, or ask {name} to remember it.', { name: kwantName })}
         </p>
       )}
       {memories && memories.length > 0 && (
         <>
           <p className="text-[10px] text-zinc-500">
-            {memories.length} of {MAX_MEMORIES} · {memories.filter((m) => m.pinned).length} of {MAX_PINNED} pinned · pinned, then newest first
+            {t('{n} of {max} · {pinned} of {maxPinned} pinned · pinned, then newest first', {
+              n: memories.length,
+              max: MAX_MEMORIES,
+              pinned: memories.filter((m) => m.pinned).length,
+              maxPinned: MAX_PINNED,
+            })}
           </p>
-          <ul className="space-y-1.5" aria-label={`${kwantName}'s memories`}>
+          <ul className="space-y-1.5" aria-label={t("{name}'s memories", { name: kwantName })}>
             {memoriesForDisplay(memories).map((m) => (
               <MemoryRow
                 key={m.id}
                 memory={m}
-                onSave={(t) => wrap(() => continuityApi.updateMemory(kwantId, m.id, t))()}
+                onSave={(value) => wrap(() => continuityApi.updateMemory(kwantId, m.id, value))()}
                 onPin={(pinned) => wrap(() => continuityApi.pinMemory(kwantId, m.id, pinned))()}
                 onDelete={wrap(() => continuityApi.removeMemory(kwantId, m.id))}
               />

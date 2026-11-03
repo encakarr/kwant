@@ -12,6 +12,7 @@ import {
   statusLabel,
   thinkingText,
 } from '../activity';
+import { t } from '../i18n';
 
 /** "Running `cargo test`" with the quoted part in mono. */
 const Title: React.FC<{ text: string }> = ({ text }) => (
@@ -63,8 +64,8 @@ function useNow(on: boolean): number {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     if (!on) return;
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
   }, [on]);
   return now;
 }
@@ -94,9 +95,9 @@ const ThinkingBox: React.FC<{ text: string; live: boolean; id: string }> = ({ te
         stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 24;
       }}
       className="mt-1 max-h-56 overflow-y-auto rounded-lg bg-zinc-950/80 border border-zinc-800 px-3 py-2 text-xs text-zinc-300 whitespace-pre-wrap break-words leading-relaxed focus-visible:outline focus-visible:outline-2 focus-visible:outline-violet-400"
-      aria-label="Thinking"
+      aria-label={t('Thinking')}
     >
-      {text || <span className="text-zinc-400 italic">Nothing shared yet…</span>}
+      {text || <span className="text-zinc-400 italic">{t('Nothing shared yet…')}</span>}
     </div>
   );
 };
@@ -124,7 +125,7 @@ const StepRow: React.FC<{ step: ActivityStep; live?: LiveActivity; now: number; 
     <>
       <StatusIcon step={step} />
       <span className={`min-w-0 flex-1 break-words ${step.status === 'stopped' ? 'text-zinc-400' : waiting ? 'text-amber-100' : 'text-zinc-200'}`}>
-        {step.kind === 'thinking' ? (running ? 'Thinking…' : 'Thought') : <Title text={step.title} />}
+        {step.kind === 'thinking' ? (running ? t('Thinking…') : t('Thought')) : <Title text={step.title} />}
       </span>
       {time && <span className="flex-shrink-0 font-mono text-[10px] text-zinc-400 tabular-nums">{time}</span>}
     </>
@@ -178,13 +179,13 @@ const StepRow: React.FC<{ step: ActivityStep; live?: LiveActivity; now: number; 
 const Steps: React.FC<{ steps: ActivityStep[]; live?: LiveActivity; dropped?: number; id: string }> = ({ steps, live, dropped = 0, id }) => {
   const now = useNow(steps.some(isOpenStep));
   return (
-    <ol id={id} aria-label="Steps" className="divide-y divide-zinc-800/60">
+    <ol id={id} aria-label={t('Steps')} className="divide-y divide-zinc-800/60">
       {steps.map((s) => (
         <StepRow key={s.id} step={s} live={live} now={now} listId={id} />
       ))}
       {dropped > 0 && (
         <li className="px-3 py-1.5 text-[11px] text-zinc-400">
-          {dropped} more {dropped === 1 ? 'step' : 'steps'} not kept
+          {t(dropped === 1 ? '{n} more step not kept' : '{n} more steps not kept', { n: dropped })}
         </li>
       )}
     </ol>
@@ -199,12 +200,12 @@ export const LiveActivityList: React.FC<{ live: LiveActivity; idBase: string }> 
   const current = [...steps].reverse().find(isOpenStep);
   const span = activitySpan(steps);
   return (
-    <section aria-label="What the bot is doing" className="mb-2 w-full max-w-2xl rounded-xl border border-zinc-800 bg-zinc-950/50 overflow-hidden">
+    <section aria-label={t('What the bot is doing')} className="mb-2 w-full max-w-2xl rounded-xl border border-zinc-800 bg-zinc-950/50 overflow-hidden">
       <p className="flex items-center gap-1.5 px-3 pt-2 pb-1 text-[10px] font-medium uppercase tracking-wide text-zinc-400">
         <ListTree size={11} className="text-sky-400/80" aria-hidden="true" />
-        Working
+        {t('Working')}
         <span className="normal-case tracking-normal font-normal">
-          · {work} {work === 1 ? 'step' : 'steps'}
+          · {t(work === 1 ? '{n} step' : '{n} steps', { n: work })}
           {span !== null && span >= 1000 ? ` · ${formatDuration(span)}` : ''}
         </span>
       </p>

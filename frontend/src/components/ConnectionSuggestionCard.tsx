@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, CheckCircle2, ExternalLink, Link2, Loader2, Plug } from 'lucide-react';
 import { ModernAvatar } from './ModernAvatar';
 import { inDesktopApp } from '../externalLinks';
+import { t, tj } from '../i18n';
 import {
   CardState,
   ConnectApi,
@@ -43,12 +44,11 @@ export const ConnectionSuggestionView: React.FC<ConnectionSuggestionViewProps> =
 }) => {
   const headingId = `conn-s-${messageId}`;
   const { phase } = state;
-  const where = mac ? 'your browser' : 'the new tab';
   const border =
     phase === 'connected' ? 'border-emerald-500/30' : phase === 'error' ? 'border-rose-500/40' : phase === 'missing' ? 'border-amber-500/30' : 'border-sky-500/35';
   const again = (
     <button type="button" onClick={onConnect} className={quietBtn} data-connect-again>
-      <Link2 size={13} aria-hidden="true" /> Open the sign-in again
+      <Link2 size={13} aria-hidden="true" /> {t('Open the sign-in again')}
     </button>
   );
 
@@ -64,14 +64,14 @@ export const ConnectionSuggestionView: React.FC<ConnectionSuggestionViewProps> =
         <div className="px-4 pt-3 pb-2 space-y-1.5">
           <span className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-400">
             <Plug size={12} className="text-sky-300" aria-hidden="true" />
-            <span className="text-zinc-200">{kwantName}</span> suggests a connection
+            {tj('{name} suggests a connection', { name: <span className="text-zinc-200">{kwantName}</span> })}
           </span>
           <h3 id={headingId} className="text-sm font-semibold text-zinc-100 break-words leading-snug">
             {meta.name}
           </h3>
           {meta.reason && (
             <p className="text-sm text-zinc-300 break-words leading-relaxed">
-              <span className="text-zinc-500">Why: </span>
+              <span className="text-zinc-500">{t('Why: ')}</span>
               {meta.reason}
             </p>
           )}
@@ -82,7 +82,11 @@ export const ConnectionSuggestionView: React.FC<ConnectionSuggestionViewProps> =
             <p className="flex items-start gap-1.5 text-emerald-200" data-connected>
               <CheckCircle2 size={15} className="mt-0.5 shrink-0" aria-hidden="true" />
               <span>
-                <span className="font-medium">Connected.</span> {kwantName} can use {meta.name} from its next turn.
+                {tj('{connected} {name} can use {app} from its next turn.', {
+                  connected: <span className="font-medium">{t('Connected.')}</span>,
+                  name: kwantName,
+                  app: meta.name,
+                })}
               </span>
             </p>
           ) : phase === 'missing' ? (
@@ -93,7 +97,7 @@ export const ConnectionSuggestionView: React.FC<ConnectionSuggestionViewProps> =
               </p>
               {onOpenConnections && (
                 <button type="button" onClick={onOpenConnections} className={mainBtn} data-open-connections>
-                  <Plug size={13} aria-hidden="true" /> Open Connections
+                  <Plug size={13} aria-hidden="true" /> {t('Open Connections')}
                 </button>
               )}
             </>
@@ -103,17 +107,21 @@ export const ConnectionSuggestionView: React.FC<ConnectionSuggestionViewProps> =
                 {phase === 'waiting' && <Loader2 size={14} className="mt-0.5 shrink-0 animate-spin motion-reduce:animate-none text-sky-300" aria-hidden="true" />}
                 <span>
                   {state.link
-                    ? `Your browser blocked the new tab. Open the sign-in to connect ${meta.name}.`
+                    ? t('Your browser blocked the new tab. Open the sign-in to connect {app}.', { app: meta.name })
                     : phase === 'waiting'
-                      ? `Finish signing in to ${meta.name} in ${where}. This updates by itself when you’re done.`
-                      : `Finish signing in to ${meta.name} in ${where}. Once you have, its tools reach your bots from their next turn.`}
+                      ? mac
+                        ? t('Finish signing in to {app} in your browser. This updates by itself when you’re done.', { app: meta.name })
+                        : t('Finish signing in to {app} in the new tab. This updates by itself when you’re done.', { app: meta.name })
+                      : mac
+                        ? t('Finish signing in to {app} in your browser. Once you have, its tools reach your bots from their next turn.', { app: meta.name })
+                        : t('Finish signing in to {app} in the new tab. Once you have, its tools reach your bots from their next turn.', { app: meta.name })}
                 </span>
               </p>
               <div className="flex flex-wrap items-center gap-2">
                 {state.link ? (
                   <a href={state.link} target="_blank" rel="noopener noreferrer" className={mainBtn} data-sign-in-link>
-                    Open the sign-in <ExternalLink size={13} aria-hidden="true" />
-                    <span className="sr-only">(opens in a new tab)</span>
+                    {t('Open the sign-in')} <ExternalLink size={13} aria-hidden="true" />
+                    <span className="sr-only">{t('(opens in a new tab)')}</span>
                   </a>
                 ) : (
                   again
@@ -123,13 +131,13 @@ export const ConnectionSuggestionView: React.FC<ConnectionSuggestionViewProps> =
           ) : phase === 'timed_out' ? (
             <>
               <p className="text-zinc-300 break-words">
-                The sign-in hasn’t finished yet. If you closed it, open it again; if you finished, the connection shows in Connections.
+                {t('The sign-in hasn’t finished yet. If you closed it, open it again; if you finished, the connection shows in Connections.')}
               </p>
               <div className="flex flex-wrap items-center gap-2">
                 {again}
                 {onOpenConnections && (
                   <button type="button" onClick={onOpenConnections} className={quietBtn}>
-                    Open Connections
+                    {t('Open Connections')}
                   </button>
                 )}
               </div>
@@ -145,11 +153,11 @@ export const ConnectionSuggestionView: React.FC<ConnectionSuggestionViewProps> =
               <div className="flex flex-wrap items-center gap-2">
                 <button type="button" onClick={onConnect} disabled={phase === 'opening'} className={mainBtn} data-connect>
                   {phase === 'opening' ? <Loader2 size={13} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Plug size={13} aria-hidden="true" />}
-                  {phase === 'opening' ? 'Opening the sign-in…' : phase === 'error' ? 'Try again' : 'Connect'}
+                  {phase === 'opening' ? t('Opening the sign-in…') : phase === 'error' ? t('Try again') : t('Connect')}
                 </button>
               </div>
               <p className="text-[11px] text-zinc-500 break-words">
-                You sign in on {meta.name}’s own page, through Composio, which keeps the sign-in on its servers. Nothing connects until you do.
+                {t('You sign in on {app}’s own page, through Composio, which keeps the sign-in on its servers. Nothing connects until you do.', { app: meta.name })}
               </p>
             </>
           )}

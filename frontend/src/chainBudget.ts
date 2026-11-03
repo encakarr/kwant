@@ -1,5 +1,6 @@
 // The chain token budget: when one person message's chain of hand-offs goes over it, kwnt stops
 // handing the turn on and posts one notice (message meta kind "budget_paused") with Continue.
+import { t } from './i18n';
 import { request } from './threads';
 
 export const BUDGET_MAX = 100_000_000;
@@ -61,10 +62,11 @@ export function parseHandoffCapped(meta: string | null | undefined): HandoffCapp
 /** The notice's plain line: "Paused after 16 hand-offs so it doesn't loop. Continue?" */
 export function handoffCappedText(meta: HandoffCappedMeta): { headline: string; detail: string | null } {
   const n = meta.sent;
-  const headline = n > 0 ? `Paused after ${n} hand-off${n === 1 ? '' : 's'} so it doesn't loop.` : "Paused so the hand-offs don't loop.";
-  const who = meta.waiting.length <= 3 ? meta.waiting.join(', ') : `${meta.waiting.slice(0, 3).join(', ')} and ${meta.waiting.length - 3} more`;
-  if (meta.resumed) return { headline, detail: who ? `Continued: handed on to ${who}.` : 'Continued.' };
-  return { headline: `${headline} Continue?`, detail: who ? `Waiting: ${who}` : null };
+  const headline = n > 0 ? t(n === 1 ? "Paused after {n} hand-off so it doesn't loop." : "Paused after {n} hand-offs so it doesn't loop.", { n }) : t("Paused so the hand-offs don't loop.");
+  const sep = t(', ');
+  const who = meta.waiting.length <= 3 ? meta.waiting.join(sep) : t('{names} and {n} more', { names: meta.waiting.slice(0, 3).join(sep), n: meta.waiting.length - 3 });
+  if (meta.resumed) return { headline, detail: who ? t('Continued: handed on to {who}.', { who }) : t('Continued.') };
+  return { headline: t('{headline} Continue?', { headline }), detail: who ? t('Waiting: {who}', { who }) : null };
 }
 
 const httpStatus = (e: unknown): number | undefined => {
@@ -82,8 +84,8 @@ export const isChainGone = (e: unknown): boolean => httpStatus(e) === 410;
 /** Error text for the budget field, or null for a whole number from 0 (off) to BUDGET_MAX. */
 export function budgetError(raw: string): string | null {
   const s = raw.trim().replace(/[ _,]/g, '');
-  if (!/^\d+$/.test(s)) return 'Enter a whole number of tokens, or 0 to turn it off.';
-  if (Number(s) > BUDGET_MAX) return `At most ${BUDGET_MAX.toLocaleString('en-US')}.`;
+  if (!/^\d+$/.test(s)) return t('Enter a whole number of tokens, or 0 to turn it off.');
+  if (Number(s) > BUDGET_MAX) return t('At most {n}.', { n: BUDGET_MAX.toLocaleString('en-US') });
   return null;
 }
 

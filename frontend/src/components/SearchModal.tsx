@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Hash, Loader2, MessageSquare, Search, X } from 'lucide-react';
 import { SearchHit, continuityApi, formatWhen, groupHits, snippetParts } from '../continuity';
 import type { Kwant } from './Sidebar';
+import { t } from '../i18n';
 
 /** Renders a server snippet as text; only the `<mark>` hits become elements. */
 export const Snippet: React.FC<{ text: string }> = ({ text }) => (
@@ -54,7 +55,7 @@ export const SearchModal: React.FC<{
       return;
     }
     setLoading(true);
-    const t = setTimeout(() => {
+    const timer = setTimeout(() => {
       continuityApi.search(term).then(
         (r) => {
           if (seq !== seqRef.current) return;
@@ -65,12 +66,12 @@ export const SearchModal: React.FC<{
         },
         (e) => {
           if (seq !== seqRef.current) return;
-          setError(e instanceof Error ? e.message : 'Search failed.');
+          setError(e instanceof Error ? e.message : t('Search failed.'));
           setLoading(false);
         },
       );
     }, DEBOUNCE_MS);
-    return () => clearTimeout(t);
+    return () => clearTimeout(timer);
   }, [q, isOpen]);
 
   const groups = useMemo(() => groupHits(hits ?? [], (id) => kwants.find((k) => k.id === id)?.name), [hits, kwants]);
@@ -109,7 +110,7 @@ export const SearchModal: React.FC<{
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Search chats"
+        aria-label={t('Search chats')}
         onKeyDown={onKeyDown}
         className="kw-dialog-panel bg-zinc-900 border border-zinc-800 rounded-2xl max-w-xl w-full max-h-[86vh] flex flex-col text-zinc-100 shadow-2xl overflow-hidden"
       >
@@ -123,31 +124,31 @@ export const SearchModal: React.FC<{
             ref={inputRef}
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search all chats…"
+            placeholder={t('Search all chats…')}
             role="combobox"
             aria-expanded={flat.length > 0}
             aria-controls="search-results"
             aria-activedescendant={flat[active] ? `search-hit-${flat[active].message_id}` : undefined}
-            aria-label="Search all chats"
+            aria-label={t('Search all chats')}
             className="flex-1 min-w-0 bg-transparent py-3.5 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none"
           />
-          <button type="button" onClick={onClose} aria-label="Close search" className="p-1 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors">
+          <button type="button" onClick={onClose} aria-label={t('Close search')} className="p-1 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors">
             <X size={16} />
           </button>
         </div>
 
-        <div ref={listRef} id="search-results" role="listbox" aria-label="Results" className="flex-1 overflow-y-auto p-2">
+        <div ref={listRef} id="search-results" role="listbox" aria-label={t('Results')} className="flex-1 overflow-y-auto p-2">
           {error && (
             <p className="m-2 text-xs text-rose-300" role="alert">
               {error}
             </p>
           )}
           {!hits && !error && (
-            <p className="m-3 text-xs text-zinc-500">Type a word to search every channel and direct chat. ↑↓ to move, Enter to open.</p>
+            <p className="m-3 text-xs text-zinc-500">{t('Type a word to search every channel and direct chat. ↑↓ to move, Enter to open.')}</p>
           )}
           {hits && hits.length === 0 && !loading && (
             <p className="m-3 text-xs text-zinc-500" role="status">
-              No messages match “{q.trim()}”.
+              {t('No messages match “{q}”.', { q: q.trim() })}
             </p>
           )}
           {groups.map((g) => (
@@ -172,7 +173,7 @@ export const SearchModal: React.FC<{
                     className={`px-2.5 py-2 rounded-lg cursor-pointer ${isActive ? 'bg-sky-500/10 ring-1 ring-sky-500/30' : 'hover:bg-zinc-800/60'}`}
                   >
                     <div className="flex items-center gap-2 text-[11px] text-zinc-400">
-                      <span className="font-medium text-zinc-200 truncate">{h.author === 'PlayerHero' ? 'You' : h.author}</span>
+                      <span className="font-medium text-zinc-200 truncate">{h.author === 'PlayerHero' ? t('You') : h.author}</span>
                       <span className="ml-auto shrink-0 text-zinc-500">{formatWhen(h.created_at)}</span>
                     </div>
                     <p className="mt-0.5 text-xs text-zinc-300 break-words line-clamp-3">

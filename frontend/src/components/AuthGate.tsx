@@ -16,6 +16,7 @@ import {
   redeemSignIn,
 } from '../auth';
 import { fillTimeZone } from '../continuity';
+import { t } from '../i18n';
 
 interface AuthContextValue {
   /** True when this browser needs the API token (Docker, a VPS reached directly). */
@@ -39,9 +40,9 @@ installUnauthorizedListener();
 
 /** What the start screen says when the server didn't answer. */
 export function offlineMessage(e: unknown, online: boolean): string {
-  if (!online) return "You're offline. kwant bots opens once your phone is connected again.";
+  if (!online) return t("You're offline. kwant bots opens once your phone is connected again.");
   if (e instanceof Error && e.message !== 'Failed to fetch' && e.message !== 'Load failed') return e.message;
-  return "Can't reach the kwant bots server. Check that it's running and that this device can reach it.";
+  return t("Can't reach the kwant bots server. Check that it's running and that this device can reach it.");
 }
 
 let zoneFilled = false;
@@ -82,7 +83,7 @@ export const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) 
     consumeTokenLink().then((linkError) => {
       if (!cancelled) check(linkError);
     });
-    const onUnauthorized = () => check('Your session ended. Sign in again to continue.');
+    const onUnauthorized = () => check(t('Your session ended. Sign in again to continue.'));
     // A token link opened in a tab that already shows kwnt only changes the hash.
     const onHash = () => {
       if (window.location.hash.includes('kwnt_token=')) consumeTokenLink().then((linkError) => check(linkError));
@@ -112,7 +113,7 @@ export const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) 
     try {
       await endSession();
     } finally {
-      setState((prev) => ({ kind: 'locked', notice: 'Signed out.', deviceLogin: prev.kind === 'ready' && prev.deviceLogin }));
+      setState((prev) => ({ kind: 'locked', notice: t('Signed out.'), deviceLogin: prev.kind === 'ready' && prev.deviceLogin }));
     }
   }, []);
 
@@ -146,12 +147,12 @@ export const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) 
           <ModernAvatar role="brand" name="kwant bots" size={36} />
           <div>
             <h1 className="text-sm font-semibold">kwant bots</h1>
-            <p className="text-xs text-zinc-400">Your team of AI bots</p>
+            <p className="text-xs text-zinc-400">{t('Your team of AI bots')}</p>
           </div>
         </div>
         {state.kind === 'checking' && (
           <p className="flex items-center gap-2 text-xs text-zinc-400" role="status">
-            <Loader2 size={14} className="animate-spin motion-reduce:animate-none" /> Connecting…
+            <Loader2 size={14} className="animate-spin motion-reduce:animate-none" /> {t('Connecting…')}
           </p>
         )}
         {state.kind === 'offline' && (
@@ -165,7 +166,7 @@ export const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) 
               }}
               className="flex items-center gap-1.5 min-h-[44px] px-4 rounded-lg text-xs font-medium bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 transition-colors"
             >
-              <RefreshCw size={13} /> Try again
+              <RefreshCw size={13} /> {t('Try again')}
             </button>
           </div>
         )}
@@ -200,7 +201,7 @@ export const PersonTokenDialog: React.FC<{ onClose: () => void; onSignedIn: () =
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close"
+          aria-label={t('Close')}
           className="absolute top-3 right-3 p-1.5 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
         >
           <X size={14} />
@@ -271,7 +272,7 @@ const Command: React.FC<{ children: string }> = ({ children }) => {
       <button
         type="button"
         onClick={copy}
-        aria-label={copied ? 'Copied' : `Copy: ${children}`}
+        aria-label={copied ? t('Copied') : t('Copy: {command}', { command: children })}
         className="shrink-0 p-1.5 rounded text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
       >
         {copied ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
@@ -296,21 +297,21 @@ export const OtherSetups: React.FC<{
     <details className="group text-xs text-zinc-400" open={open} onToggle={(e) => onToggle?.((e.currentTarget as HTMLDetailsElement).open)}>
       <summary className="flex items-center gap-1 w-fit min-h-[32px] cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden text-zinc-400 hover:text-zinc-200 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500">
         <ChevronRight size={13} className="transition-transform group-open:rotate-90 motion-reduce:transition-none" aria-hidden="true" />
-        Other setups
+        {t('Other setups')}
       </summary>
       <div className="mt-2 space-y-2.5 leading-relaxed">
         {children}
-        <p className="text-[11px] text-zinc-500 leading-snug">Get the access token on the machine running kwant bots:</p>
-        <Setup label={docker ? 'Docker, in the folder with docker-compose.yml' : 'As the user that runs kwant bots'}>{docker ? DOCKER_COMMAND : FILE_COMMAND}</Setup>
+        <p className="text-[11px] text-zinc-500 leading-snug">{t('Get the access token on the machine running kwant bots:')}</p>
+        <Setup label={docker ? t('Docker, in the folder with docker-compose.yml') : t('As the user that runs kwant bots')}>{docker ? DOCKER_COMMAND : FILE_COMMAND}</Setup>
         {docker ? (
-          <Setup label="Without Docker, as the user that runs kwant bots">{FILE_COMMAND}</Setup>
+          <Setup label={t('Without Docker, as the user that runs kwant bots')}>{FILE_COMMAND}</Setup>
         ) : (
-          <Setup label="Docker, in the folder with docker-compose.yml">{DOCKER_COMMAND}</Setup>
+          <Setup label={t('Docker, in the folder with docker-compose.yml')}>{DOCKER_COMMAND}</Setup>
         )}
-        <Setup label="systemd service">sudo cat /var/lib/kwnt/api-token</Setup>
-        <Setup label="Built from source and not on your PATH">./target/release/kwnt token --raw</Setup>
+        <Setup label={t('systemd service')}>sudo cat /var/lib/kwnt/api-token</Setup>
+        <Setup label={t('Built from source and not on your PATH')}>./target/release/kwnt token --raw</Setup>
         {tunnel && (
-          <Setup label={`No sign-in: open an SSH tunnel on this computer, then go to ${tunnel.url} (not for Docker)`}>{tunnel.command}</Setup>
+          <Setup label={t('No sign-in: open an SSH tunnel on this computer, then go to {url} (not for Docker)', { url: tunnel.url })}>{tunnel.command}</Setup>
         )}
       </div>
     </details>
@@ -331,9 +332,9 @@ export const selectForRetry = (el: Pick<HTMLInputElement, 'focus' | 'select'> | 
   el.select();
 };
 
-export const WRONG_TOKEN = "That token isn't right. It has to come from the machine running kwant bots, as the user running it.";
+export const WRONG_TOKEN = t("That token isn't right. It has to come from the machine running kwant bots, as the user running it.");
 /** Only shown with the wrong-token error, not up front. */
-export const OWN_TOKEN_HINT = "Each install has its own token, so one copied from another computer won't work here.";
+export const OWN_TOKEN_HINT = t("Each install has its own token, so one copied from another computer won't work here.");
 
 export const TokenForm: React.FC<{
   notice: string | null;
@@ -374,7 +375,7 @@ export const TokenForm: React.FC<{
       }
       setError(result === 'link_used_or_expired' ? LINK_SPENT : WRONG_TOKEN);
     } catch (err) {
-      setError(err instanceof Error && err.message !== 'Failed to fetch' ? err.message : 'Could not reach the server.');
+      setError(err instanceof Error && err.message !== 'Failed to fetch' ? err.message : t('Could not reach the server.'));
     } finally {
       setBusy(false);
     }
@@ -384,11 +385,11 @@ export const TokenForm: React.FC<{
     <form onSubmit={submit} className="space-y-4">
       <div className="space-y-1.5">
         <h2 id={personOnly ? 'kwnt-person-token-title' : undefined} className="flex items-center gap-2 text-sm font-medium">
-          <KeyRound size={15} className="text-sky-400" /> {personOnly ? 'Confirm it’s you' : 'Sign in'}
+          <KeyRound size={15} className="text-sky-400" /> {personOnly ? t('Confirm it’s you') : t('Sign in')}
         </h2>
         {personOnly && (
           <p className="text-xs text-zinc-400 leading-relaxed">
-            Saved passwords, answers to approval cards and deleting bots or teams need you signed in from another computer, so a bot can’t do them for you. You need it once per browser.
+            {t('Saved passwords, answers to approval cards and deleting bots or teams need you signed in from another computer, so a bot can’t do them for you. You need it once per browser.')}
           </p>
         )}
       </div>
@@ -400,15 +401,16 @@ export const TokenForm: React.FC<{
       {deviceLogin && <DeviceWait onSignedIn={onSignedIn} />}
       <div className="space-y-1.5">
         <p className="text-xs text-zinc-400 leading-relaxed">
-          {deviceLogin ? 'Or open' : 'Open'} the one-time sign-in link kwant bots printed when it started, or scan its QR code with your phone. Used or lost
-          it? Make a new one on the machine running kwant bots:
+          {deviceLogin
+            ? t('Or open the one-time sign-in link kwant bots printed when it started, or scan its QR code with your phone. Used or lost it? Make a new one on the machine running kwant bots:')
+            : t('Open the one-time sign-in link kwant bots printed when it started, or scan its QR code with your phone. Used or lost it? Make a new one on the machine running kwant bots:')}
         </p>
         <Command>{docker ? DOCKER_LINK_COMMAND : LINK_COMMAND}</Command>
       </div>
       <OtherSetups loc={loc} docker={docker} open={othersOpen} onToggle={setOthersOpen}>
         <div className="space-y-1.5">
           <label htmlFor="kwnt-token" className="block text-[11px] text-zinc-500 leading-snug">
-            Paste a sign-in link or the access token
+            {t('Paste a sign-in link or the access token')}
           </label>
           <div className="flex gap-2">
             <input
@@ -422,14 +424,14 @@ export const TokenForm: React.FC<{
               aria-invalid={!!error}
               aria-describedby={error ? 'kwnt-token-error' : undefined}
               className="flex-1 min-w-0 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs font-mono text-zinc-100 placeholder-zinc-600 focus:border-sky-500 focus:outline-none transition-colors"
-              placeholder="Link or token"
+              placeholder={t('Link or token')}
             />
             <button
               type="submit"
               disabled={busy || !token.trim()}
               className="shrink-0 flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium text-white bg-sky-600 hover:bg-sky-500 transition-colors disabled:opacity-50"
             >
-              {busy && <Loader2 size={13} className="animate-spin motion-reduce:animate-none" />} Continue
+              {busy && <Loader2 size={13} className="animate-spin motion-reduce:animate-none" />} {t('Continue')}
             </button>
           </div>
           {error && (
@@ -440,14 +442,14 @@ export const TokenForm: React.FC<{
           )}
         </div>
       </OtherSetups>
-      <p className="text-[11px] text-zinc-500">Stays signed in for a year. Anyone with a sign-in link or the token controls this server.</p>
+      <p className="text-[11px] text-zinc-500">{t('Stays signed in for a year. Anyone with a sign-in link or the token controls this server.')}</p>
       {onCancel && (
         <button
           type="button"
           onClick={onCancel}
           className="w-full px-4 py-2 rounded-lg text-xs font-medium text-zinc-200 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 transition-colors"
         >
-          Not now
+          {t('Not now')}
         </button>
       )}
     </form>

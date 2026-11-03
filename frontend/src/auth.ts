@@ -1,6 +1,7 @@
 // API token handling: the `#kwnt_token=` link, the session cookie and 401s from any `/api` call.
 
 import { getCurrentSpace, withSpace } from './spaces';
+import { t } from './i18n';
 
 /** Fired on `window` when an `/api` call answers 401 (the token is missing or no longer valid). */
 export const UNAUTHORIZED_EVENT = 'kwnt:unauthorized';
@@ -13,7 +14,7 @@ export const PERSON_SIGNED_IN_EVENT = 'kwnt:person-signed-in';
 export const PERSON_PROMPT_CLOSED_EVENT = 'kwnt:person-prompt-closed';
 
 /** What a person-only action says when the person closed "Confirm it's you" instead of signing in. */
-export const PERSON_CANCELLED_TEXT = 'Nothing was changed. Only you can do this: confirm it’s you, then try again.';
+export const PERSON_CANCELLED_TEXT = t('Nothing was changed. Only you can do this: confirm it’s you, then try again.');
 
 /** Thrown by `personFetch` when the person closed "Confirm it's you"; nothing was changed. */
 export class PersonCancelledError extends Error {
@@ -121,8 +122,8 @@ export function installUnauthorizedListener(): void {
 
 export async function fetchAuthStatus(): Promise<AuthStatus> {
   const res = await fetch('/api/auth/status', { cache: 'no-store' });
-  if (res.status === 403) throw new Error("This page's address isn't allowed to use the API (403). Open kwant bots at its own address.");
-  if (!res.ok) throw new Error(`The server answered ${res.status}.`);
+  if (res.status === 403) throw new Error(t("This page's address isn't allowed to use the API (403). Open kwant bots at its own address."));
+  if (!res.ok) throw new Error(t('The server answered {status}.', { status: res.status }));
   return res.json();
 }
 
@@ -150,7 +151,7 @@ export async function redeemSignIn(token: string): Promise<SessionResult> {
     if (body?.reason === 'link_used_or_expired' || isLinkCode(token)) return 'link_used_or_expired';
     return 'wrong_token';
   }
-  if (!res.ok) throw new Error(`The server answered ${res.status}.`);
+  if (!res.ok) throw new Error(t('The server answered {status}.', { status: res.status }));
   return 'ok';
 }
 
@@ -166,8 +167,9 @@ export async function endSession(): Promise<void> {
 let linkSession: Promise<string | null> | null = null;
 
 /** What the sign-in screen says when a one-time link was opened a second time or too late. */
-export const LINK_SPENT =
-  'This sign-in link was already used or has expired. Each link works once, for 15 minutes. Sign in another way below.';
+export const LINK_SPENT = t(
+  'This sign-in link was already used or has expired. Each link works once, for 15 minutes. Sign in another way below.',
+);
 
 /**
  * Signs in with a `#kwnt_token=` link (a one-time code or the API token) and removes it from the
@@ -179,15 +181,15 @@ export function consumeTokenLink(): Promise<string | null> {
   if (token === null) return linkSession ?? Promise.resolve(null);
   window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}${rest}`);
   linkSession = !token
-    ? Promise.resolve('The link is incomplete. Copy the whole link, or sign in another way below.')
+    ? Promise.resolve(t('The link is incomplete. Copy the whole link, or sign in another way below.'))
     : redeemSignIn(token).then(
         (result) =>
           result === 'ok'
             ? null
             : result === 'link_used_or_expired'
               ? LINK_SPENT
-              : "The link's token wasn't accepted. It may have been changed; sign in another way below.",
-        (e: unknown) => (e instanceof Error ? e.message : 'Could not reach the server.'),
+              : t("The link's token wasn't accepted. It may have been changed; sign in another way below."),
+        (e: unknown) => (e instanceof Error ? e.message : t('Could not reach the server.')),
       );
   return linkSession;
 }

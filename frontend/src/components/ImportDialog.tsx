@@ -11,7 +11,6 @@ import {
   fileTooBig,
   importApi,
   importErrorText,
-  plural,
   previewRows,
   sourceName,
   textTooLong,
@@ -20,6 +19,7 @@ import {
   trapFocusTarget,
 } from '../imports';
 import { useEscapeLayer } from '../escape';
+import { t } from '../i18n';
 
 const btn =
   'flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-zinc-300 border border-zinc-700/60 bg-zinc-800/60 hover:bg-zinc-700/70 hover:text-zinc-100 transition-colors disabled:opacity-50';
@@ -31,10 +31,10 @@ const card = 'rounded-xl border border-zinc-800 bg-zinc-950/60';
 
 /** One line under each source in "Bring a bot from…". */
 const SOURCE_HINT: Record<string, string> = {
-  grok: 'A Grok Project or custom Grok bot',
-  chatgpt: 'A custom GPT or ChatGPT Project',
-  claude: 'A Claude Project',
-  other: 'Any other bot or assistant',
+  grok: t('A Grok Project or custom Grok bot'),
+  chatgpt: t('A custom GPT or ChatGPT Project'),
+  claude: t('A Claude Project'),
+  other: t('Any other bot or assistant'),
 };
 
 export const ErrorBox: React.FC<{ error: unknown; children?: React.ReactNode }> = ({ error, children }) => {
@@ -65,16 +65,16 @@ export const SourceList: React.FC<{
 }> = ({ prompts, error, onPick, onUpload, onRetry }) => (
   <div className="space-y-3">
     <p className="text-xs text-zinc-400">
-      Pick where your bot lives now. Nothing is created until you check a preview and press Import.
+      {t('Pick where your bot lives now. Nothing is created until you check a preview and press Import.')}
     </p>
-    <h3 className="text-xs font-semibold text-zinc-300">Bring a bot from…</h3>
+    <h3 className="text-xs font-semibold text-zinc-300">{t('Bring a bot from…')}</h3>
     {error ? (
       <ErrorBox error={error}>
-        <button type="button" onClick={onRetry} className={btn}>Try again</button>
+        <button type="button" onClick={onRetry} className={btn}>{t('Try again')}</button>
       </ErrorBox>
     ) : !prompts ? (
       <p className="flex items-center gap-2 text-xs text-zinc-500" role="status">
-        <Loader2 size={13} className="animate-spin motion-reduce:animate-none" /> Loading…
+        <Loader2 size={13} className="animate-spin motion-reduce:animate-none" /> {t('Loading…')}
       </p>
     ) : (
       <ul className="space-y-1.5">
@@ -83,7 +83,7 @@ export const SourceList: React.FC<{
             <button type="button" onClick={() => onPick(p)} className={`${card} w-full flex items-center gap-3 p-3 text-left hover:border-zinc-600 transition-colors`}>
               <span className="flex-1 min-w-0">
                 <span className="block text-sm font-medium text-zinc-100">{p.label}</span>
-                <span className="block text-[11px] text-zinc-500">{SOURCE_HINT[p.id] ?? 'Copy a message, paste the reply'}</span>
+                <span className="block text-[11px] text-zinc-500">{SOURCE_HINT[p.id] ?? t('Copy a message, paste the reply')}</span>
               </span>
               <ChevronRight size={16} className="text-zinc-500 shrink-0" aria-hidden="true" />
             </button>
@@ -94,8 +94,8 @@ export const SourceList: React.FC<{
     <button type="button" onClick={onUpload} className={`${card} w-full flex items-center gap-3 p-3 text-left hover:border-zinc-600 transition-colors`}>
       <FileUp size={18} className="text-zinc-400 shrink-0" aria-hidden="true" />
       <span className="flex-1 min-w-0">
-        <span className="block text-sm font-medium text-zinc-100">Upload a file</span>
-        <span className="block text-[11px] text-zinc-500">A Claude Code subagent or SKILL.md, a character card, or a Grok Bot, OpenMausBot or .kwant.json export</span>
+        <span className="block text-sm font-medium text-zinc-100">{t('Upload a file')}</span>
+        <span className="block text-[11px] text-zinc-500">{t('A Claude Code subagent or SKILL.md, a character card, or a Grok Bot, OpenMausBot or .kwant.json export')}</span>
       </span>
       <ChevronRight size={16} className="text-zinc-500 shrink-0" aria-hidden="true" />
     </button>
@@ -113,14 +113,14 @@ export const PromptStep: React.FC<{
   <div className="space-y-4">
     <ol className="space-y-1.5 text-xs text-zinc-300 list-decimal pl-5">
       <li>{prompt.where_to_send}</li>
-      <li>Copy the message below and send it to your bot.</li>
-      <li>Copy everything your bot replies and paste it in the box at the bottom.</li>
+      <li>{t('Copy the message below and send it to your bot.')}</li>
+      <li>{t('Copy everything your bot replies and paste it in the box at the bottom.')}</li>
     </ol>
     <div className={`${card} p-3 space-y-2`}>
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs font-medium text-zinc-300" id="import-prompt-label">Message for your bot</p>
+        <p className="text-xs font-medium text-zinc-300" id="import-prompt-label">{t('Message for your bot')}</p>
         <button type="button" onClick={onCopy} className={copied ? `${btn} text-emerald-300` : btn}>
-          {copied ? <Check size={13} /> : <ClipboardCopy size={13} />} {copied ? 'Copied' : 'Copy'}
+          {copied ? <Check size={13} /> : <ClipboardCopy size={13} />} {copied ? t('Copied') : t('Copy')}
         </button>
       </div>
       <pre
@@ -133,17 +133,17 @@ export const PromptStep: React.FC<{
     </div>
     <div>
       <label htmlFor="import-reply" className="block text-xs font-medium text-zinc-300 mb-1">
-        Your bot’s reply
+        {t('Your bot’s reply')}
       </label>
       <textarea
         id="import-reply"
         value={reply}
         onChange={(e) => onReply(e.target.value)}
         rows={6}
-        placeholder="Paste the whole reply here"
+        placeholder={t('Paste the whole reply here')}
         className="w-full bg-zinc-950 border border-zinc-800 focus:border-sky-500 rounded-lg px-3 py-2 text-xs text-zinc-100 font-mono focus:outline-none"
       />
-      {textTooLong(reply) && <p className="mt-1 text-[11px] text-rose-300">That’s longer than 256 KB. Paste only your bot’s reply.</p>}
+      {textTooLong(reply) && <p className="mt-1 text-[11px] text-rose-300">{t('That’s longer than 256 KB. Paste only your bot’s reply.')}</p>}
     </div>
   </div>
 );
@@ -166,19 +166,19 @@ export const UploadStep: React.FC<{ file: File | null; onFile: (f: File | null) 
         className={`rounded-xl border-2 border-dashed p-6 text-center space-y-2 ${over ? 'border-sky-500 bg-sky-500/5' : 'border-zinc-700'}`}
       >
         <Upload size={22} className="mx-auto text-zinc-500" aria-hidden="true" />
-        <p className="text-xs text-zinc-300">{file ? file.name : 'Drop a file here, or'}</p>
+        <p className="text-xs text-zinc-300">{file ? file.name : t('Drop a file here, or')}</p>
         <label className={`${btn} inline-flex cursor-pointer`}>
-          {file ? 'Choose another file' : 'Choose a file'}
+          {file ? t('Choose another file') : t('Choose a file')}
           <input ref={inputRef} type="file" accept={IMPORT_ACCEPT} className="sr-only" onChange={(e) => onFile(e.target.files?.[0] ?? null)} />
         </label>
-        {file && fileTooBig(file.size) && <p className="text-[11px] text-rose-300">That file is over 20 MB, so it can’t be imported.</p>}
+        {file && fileTooBig(file.size) && <p className="text-[11px] text-rose-300">{t('That file is over 20 MB, so it can’t be imported.')}</p>}
       </div>
       <ul className="text-[11px] text-zinc-500 space-y-0.5 list-disc pl-5">
-        <li>Claude Code subagent (.md) or a SKILL.md</li>
-        <li>Character card (.json or .png)</li>
-        <li>Grok Bot or OpenMausBot export (.json)</li>
-        <li>A .kwant.json file exported from here</li>
-        <li>A .zip of any of these. Chat history inside is skipped.</li>
+        <li>{t('Claude Code subagent (.md) or a SKILL.md')}</li>
+        <li>{t('Character card (.json or .png)')}</li>
+        <li>{t('Grok Bot or OpenMausBot export (.json)')}</li>
+        <li>{t('A .kwant.json file exported from here')}</li>
+        <li>{t('A .zip of any of these. Chat history inside is skipped.')}</li>
       </ul>
     </div>
   );
@@ -197,9 +197,13 @@ const ToolNoteItem: React.FC<{ note: ToolNote }> = ({ note }) => {
   return (
     <li>
       <span>
-        {open
-          ? `It used tools from ${n === 1 ? note.apps[0].name : `${n} apps, listed below`}. `
-          : `It used tools from ${n === 1 ? '' : `${n} apps: `}${shown.map((a) => a.name).join(', ')}${hidden > 0 ? ` and ${hidden} more` : ''}. `}
+        {n === 1
+          ? t('It used tools from {apps}.', { apps: note.apps[0].name })
+          : open
+            ? t('It used tools from {n} apps, listed below.', { n })
+            : hidden > 0
+              ? t('It used tools from {n} apps: {apps} and {more} more.', { n, apps: shown.map((a) => a.name).join(', '), more: hidden })
+              : t('It used tools from {n} apps: {apps}.', { n, apps: shown.map((a) => a.name).join(', ') })}{' '}
         {note.tail}
       </span>{' '}
       <button
@@ -209,7 +213,7 @@ const ToolNoteItem: React.FC<{ note: ToolNote }> = ({ note }) => {
         aria-controls={listId}
         className="underline underline-offset-2 text-amber-200 hover:text-amber-100 rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400"
       >
-        {open ? 'Show less' : hidden > 0 ? 'Show all' : 'Show tool names'}
+        {open ? t('Show less') : hidden > 0 ? t('Show all') : t('Show tool names')}
       </button>
       {open && (
         <ul id={listId} className="mt-1 space-y-0.5 pl-1 list-none">
@@ -249,22 +253,28 @@ export const PreviewView: React.FC<{ preview: Preview; skip: ReadonlySet<string>
   return (
     <div className="space-y-3">
       <p className="text-xs text-zinc-300">
-        {bots.length > 0 ? `${plural(kept, 'bot')} will be created` : 'No bots in this one'}
-        {from ? ` from ${from}` : ''}. Untick any you don’t want.
+        {bots.length > 0
+          ? from
+            ? t(kept === 1 ? '{n} bot will be created from {source}.' : '{n} bots will be created from {source}.', { n: kept, source: from })
+            : t(kept === 1 ? '{n} bot will be created.' : '{n} bots will be created.', { n: kept })
+          : from
+            ? t('No bots in this one from {source}.', { source: from })
+            : t('No bots in this one.')}{' '}
+        {t('Untick any you don’t want.')}
       </p>
-      <Notes items={general.problems} tone="problem" label="Must be fixed before importing" />
+      <Notes items={general.problems} tone="problem" label={t('Must be fixed before importing')} />
       <ul className="space-y-2">
         {bots.map((b) => {
           const off = skip.has(b.ref);
           return (
             <li key={b.ref} className={`${card} p-3 space-y-2 ${off ? 'opacity-50' : ''}`}>
               <label className="flex items-start gap-2.5 cursor-pointer">
-                <input type="checkbox" checked={!off} onChange={() => onToggle(b.ref)} className="mt-0.5 accent-sky-500" aria-label={`Import ${b.name}`} />
+                <input type="checkbox" checked={!off} onChange={() => onToggle(b.ref)} className="mt-0.5 accent-sky-500" aria-label={t('Import {name}', { name: b.name })} />
                 <span className="flex-1 min-w-0">
                   <span className="block text-sm font-medium text-zinc-100 break-words">{b.name}</span>
                   {b.renamedFrom && (
                     <span className="block text-[11px] text-amber-300">
-                      Renamed from {b.renamedFrom}: that name is already taken here.
+                      {t('Renamed from {name}: that name is already taken here.', { name: b.renamedFrom })}
                     </span>
                   )}
                   {b.title && <span className="block text-[11px] text-zinc-500">{b.title}</span>}
@@ -272,26 +282,34 @@ export const PreviewView: React.FC<{ preview: Preview; skip: ReadonlySet<string>
               </label>
               {b.excerpt && <p className="text-[11px] text-zinc-400 italic break-words">“{b.excerpt}”</p>}
               <p className="text-[11px] text-zinc-500">
-                {plural(b.memories, 'memory', 'memories')} · {plural(b.skills, 'skill')} · {plural(b.routines, 'routine')}
+                {t(b.memories === 1 ? '{n} memory' : '{n} memories', { n: b.memories })} · {t(b.skills === 1 ? '{n} skill' : '{n} skills', { n: b.skills })} ·{' '}
+                {t(b.routines === 1 ? '{n} routine' : '{n} routines', { n: b.routines })}
               </p>
-              <Notes items={b.problems} tone="problem" label="Must be fixed before importing" />
-              <Notes items={b.warnings} tone="warn" label="Worth a look" />
-              <Notes items={b.dropped} tone="drop" label="Not brought over" />
+              <Notes items={b.problems} tone="problem" label={t('Must be fixed before importing')} />
+              <Notes items={b.warnings} tone="warn" label={t('Worth a look')} />
+              <Notes items={b.dropped} tone="drop" label={t('Not brought over')} />
             </li>
           );
         })}
       </ul>
       {(teams.length > 0 || shared.length > 0) && (
         <p className="text-[11px] text-zinc-400">
-          Also: {[teams.length ? plural(teams.length, 'team') : '', shared.length ? plural(shared.length, 'shared skill') : ''].filter(Boolean).join(' and ')}
-          {teams.length ? ` (${teams.map((t) => t.name).join(', ')})` : ''}.
+          {t('Also: {list}{names}.', {
+            list: [
+              teams.length ? t(teams.length === 1 ? '{n} team' : '{n} teams', { n: teams.length }) : '',
+              shared.length ? t(shared.length === 1 ? '{n} shared skill' : '{n} shared skills', { n: shared.length }) : '',
+            ]
+              .filter(Boolean)
+              .join(t(' and ')),
+            names: teams.length ? ` (${teams.map((team) => team.name).join(', ')})` : '',
+          })}
         </p>
       )}
-      <Notes items={general.warnings} tone="warn" label="Worth a look" />
-      <Notes items={[...general.dropped, ...omitted]} tone="drop" label="Not brought over" />
+      <Notes items={general.warnings} tone="warn" label={t('Worth a look')} />
+      <Notes items={[...general.dropped, ...omitted]} tone="drop" label={t('Not brought over')} />
       <p className="flex gap-2 text-[11px] text-zinc-400 rounded-lg bg-zinc-900/60 p-2.5">
         <Info size={13} className="shrink-0 mt-px text-sky-400" aria-hidden="true" />
-        <span>To keep you safe, imported bots start with no tools, their skills wait for your OK, and routines start paused. Keys are removed.</span>
+        <span>{t('To keep you safe, imported bots start with no tools, their skills wait for your OK, and routines start paused. Keys are removed.')}</span>
       </p>
     </div>
   );
@@ -313,45 +331,59 @@ export const DoneView: React.FC<{ applied: Applied; undo: UndoState; onUndo: (fo
     return (
       <div className="space-y-2" role="status">
         <p className="flex items-center gap-2 text-sm text-zinc-100">
-          <Undo2 size={16} className="text-sky-400" /> Import undone
+          <Undo2 size={16} className="text-sky-400" /> {t('Import undone')}
         </p>
-        <p className="text-xs text-zinc-400">{names.length ? `${names.join(', ')} ${names.length === 1 ? 'was' : 'were'} removed.` : 'Everything it made was removed.'}</p>
+        <p className="text-xs text-zinc-400">{names.length
+            ? t(names.length === 1 ? '{names} was removed.' : '{names} were removed.', { names: names.join(', ') })
+            : t('Everything it made was removed.')}</p>
       </div>
     );
   }
   const extras = [
-    c.teams.length ? plural(c.teams.length, 'team') : '',
-    c.skills.length ? `${plural(c.skills.length, 'skill')} to review` : '',
-    c.routines.length ? `${plural(c.routines.length, 'paused routine')}` : '',
-    c.memories ? plural(c.memories, 'memory', 'memories') : '',
+    c.teams.length ? t(c.teams.length === 1 ? '{n} team' : '{n} teams', { n: c.teams.length }) : '',
+    c.skills.length ? t(c.skills.length === 1 ? '{n} skill to review' : '{n} skills to review', { n: c.skills.length }) : '',
+    c.routines.length ? t(c.routines.length === 1 ? '{n} paused routine' : '{n} paused routines', { n: c.routines.length }) : '',
+    c.memories ? t(c.memories === 1 ? '{n} memory' : '{n} memories', { n: c.memories }) : '',
   ].filter(Boolean);
   return (
     <div className="space-y-3">
       <div role="status" className="space-y-1">
         <p className="flex items-center gap-2 text-sm text-zinc-100">
-          <Check size={16} className="text-emerald-400" /> Imported {plural(names.length, 'bot')}
+          <Check size={16} className="text-emerald-400" /> {t(names.length === 1 ? 'Imported {n} bot' : 'Imported {n} bots', { n: names.length })}
         </p>
         {names.length > 0 && <p className="text-xs text-zinc-300 break-words">{names.join(', ')}</p>}
-        {extras.length > 0 && <p className="text-[11px] text-zinc-500">Also {extras.join(', ')}.</p>}
+        {extras.length > 0 && <p className="text-[11px] text-zinc-500">{t('Also {list}.', { list: extras.join(', ') })}</p>}
       </div>
-      <Notes items={applied.warnings.map((n) => n.message)} tone="warn" label="Worth a look" />
-      <p className="text-[11px] text-zinc-400">Give them an account and tools in Settings › This space when you’re ready. Skills and routines are there to review.</p>
-      <p className="text-[11px] text-zinc-400">Tools you add to this space later will be on for these bots too.</p>
+      <Notes items={applied.warnings.map((n) => n.message)} tone="warn" label={t('Worth a look')} />
+      <p className="text-[11px] text-zinc-400">{t('Give them an account and tools in Settings › This space when you’re ready. Skills and routines are there to review.')}</p>
+      <p className="text-[11px] text-zinc-400">{t('Tools you add to this space later will be on for these bots too.')}</p>
       {undo.kind === 'confirm_edited' && (
         <div role="alert" className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 space-y-2">
           <p className="text-xs text-amber-100">
-            {undo.names.join(', ')} changed since the import. Undo anyway removes {undo.names.length === 1 ? 'it' : 'them'} with your changes.
+            {t(
+              undo.names.length === 1
+                ? '{names} changed since the import. Undo anyway removes it with your changes.'
+                : '{names} changed since the import. Undo anyway removes them with your changes.',
+              { names: undo.names.join(', ') },
+            )}
           </p>
           <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={onKeep} className={btn}>Keep them</button>
-            <button type="button" onClick={() => onUndo(true)} className={danger}>Undo anyway</button>
+            <button type="button" onClick={onKeep} className={btn}>{t('Keep them')}</button>
+            <button type="button" onClick={() => onUndo(true)} className={danger}>{t('Undo anyway')}</button>
           </div>
         </div>
       )}
       {undo.kind === 'in_use' && (
         <div role="alert" className="rounded-lg border border-zinc-700 bg-zinc-900 p-3">
           <p className="text-xs text-zinc-300">
-            {undo.names.length ? `${undo.names.join(', ')} ${undo.names.length === 1 ? 'has' : 'have'}` : 'Something it made has'} already been used, so this import can’t be undone in one step. Delete those bots yourself in Kwant bots.
+            {undo.names.length === 0
+              ? t('Something it made has already been used, so this import can’t be undone in one step. Delete those bots yourself in Kwant bots.')
+              : t(
+                  undo.names.length === 1
+                    ? '{names} has already been used, so this import can’t be undone in one step. Delete those bots yourself in Kwant bots.'
+                    : '{names} have already been used, so this import can’t be undone in one step. Delete those bots yourself in Kwant bots.',
+                  { names: undo.names.join(', ') },
+                )}
           </p>
         </div>
       )}
@@ -492,14 +524,22 @@ export const ImportDialog: React.FC<Props> = ({ spaceName, onClose, onChanged })
   };
 
   const title =
-    step.kind === 'prompt' ? `Bring a bot from ${step.prompt.label}` : step.kind === 'upload' ? 'Upload a file' : step.kind === 'preview' ? 'Check before importing' : step.kind === 'done' ? 'Import bots' : `Import bots into ${spaceName}`;
+    step.kind === 'prompt'
+      ? t('Bring a bot from {source}', { source: step.prompt.label })
+      : step.kind === 'upload'
+        ? t('Upload a file')
+        : step.kind === 'preview'
+          ? t('Check before importing')
+          : step.kind === 'done'
+            ? t('Import bots')
+            : t('Import bots into {space}', { space: spaceName });
 
   let footer: React.ReactNode = null;
   if (step.kind === 'prompt' || step.kind === 'upload') {
     const ready = step.kind === 'prompt' ? reply.trim() !== '' && !textTooLong(reply) : !!file && !fileTooBig(file.size);
     footer = (
       <button type="button" onClick={check} disabled={!ready || busy} className={primary}>
-        {busy && <Loader2 size={13} className="animate-spin motion-reduce:animate-none" />} {busy ? 'Reading…' : 'Preview'}
+        {busy && <Loader2 size={13} className="animate-spin motion-reduce:animate-none" />} {busy ? t('Reading…') : t('Preview')}
       </button>
     );
   } else if (step.kind === 'preview' && preview) {
@@ -507,11 +547,11 @@ export const ImportDialog: React.FC<Props> = ({ spaceName, onClose, onChanged })
     const isNameRace = error instanceof ImportError && error.code === 'name_taken';
     footer = isNameRace ? (
       <button type="button" onClick={check} disabled={busy} className={primary}>
-        Check again
+        {t('Check again')}
       </button>
     ) : (
       <button type="button" onClick={doImport} disabled={!canImport(preview, skip) || busy} className={primary}>
-        {busy && <Loader2 size={13} className="animate-spin motion-reduce:animate-none" />} {busy ? 'Importing…' : n > 0 ? `Import ${plural(n, 'bot')}` : 'Import'}
+        {busy && <Loader2 size={13} className="animate-spin motion-reduce:animate-none" />} {busy ? t('Importing…') : n > 0 ? t(n === 1 ? 'Import {n} bot' : 'Import {n} bots', { n }) : t('Import')}
       </button>
     );
   } else if (step.kind === 'done' && applied) {
@@ -519,10 +559,10 @@ export const ImportDialog: React.FC<Props> = ({ spaceName, onClose, onChanged })
       <>
         {undo.kind !== 'undone' && undo.kind !== 'confirm_edited' && undo.kind !== 'in_use' && (
           <button type="button" onClick={() => doUndo(false)} disabled={undo.kind === 'busy'} className={btn}>
-            {undo.kind === 'busy' ? <Loader2 size={13} className="animate-spin motion-reduce:animate-none" /> : <Undo2 size={13} />} Undo import
+            {undo.kind === 'busy' ? <Loader2 size={13} className="animate-spin motion-reduce:animate-none" /> : <Undo2 size={13} />} {t('Undo import')}
           </button>
         )}
-        <button type="button" onClick={onClose} className={primary}>Done</button>
+        <button type="button" onClick={onClose} className={primary}>{t('Done')}</button>
       </>
     );
   }
@@ -539,12 +579,12 @@ export const ImportDialog: React.FC<Props> = ({ spaceName, onClose, onChanged })
       >
         <div className="flex items-center gap-2 border-b border-zinc-800 px-4 py-3">
           {step.kind !== 'choose' && step.kind !== 'done' && (
-            <button type="button" onClick={back} aria-label="Back" className="p-1.5 -ml-1 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800">
+            <button type="button" onClick={back} aria-label={t('Back')} className="p-1.5 -ml-1 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800">
               <ArrowLeft size={17} />
             </button>
           )}
           <h2 id="import-title" className="flex-1 min-w-0 text-sm font-semibold truncate">{title}</h2>
-          <button type="button" onClick={onClose} aria-label="Close" className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800">
+          <button type="button" onClick={onClose} aria-label={t('Close')} className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800">
             <X size={18} />
           </button>
         </div>
@@ -581,7 +621,7 @@ export const ImportDialog: React.FC<Props> = ({ spaceName, onClose, onChanged })
 
 /** Recent imports in this space, each with Undo while it still applies. */
 export const RecentImports: React.FC<{ records: ImportRecord[]; onUndo: (r: ImportRecord) => void; busyId: string | null }> = ({ records, onUndo, busyId }) => {
-  if (records.length === 0) return <p className="text-[11px] text-zinc-500">No imports yet.</p>;
+  if (records.length === 0) return <p className="text-[11px] text-zinc-500">{t('No imports yet.')}</p>;
   return (
     <ul className="space-y-1.5">
       {records.slice(0, 10).map((r) => {
@@ -589,15 +629,15 @@ export const RecentImports: React.FC<{ records: ImportRecord[]; onUndo: (r: Impo
         return (
           <li key={r.id} className={`${card} flex items-center gap-3 p-2.5`}>
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-zinc-200 truncate">{names.length ? names.join(', ') : 'Skills only'}</p>
+              <p className="text-xs text-zinc-200 truncate">{names.length ? names.join(', ') : t('Skills only')}</p>
               <p className="text-[11px] text-zinc-500">
                 {new Date(r.created_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
-                {r.status === 'undone' ? ' · undone' : ''}
+                {r.status === 'undone' ? ` · ${t('undone')}` : ''}
               </p>
             </div>
             {r.status === 'applied' && (
-              <button type="button" onClick={() => onUndo(r)} disabled={busyId === r.id} className={btn} aria-label={`Undo import of ${names.join(', ') || 'skills'}`}>
-                {busyId === r.id ? <Loader2 size={12} className="animate-spin motion-reduce:animate-none" /> : <Undo2 size={12} />} Undo
+              <button type="button" onClick={() => onUndo(r)} disabled={busyId === r.id} className={btn} aria-label={t('Undo import of {names}', { names: names.join(', ') || t('skills') })}>
+                {busyId === r.id ? <Loader2 size={12} className="animate-spin motion-reduce:animate-none" /> : <Undo2 size={12} />} {t('Undo')}
               </button>
             )}
           </li>

@@ -1,15 +1,10 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
-import ts from 'typescript';
+import { loadBundled } from './bundle.mjs';
 
-const load = async (path) => {
-  const source = await readFile(new URL(path, import.meta.url), 'utf8');
-  const { outputText } = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext } });
-  return import(`data:text/javascript;base64,${Buffer.from(outputText).toString('base64')}`);
-};
-
-const t = await load('../src/threads.ts');
+// threads.ts imports the interface language (src/i18n), so it is bundled with it.
+const t = await loadBundled(`export * from './src/threads';`);
 
 // A chat on screen, kept the way App keeps it: TurnComplete loads the chat, turn_ended loads it
 // again when reloadOnTurnEnd says so, and a load only lands if ChatLoads says it is the newest.

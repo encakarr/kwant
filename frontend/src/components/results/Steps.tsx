@@ -1,6 +1,7 @@
 import React, { useId, useState } from 'react';
 import { StepsBlock, plainText, readDoneSteps, saveDoneSteps } from '../../smartResults';
 import type { RendererProps } from './registry';
+import { t, tj } from '../../i18n';
 
 const boxClass =
   'mt-[5px] h-3.5 w-3.5 shrink-0 cursor-pointer rounded-sm accent-sky-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70 focus-visible:ring-offset-1 focus-visible:ring-offset-zinc-900';
@@ -39,10 +40,8 @@ export const Steps: React.FC<RendererProps<StepsBlock>> = ({ block, messageId, r
                 items[i]
               ) : (
                 <>
-                  <span className="font-medium text-zinc-200">{it.when}</span>
-                  {': '}
-                  {items[i]}
-                  {it.owner && <span className="text-zinc-500"> (owner: {it.owner})</span>}
+                  {tj('{when}: {text}', { when: <span className="font-medium text-zinc-200">{it.when}</span>, text: items[i] })}
+                  {it.owner && <span className="text-zinc-500"> {t('(owner: {owner})', { owner: it.owner })}</span>}
                 </>
               )}
             </li>
@@ -75,7 +74,7 @@ export const Steps: React.FC<RendererProps<StepsBlock>> = ({ block, messageId, r
         })}
       </List>
       <span className="sr-only" aria-live="polite">
-        {done.size} of {block.items.length} done
+        {t('{done} of {total} done', { done: done.size, total: block.items.length })}
       </span>
     </div>
   );

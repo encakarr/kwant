@@ -132,7 +132,7 @@ test('the second delete keeps its own Undo window; a failed first one still repo
 
 test('scenario Undo says its past runs go too; each scenario delete drops only itself', () => {
   const s = readFileSync(join(root, 'src/components/ParallelUniverseView.tsx'), 'utf8');
-  assert.match(s, /Deleted “\$\{removing\.title\}” and its past runs\./);
+  assert.match(s, /Deleted “\{title\}” and its past runs\./);
   assert.match(s, /await parallelApi\.remove\(s\.id\);[^]*filter\(\(x\) => x\.id !== s\.id\)/);
 });
 

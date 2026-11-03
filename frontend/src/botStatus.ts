@@ -1,5 +1,6 @@
 // One status per bot for the dot on its avatar: what it's doing right now, from its turns and whether
 // anything can run. A bot with a running turn is never "Available", the open chat included.
+import { t } from './i18n';
 
 export type BotStatus = 'needs_you' | 'working' | 'queued' | 'cant_run' | 'available';
 
@@ -24,11 +25,11 @@ export interface StatusInputs {
 export const STATUS_PRIORITY: readonly BotStatus[] = ['needs_you', 'working', 'queued', 'cant_run', 'available'];
 
 export const STATUS_LABEL: Record<BotStatus, string> = {
-  needs_you: 'Needs you',
-  working: 'Working',
-  queued: 'Queued',
-  cant_run: "Can't run",
-  available: 'Available',
+  needs_you: t('Needs you'),
+  working: t('Working'),
+  queued: t('Queued'),
+  cant_run: t("Can't run"),
+  available: t('Available'),
 };
 
 const rank = (s: BotStatus) => STATUS_PRIORITY.indexOf(s);
@@ -37,10 +38,10 @@ const higher = (a: BotStatus | undefined, b: BotStatus): BotStatus => (a && rank
 /** Status for every bot that has turns or open steps; bots not listed are idle. */
 export function botStatuses({ turns, awaiting, needsYou = {} }: StatusInputs): Record<string, BotStatus> {
   const out: Record<string, BotStatus> = {};
-  for (const t of turns) {
-    if (!t?.kwant_id) continue;
-    const s: BotStatus = t.state === 'queued' ? 'queued' : awaiting?.has(t.turn_id) ? 'needs_you' : 'working';
-    out[t.kwant_id] = higher(out[t.kwant_id], s);
+  for (const turn of turns) {
+    if (!turn?.kwant_id) continue;
+    const s: BotStatus = turn.state === 'queued' ? 'queued' : awaiting?.has(turn.turn_id) ? 'needs_you' : 'working';
+    out[turn.kwant_id] = higher(out[turn.kwant_id], s);
   }
   for (const [id, n] of Object.entries(needsYou)) if (n > 0) out[id] = 'needs_you';
   return out;
@@ -76,12 +77,24 @@ export function busyLines({ turns, openCtx, awaiting, browser, describe }: {
   describe: (contextId: string, kwantId: string) => string;
 }): Record<string, string> {
   const out: Record<string, string> = {};
-  const later = (t: StatusTurn) => (t.state === 'queued' ? 2 : 0) + (t.context_id === openCtx ? 1 : 0);
-  for (const t of [...turns].sort((x, y) => later(x) - later(y))) {
-    if (!t?.kwant_id || out[t.kwant_id]) continue;
-    const what = t.state === 'queued' ? 'Waiting to work' : browser?.has(t.turn_id) ? 'Needs you in the browser' : awaiting?.has(t.turn_id) ? 'Asked you a question' : 'Working';
-    out[t.kwant_id] =
-      t.context_id === openCtx ? `${what} here` : `${what} ${t.state === 'queued' || what === 'Working' ? 'on' : 'in'} ${describe(t.context_id ?? '', t.kwant_id)}`;
+  const later = (x: StatusTurn) => (x.state === 'queued' ? 2 : 0) + (x.context_id === openCtx ? 1 : 0);
+  for (const turn of [...turns].sort((x, y) => later(x) - later(y))) {
+    if (!turn?.kwant_id || out[turn.kwant_id]) continue;
+    const what = turn.state === 'queued' ? 'queued' : browser?.has(turn.turn_id) ? 'browser' : awaiting?.has(turn.turn_id) ? 'asked' : 'working';
+    if (turn.context_id === openCtx) {
+      out[turn.kwant_id] =
+        what === 'queued' ? t('Waiting to work here') : what === 'browser' ? t('Needs you in the browser here') : what === 'asked' ? t('Asked you a question here') : t('Working here');
+    } else {
+      const place = describe(turn.context_id ?? '', turn.kwant_id);
+      out[turn.kwant_id] =
+        what === 'queued'
+          ? t('Waiting to work on {place}', { place })
+          : what === 'browser'
+            ? t('Needs you in the browser in {place}', { place })
+            : what === 'asked'
+              ? t('Asked you a question in {place}', { place })
+              : t('Working on {place}', { place });
+    }
   }
   return out;
 }

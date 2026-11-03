@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { ArrowRightLeft, X } from 'lucide-react';
+import { t } from '../i18n';
 
 export interface Toast {
   id: number;
@@ -13,8 +14,8 @@ const TOAST_MS = 7000;
 
 const ToastItem: React.FC<{ toast: Toast; onDismiss: (id: number) => void }> = ({ toast, onDismiss }) => {
   useEffect(() => {
-    const t = setTimeout(() => onDismiss(toast.id), TOAST_MS);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => onDismiss(toast.id), TOAST_MS);
+    return () => clearTimeout(timer);
   }, [toast.id, onDismiss]);
   return (
     <div className="kw-toast pointer-events-auto flex items-start gap-2.5 w-full bg-zinc-900/95 border border-zinc-700 rounded-xl px-3 py-2.5 shadow-xl text-xs">
@@ -38,7 +39,7 @@ const ToastItem: React.FC<{ toast: Toast; onDismiss: (id: number) => void }> = (
       <button
         type="button"
         onClick={() => onDismiss(toast.id)}
-        aria-label="Dismiss"
+        aria-label={t('Dismiss')}
         className="p-0.5 rounded text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
       >
         <X size={13} />
@@ -59,8 +60,8 @@ export const Toasts: React.FC<{ toasts: Toast[]; onDismiss: (id: number) => void
     aria-live="polite"
     className={`pointer-events-none fixed ${position === 'top' ? 'top-4' : 'bottom-4'} right-4 left-4 sm:left-auto z-[60] flex flex-col items-end gap-2 sm:w-80`}
   >
-    {toasts.map((t) => (
-      <ToastItem key={t.id} toast={t} onDismiss={onDismiss} />
+    {toasts.map((toast) => (
+      <ToastItem key={toast.id} toast={toast} onDismiss={onDismiss} />
     ))}
   </div>
 );

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CheckCircle2, Clock, Globe, Hand, Loader2, MinusCircle, MonitorPlay, Puzzle } from 'lucide-react';
 import { ModernAvatar } from './ModernAvatar';
 import { HumanStep, HumanStepMeta, KIND_TEXT, domainOf, humanStepView } from '../humanSteps';
+import { t, tj } from '../i18n';
 
 export interface HumanStepCardProps {
   meta: HumanStepMeta;
@@ -51,36 +52,36 @@ export const HumanStepCard: React.FC<HumanStepCardProps> = ({ meta, messageId, k
   const line =
     status === 'resolved_auto' ? (
       <span className="inline-flex items-center gap-1.5 text-emerald-300">
-        <CheckCircle2 size={13} aria-hidden="true" /> Solved. {kwantName} continues.
+        <CheckCircle2 size={13} aria-hidden="true" /> {t('Solved. {name} continues.', { name: kwantName })}
       </span>
     ) : status === 'timed_out' ? (
       <span className="inline-flex items-center gap-1.5 text-zinc-400">
-        <Clock size={13} aria-hidden="true" /> Nobody solved it in time. {kwantName} moved on without it.
+        <Clock size={13} aria-hidden="true" /> {t('Nobody solved it in time. {name} moved on without it.', { name: kwantName })}
       </span>
     ) : status === 'done' ? (
       <span className="inline-flex items-center gap-1.5 text-emerald-300">
-        <CheckCircle2 size={13} aria-hidden="true" /> Done. {kwantName} is carrying on{view.status === 'open' ? '…' : '.'}
+        <CheckCircle2 size={13} aria-hidden="true" /> {view.status === 'open' ? t('Done. {name} is carrying on…', { name: kwantName }) : t('Done. {name} is carrying on.', { name: kwantName })}
       </span>
     ) : status === 'declined' ? (
       <span className="inline-flex items-center gap-1.5 text-zinc-400">
-        <MinusCircle size={13} aria-hidden="true" /> Skipped. {kwantName} continues without it.
+        <MinusCircle size={13} aria-hidden="true" /> {t('Skipped. {name} continues without it.', { name: kwantName })}
       </span>
     ) : status === 'cancelled' ? (
       <span className="inline-flex items-center gap-1.5 text-zinc-400">
-        <MinusCircle size={13} aria-hidden="true" /> Closed: the reply was stopped.
+        <MinusCircle size={13} aria-hidden="true" /> {t('Closed: the reply was stopped.')}
       </span>
     ) : waiting ? (
       <span className="inline-flex items-center gap-1.5 text-amber-300">
-        <Clock size={13} aria-hidden="true" /> {kwantName} is paused and waiting for you.
+        <Clock size={13} aria-hidden="true" /> {t('{name} is paused and waiting for you.', { name: kwantName })}
       </span>
     ) : captcha ? (
       // The turn ended, but the step's watcher still resumes the bot once the puzzle clears.
       <span className="inline-flex items-center gap-1.5 text-zinc-400">
-        <Clock size={13} aria-hidden="true" /> {kwantName}’s turn ended. It continues by itself once the puzzle is solved.
+        <Clock size={13} aria-hidden="true" /> {t('{name}’s turn ended. It continues by itself once the puzzle is solved.', { name: kwantName })}
       </span>
     ) : (
       <span className="inline-flex items-center gap-1.5 text-zinc-400">
-        <Clock size={13} aria-hidden="true" /> {kwantName} stopped waiting. Press Done any time and it picks up in a new reply.
+        <Clock size={13} aria-hidden="true" /> {t('{name} stopped waiting. Press Done any time and it picks up in a new reply.', { name: kwantName })}
       </span>
     );
 
@@ -97,8 +98,8 @@ export const HumanStepCard: React.FC<HumanStepCardProps> = ({ meta, messageId, k
         <div className="px-4 pt-3 pb-2 space-y-1">
           <span className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-400">
             <Hand size={12} className="text-amber-300" aria-hidden="true" />
-            <span className="text-zinc-200">{kwantName}</span> needs you in the browser
-            {view.source === 'auto' && <span className="text-zinc-400">· spotted automatically</span>}
+            {tj('{name} needs you in the browser', { name: <span className="text-zinc-200">{kwantName}</span> })}
+            {view.source === 'auto' && <span className="text-zinc-400">{t('· spotted automatically')}</span>}
           </span>
           <h3 id={headingId} className="text-sm font-semibold text-zinc-100">
             {text.heading}
@@ -120,7 +121,7 @@ export const HumanStepCard: React.FC<HumanStepCardProps> = ({ meta, messageId, k
                 onClick={() => onOpenBrowser(view.sandbox_target, true)}
                 className={`inline-flex items-center justify-center gap-2 min-h-[48px] sm:min-h-[38px] px-4 py-2 rounded-xl text-base sm:text-sm font-semibold bg-amber-400 text-zinc-950 hover:bg-amber-300 ${focusRing}`}
               >
-                <Puzzle size={16} aria-hidden="true" /> Solve it
+                <Puzzle size={16} aria-hidden="true" /> {t('Solve it')}
               </button>
             )}
             {onOpenBrowser && !captcha && (
@@ -129,7 +130,7 @@ export const HumanStepCard: React.FC<HumanStepCardProps> = ({ meta, messageId, k
                 onClick={() => onOpenBrowser(view.sandbox_target)}
                 className={`inline-flex items-center justify-center gap-1.5 min-h-[40px] sm:min-h-[34px] px-3 py-1.5 rounded-xl text-sm border bg-zinc-800/80 border-zinc-700 text-zinc-100 hover:bg-zinc-700 hover:border-zinc-600 ${focusRing}`}
               >
-                <MonitorPlay size={14} aria-hidden="true" /> Open browser
+                <MonitorPlay size={14} aria-hidden="true" /> {t('Open browser')}
               </button>
             )}
             <button
@@ -151,7 +152,7 @@ export const HumanStepCard: React.FC<HumanStepCardProps> = ({ meta, messageId, k
               disabled={busy !== null}
               className={`inline-flex items-center justify-center gap-1.5 min-h-[40px] sm:min-h-[34px] px-3 py-1.5 rounded-xl text-sm text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 disabled:opacity-60 ${focusRing}`}
             >
-              {busy === 'skip' ? 'Skipping…' : 'Skip'}
+              {busy === 'skip' ? t('Skipping…') : t('Skip')}
             </button>
           </div>
         )}
@@ -161,9 +162,9 @@ export const HumanStepCard: React.FC<HumanStepCardProps> = ({ meta, messageId, k
             {line}
           </p>
           {open && captcha && (
-            <p className="basis-full text-zinc-400">Solve the puzzle and {kwantName} continues by itself. Nothing you do there is passed to {kwantName}.</p>
+            <p className="basis-full text-zinc-400">{t('Solve the puzzle and {name} continues by itself. Nothing you do there is passed to {name}.', { name: kwantName })}</p>
           )}
-          {open && !captcha && <p className="basis-full text-zinc-400">Do it in the browser panel, then press Done. What you type into fields there isn’t passed to {kwantName}.</p>}
+          {open && !captcha && <p className="basis-full text-zinc-400">{t('Do it in the browser panel, then press Done. What you type into fields there isn’t passed to {name}.', { name: kwantName })}</p>}
           {error && (
             <span role="alert" className="basis-full text-rose-300">
               {error}

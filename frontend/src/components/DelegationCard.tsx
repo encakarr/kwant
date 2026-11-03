@@ -3,6 +3,7 @@ import { ArrowRightLeft, CheckCircle2, Clock, ExternalLink, Loader2, Square, XCi
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { ModernAvatar } from './ModernAvatar';
 import { Delegation, DelegationMeta, DelegationStatus, delegationStatusLine, isOpenDelegation } from '../threads';
+import { t, tj } from '../i18n';
 
 export interface DelegationCardProps {
   meta: DelegationMeta;
@@ -40,7 +41,7 @@ export const DelegationCard: React.FC<DelegationCardProps> = ({ meta, text, mess
   const [expanded, setExpanded] = useState(false);
 
   const status: DelegationStatus = live?.status ?? meta.status;
-  const t = tone[status] ?? tone.queued;
+  const look = tone[status] ?? tone.queued;
   const isResult = meta.kind === 'delegation_result';
   const running = isOpenDelegation({ status });
   const line = delegationStatusLine(status, meta.specialist_name, { queuePos, error: live?.error });
@@ -68,17 +69,18 @@ export const DelegationCard: React.FC<DelegationCardProps> = ({ meta, text, mess
           <ArrowRightLeft size={15} className="text-amber-300" aria-hidden="true" />
         </div>
       )}
-      <div className={`flex-1 min-w-0 max-w-4xl rounded-2xl rounded-tl-sm border ${t.ring} bg-zinc-900/60 shadow-sm`}>
+      <div className={`flex-1 min-w-0 max-w-4xl rounded-2xl rounded-tl-sm border ${look.ring} bg-zinc-900/60 shadow-sm`}>
         <div className="px-4 pt-3 pb-2 flex flex-wrap items-center gap-x-2 gap-y-1">
           <span className="text-[11px] font-medium text-zinc-400">
-            {isResult ? 'Result from' : meta.kind === 'delegation_stalled' ? 'Still running at' : 'Delegated to'}{' '}
-            <span className="text-zinc-200">{meta.specialist_name}</span>
+            {tj(isResult ? 'Result from {name}' : meta.kind === 'delegation_stalled' ? 'Still running at {name}' : 'Delegated to {name}', {
+              name: <span className="text-zinc-200">{meta.specialist_name}</span>,
+            })}
           </span>
           <h3 id={headingId} className="basis-full text-sm font-semibold text-zinc-100 break-words">
             {meta.title}
           </h3>
-          <p className={`basis-full flex items-center gap-1.5 text-[11px] ${t.text}`} role="status" aria-live="polite">
-            {t.icon}
+          <p className={`basis-full flex items-center gap-1.5 text-[11px] ${look.text}`} role="status" aria-live="polite">
+            {look.icon}
             <span className="min-w-0 break-words">{line}</span>
           </p>
         </div>
@@ -98,7 +100,7 @@ export const DelegationCard: React.FC<DelegationCardProps> = ({ meta, text, mess
                 aria-expanded={expanded}
                 className="mt-1 text-[11px] font-medium text-sky-300 hover:text-sky-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500 rounded"
               >
-                {expanded ? 'Show less' : 'Show the whole answer'}
+                {expanded ? t('Show less') : t('Show the whole answer')}
               </button>
             )}
           </div>
@@ -113,18 +115,18 @@ export const DelegationCard: React.FC<DelegationCardProps> = ({ meta, text, mess
             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-sky-300 bg-sky-500/10 border border-sky-500/30 hover:bg-sky-500/20 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500"
           >
             <ExternalLink size={12} aria-hidden="true" />
-            Open {meta.specialist_name}'s thread
+            {t("Open {name}'s thread", { name: meta.specialist_name })}
           </button>
           {running && (
             <button
               type="button"
               onClick={stop}
               disabled={stopping}
-              aria-label={`Stop “${meta.title}”`}
+              aria-label={t('Stop “{title}”', { title: meta.title })}
               className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-rose-300 bg-rose-500/10 border border-rose-500/30 hover:bg-rose-500/20 transition-colors disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-rose-500"
             >
               <Square size={10} fill="currentColor" aria-hidden="true" />
-              {stopping ? 'Stopping…' : 'Stop'}
+              {stopping ? t('Stopping…') : t('Stop')}
             </button>
           )}
           {error && (

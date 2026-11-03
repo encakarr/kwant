@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Globe, Loader2, RefreshCw, Share2, MousePointerClick } from 'lucide-react';
 import { ComputerModeChip, ComputerModeError, LocalBrowserNote, OpenWindowButton, useComputerMode } from './ComputerModeSwitch';
 import { showsLocalWindow } from '../computerMode';
+import { t } from '../i18n';
 
 // Must match the sandbox Chromium --window-size (docker/entrypoint.sh)
 const VIEWPORT_W = 1280;
@@ -57,7 +58,7 @@ export const SandboxViewer: React.FC<{ teamId: string }> = ({ teamId }) => {
       if (data.title) setTitle(data.title);
       setError(null);
     } catch (err) {
-      setError('Sandbox browser is not reachable. Is the sandbox running?');
+      setError(t('Sandbox browser is not reachable. Is the sandbox running?'));
     }
   }, [api, applyUrl]);
 
@@ -145,7 +146,7 @@ export const SandboxViewer: React.FC<{ teamId: string }> = ({ teamId }) => {
   }, [teamId, applyUrl]);
 
   useEffect(() => {
-    document.title = `${title || url || 'Sandbox browser'} · kwant bots browser`;
+    document.title = t('{page} · kwant bots browser', { page: title || url || t('Sandbox browser') });
   }, [title, url]);
 
   const toViewport = (clientX: number, clientY: number) => {
@@ -207,7 +208,7 @@ export const SandboxViewer: React.FC<{ teamId: string }> = ({ teamId }) => {
       <header className="flex items-center gap-3 px-4 py-2.5 border-b border-zinc-800 bg-zinc-900/60">
         <div className="flex items-center gap-2 flex-shrink-0">
           <span className={`w-2.5 h-2.5 rounded-full ${error ? 'bg-zinc-500' : 'bg-emerald-400 animate-pulse'}`} />
-          <span className="text-sm font-semibold">Sandbox browser</span>
+          <span className="text-sm font-semibold">{t('Sandbox browser')}</span>
         </div>
 
         <form
@@ -226,7 +227,7 @@ export const SandboxViewer: React.FC<{ teamId: string }> = ({ teamId }) => {
               urlInputFocusedRef.current = false;
               setInputUrl(url);
             }}
-            placeholder="Enter a URL to open in the sandbox"
+            placeholder={t('Enter a URL to open in the sandbox')}
             className="flex-1 bg-transparent outline-none text-sm font-mono min-w-0"
           />
           {isBusy && <Loader2 size={14} className="animate-spin text-sky-400 flex-shrink-0" />}
@@ -235,7 +236,7 @@ export const SandboxViewer: React.FC<{ teamId: string }> = ({ teamId }) => {
         <button
           type="button"
           onClick={() => (url ? navigate(url) : refresh())}
-          title="Reload page"
+          title={t('Reload page')}
           className="p-2 rounded-md text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 cursor-pointer"
         >
           <RefreshCw size={14} />
@@ -246,10 +247,10 @@ export const SandboxViewer: React.FC<{ teamId: string }> = ({ teamId }) => {
 
         <div
           className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 flex-shrink-0"
-          title="This is the same browser your bots use. They will see the current page on their next reply."
+          title={t('This is the same browser your bots use. They will see the current page on their next reply.')}
         >
           <Share2 size={12} />
-          <span>Shared with your bots</span>
+          <span>{t('Shared with your bots')}</span>
         </div>
       </header>
 
@@ -258,8 +259,8 @@ export const SandboxViewer: React.FC<{ teamId: string }> = ({ teamId }) => {
           <MousePointerClick size={12} className={isFocused ? 'text-sky-400' : ''} />
           <span>
             {isFocused
-              ? 'Controlling the sandbox: clicks, scrolling, typing and paste go to the page.'
-              : 'Click the page to take control. Your bots will see wherever you leave this browser.'}
+              ? t('Controlling the sandbox: clicks, scrolling, typing and paste go to the page.')
+              : t('Click the page to take control. Your bots will see wherever you leave this browser.')}
           </span>
           {title && <span className="ml-auto truncate text-zinc-400">{title}</span>}
         </div>
@@ -297,13 +298,13 @@ export const SandboxViewer: React.FC<{ teamId: string }> = ({ teamId }) => {
               <img
                 ref={imageRef}
                 src={`data:image/jpeg;base64,${screenshot}`}
-                alt={title || 'Sandbox browser'}
+                alt={title || t('Sandbox browser')}
                 draggable={false}
                 className="w-full h-full object-contain select-none bg-white"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-zinc-500 text-sm gap-2">
-                <Loader2 size={16} className="animate-spin" /> Connecting to sandbox…
+                <Loader2 size={16} className="animate-spin" /> {t('Connecting to sandbox…')}
               </div>
             )}
           </div>

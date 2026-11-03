@@ -2,6 +2,7 @@
 // entries (lowercase, a pasted URL keeps its host, punycode) and names a bad one in a 400; the UI
 // shows the stored lists it gets back.
 import type { TagLimits } from './tagList';
+import { t } from './i18n';
 
 export type BrowserSites = {
   browser_allowed_sites: string[];
@@ -38,14 +39,13 @@ export function changedSites(before: BrowserSites, after: BrowserSites): Partial
 
 /** One line for the closed Browser section: "No limits", "Only wikipedia.org · never 2 sites · …". */
 export function sitesSummary(s: BrowserSites): string {
-  const sites = (n: number) => (n === 1 ? '1 site' : `${n} sites`);
   const parts: string[] = [];
   const a = s.browser_allowed_sites;
-  if (a.length) parts.push(a.length === 1 ? `Only ${a[0]}` : `Only ${sites(a.length)}`);
+  if (a.length) parts.push(a.length === 1 ? t('Only {site}', { site: a[0] }) : t('Only {n} sites', { n: a.length }));
   const b = s.browser_blocked_sites;
-  if (b.length) parts.push(b.length === 1 ? `never ${b[0]}` : `never ${sites(b.length)}`);
-  if (s.browser_block_private_network) parts.push('no local network');
-  if (!parts.length) return 'Any site';
+  if (b.length) parts.push(b.length === 1 ? t('never {site}', { site: b[0] }) : t('never {n} sites', { n: b.length }));
+  if (s.browser_block_private_network) parts.push(t('no local network'));
+  if (!parts.length) return t('Any site');
   const line = parts.join(' · ');
   return line[0].toUpperCase() + line.slice(1);
 }

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Download, Loader2, Trash2 } from 'lucide-react';
 import { BotUsage, botDeleteApi, deleteBlockedReason, leadsNote, lossLines } from '../botDelete';
 import { downloadExport, trapFocusTarget } from '../imports';
+import { t } from '../i18n';
 
 interface DeleteBotDialogProps {
   kwant: { id: string; name: string };
@@ -64,7 +65,7 @@ export const DeleteBotDialog: React.FC<DeleteBotDialogProps> = ({ kwant, busy, o
       const file = await downloadExport(kwant.id);
       setExported(file);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Couldn’t export the bot.');
+      setError(err instanceof Error ? err.message : t('Couldn’t export the bot.'));
     }
     setExporting(false);
   };
@@ -101,32 +102,33 @@ export const DeleteBotDialog: React.FC<DeleteBotDialogProps> = ({ kwant, busy, o
           </div>
           <div className="min-w-0">
             <h3 id="delete-bot-title" className="text-sm font-semibold break-words">
-              Delete {kwant.name}?
+              {t('Delete {name}?', { name: kwant.name })}
             </h3>
             <p id="delete-bot-desc" className="text-xs text-zinc-400">
-              This removes the bot and everything below for good. It can’t be undone.
+              {t('This removes the bot and everything below for good. It can’t be undone.')}
             </p>
           </div>
         </div>
 
-        <ul aria-label="What gets deleted" aria-busy={!loaded} className="list-disc pl-5 text-xs text-zinc-200 space-y-0.5">
+        <ul aria-label={t('What gets deleted')} aria-busy={!loaded} className="list-disc pl-5 text-xs text-zinc-200 space-y-0.5">
           {lossLines(usage).map((l) => (
             <li key={l}>{l}</li>
           ))}
         </ul>
         <p className="text-[11px] text-zinc-500">
-          {leadsNote(usage) ?? 'Teams it’s in lose it as a member.'} Other bots and their chats stay, and so do its team-chat messages and working folder.
+          {leadsNote(usage) ?? t('Teams it’s in lose it as a member.')}{' '}
+          {t('Other bots and their chats stay, and so do its team-chat messages and working folder.')}
         </p>
 
         <div className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-3 space-y-2">
-          <p className="text-xs text-zinc-300">Want a copy first? Export saves its instructions, memory, skills and routines to a file you can import later.</p>
+          <p className="text-xs text-zinc-300">{t('Want a copy first? Export saves its instructions, memory, skills and routines to a file you can import later.')}</p>
           <button type="button" onClick={doExport} disabled={exporting || deleting} className={`${btn} text-zinc-100 border border-zinc-700 hover:bg-zinc-800 focus-visible:outline-zinc-400`}>
             {exporting ? <Loader2 size={13} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Download size={13} aria-hidden="true" />}
-            {exporting ? 'Exporting…' : `Export ${kwant.name}`}
+            {exporting ? t('Exporting…') : t('Export {name}', { name: kwant.name })}
           </button>
           {exported && (
             <p role="status" className="text-[11px] text-emerald-300 break-words">
-              Saved {exported}.
+              {t('Saved {file}.', { file: exported })}
             </p>
           )}
         </div>
@@ -146,7 +148,7 @@ export const DeleteBotDialog: React.FC<DeleteBotDialogProps> = ({ kwant, busy, o
 
         <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
           <button ref={cancelRef} type="button" onClick={onClose} disabled={deleting} className={`${btn} text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 focus-visible:outline-zinc-400`}>
-            Cancel
+            {t('Cancel')}
           </button>
           <button
             type="button"
@@ -156,7 +158,7 @@ export const DeleteBotDialog: React.FC<DeleteBotDialogProps> = ({ kwant, busy, o
             className={`${btn} text-white bg-rose-600 hover:bg-rose-500 focus-visible:outline-rose-400`}
           >
             {deleting ? <Loader2 size={13} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Trash2 size={13} aria-hidden="true" />}
-            {deleting ? 'Deleting…' : `Delete ${kwant.name}`}
+            {deleting ? t('Deleting…') : t('Delete {name}', { name: kwant.name })}
           </button>
         </div>
       </div>

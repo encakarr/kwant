@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ExternalLink, Key, LogIn } from 'lucide-react';
 import { EngineInfo, INSTALL_URL } from '../engines';
 import { playSfx } from '../audio/chiptune';
+import { t } from '../i18n';
 import { ClaudeSignIn } from './ClaudeSignIn';
 import { NewKeyAccountForm } from './EngineAccounts';
 
@@ -14,9 +15,9 @@ const KEY_PROVIDERS = [
 ] as const;
 
 const CHOICES: Array<{ id: StartChoice; title: string; hint: string; Icon: typeof Key }> = [
-  { id: 'claude', title: 'Sign in with Claude', hint: 'Uses your Claude Pro or Max plan', Icon: LogIn },
-  { id: 'codex', title: 'Sign in with ChatGPT', hint: 'Through Codex, with your ChatGPT plan', Icon: LogIn },
-  { id: 'key', title: 'Paste an API key', hint: 'Anthropic, OpenAI or xAI', Icon: Key },
+  { id: 'claude', title: t('Sign in with Claude'), hint: t('Uses your Claude Pro or Max plan'), Icon: LogIn },
+  { id: 'codex', title: t('Sign in with ChatGPT'), hint: t('Through Codex, with your ChatGPT plan'), Icon: LogIn },
+  { id: 'key', title: t('Paste an API key'), hint: t('Anthropic, OpenAI or xAI'), Icon: Key },
 ];
 
 /** Inline `code` in an engine's hint like "Not signed in: run `codex login`". */
@@ -35,13 +36,13 @@ const InstallLink: React.FC<{ engine: EngineInfo | undefined; name: string }> = 
   const url = engine ? INSTALL_URL[engine.id] : undefined;
   return (
     <p className="text-[11px] text-zinc-400 leading-snug">
-      {name} isn’t on this computer yet.{' '}
+      {t('{name} isn’t on this computer yet.', { name })}{' '}
       {url && (
         <a href={url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-0.5 text-violet-300 hover:text-violet-200 underline-offset-2 hover:underline">
-          Install {name} <ExternalLink size={10} aria-hidden="true" />
+          {t('Install {name}', { name })} <ExternalLink size={10} aria-hidden="true" />
         </a>
       )}
-      {url && ', then press Re-check.'}
+      {url && t(', then press Re-check.')}
     </p>
   );
 };
@@ -62,22 +63,22 @@ export const StartPicker: React.FC<{
   const body = () => {
     if (choice === 'claude') {
       if (!claude || claude.status === 'not_installed') return <InstallLink engine={claude ?? ({ id: 'claude' } as EngineInfo)} name="Claude Code" />;
-      if (claude.enabled === false) return <p className="text-[11px] text-zinc-400">Claude is switched off. Turn it on in its card below.</p>;
+      if (claude.enabled === false) return <p className="text-[11px] text-zinc-400">{t('Claude is switched off. Turn it on in its card below.')}</p>;
       return <ClaudeSignIn onSignedIn={onSignedIn} focusRequest={focusClaudeSignIn} />;
     }
     if (choice === 'codex') {
       if (!codex || codex.status === 'not_installed') return <InstallLink engine={codex ?? ({ id: 'codex' } as EngineInfo)} name="Codex" />;
-      if (codex.enabled === false) return <p className="text-[11px] text-zinc-400">Codex is switched off. Turn it on in its card below.</p>;
+      if (codex.enabled === false) return <p className="text-[11px] text-zinc-400">{t('Codex is switched off. Turn it on in its card below.')}</p>;
       return (
         <p className="text-[11px] text-zinc-400 leading-snug">
-          {withCode(codex.detail || 'Run `codex login` on this computer and pick “Sign in with ChatGPT”.')} Then press Re-check.
+          {withCode(codex.detail || t('Run `codex login` on this computer and pick “Sign in with ChatGPT”.'))} {t('Then press Re-check.')}
         </p>
       );
     }
     if (choice === 'key')
       return (
         <div className="space-y-2">
-          <div role="radiogroup" aria-label="Key from" className="flex flex-wrap gap-1.5">
+          <div role="radiogroup" aria-label={t('Key from')} className="flex flex-wrap gap-1.5">
             {KEY_PROVIDERS.map((p) => (
               <button
                 key={p.card}
@@ -102,10 +103,10 @@ export const StartPicker: React.FC<{
   return (
     <div data-start-picker="" className="rounded-xl border border-violet-500/25 bg-violet-500/[0.05] p-3 space-y-2.5">
       <div>
-        <h4 className="text-xs font-semibold text-zinc-100">Pick one to start</h4>
-        <p className="text-[11px] text-zinc-400">Your bots answer once one of these works. You can add more later.</p>
+        <h4 className="text-xs font-semibold text-zinc-100">{t('Pick one to start')}</h4>
+        <p className="text-[11px] text-zinc-400">{t('Your bots answer once one of these works. You can add more later.')}</p>
       </div>
-      <div role="radiogroup" aria-label="How to start" className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+      <div role="radiogroup" aria-label={t('How to start')} className="grid grid-cols-1 sm:grid-cols-3 gap-2">
         {CHOICES.map(({ id, title, hint, Icon }) => (
           <button
             key={id}

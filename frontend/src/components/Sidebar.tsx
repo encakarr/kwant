@@ -16,6 +16,7 @@ import { teamChannelOf } from '../teamChannel';
 import { layaRoutes } from '../channels';
 import { InstallAppButton } from './InstallAppButton';
 import { trapFocusTarget } from '../imports';
+import { t } from '../i18n';
 
 export interface Kwant {
   id: string;
@@ -194,11 +195,11 @@ const MoreMenu: React.FC<{
         className={className}
       >
         <MoreHorizontal size={15} className={active ? 'text-sky-400' : 'text-zinc-500'} aria-hidden="true" />
-        <span className="truncate flex-1">More</span>
+        <span className="truncate flex-1">{t('More')}</span>
         <ChevronDown size={12} className={`shrink-0 text-zinc-500 transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
       </button>
       {open && (
-        <div id={menuId} role="menu" aria-label="More" className="absolute left-0 right-0 top-full mt-1 z-30 rounded-lg border border-zinc-700/70 bg-zinc-900 p-1 shadow-xl">
+        <div id={menuId} role="menu" aria-label={t('More')} className="absolute left-0 right-0 top-full mt-1 z-30 rounded-lg border border-zinc-700/70 bg-zinc-900 p-1 shadow-xl">
           {items.map((it) => (
             <button
               key={it.label}
@@ -370,7 +371,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           active ? 'bg-zinc-800/90 text-zinc-100 shadow-sm border border-zinc-700/60' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/40 border border-transparent'
         }`}
       >
-        <span className="shrink-0" title={status === 'cant_run' ? "Can't run yet: no account works here" : statusText(k.name, status)}>
+        <span className="shrink-0" title={status === 'cant_run' ? t("Can't run yet: no account works here") : statusText(k.name, status)}>
           <ModernAvatar role={k.avatar_sprite} name={k.name} size={28} status={status} kwantId={k.id} />
         </span>
         <div className="flex-1 min-w-0">
@@ -381,21 +382,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {k.name}
             </span>
             {isLead && (
-              <span className="shrink-0 flex items-center gap-0.5 h-4 text-[9px] uppercase tracking-wide text-amber-300/90" title={`Leads @${team!.name}`}>
+              <span className="shrink-0 flex items-center gap-0.5 h-4 text-[9px] uppercase tracking-wide text-amber-300/90" title={t('Leads @{team}', { team: team!.name })}>
                 <Crown size={10} aria-hidden="true" />
-                lead
+                {t('lead')}
               </span>
             )}
             {needsYou[k.id] > 0 && (
               <span
                 className="shrink-0 inline-flex items-center gap-1 px-1.5 py-px rounded-full text-[10px] font-medium bg-amber-400/15 text-amber-200 border border-amber-400/30"
-                title={`${k.name} needs you in the browser`}
+                title={t('{name} needs you in the browser', { name: k.name })}
               >
                 <Hand size={10} aria-hidden="true" />
-                Needs you{needsYou[k.id] > 1 ? ` · ${needsYou[k.id]}` : ''}
+                {t('Needs you')}
+                {needsYou[k.id] > 1 ? ` · ${needsYou[k.id]}` : ''}
               </span>
             )}
-            {approvalsOff(k) && <ApprovalsOffBadge compact title={`${k.name} acts without asking. Payments still ask you.`} />}
+            {approvalsOff(k) && <ApprovalsOffBadge compact title={t('{name} acts without asking. Payments still ask you.', { name: k.name })} />}
             {/* Over the row's right edge, so a long name gets the full width until you hover */}
             {!phone && (
               <span className="absolute right-1.5 top-1.5 flex items-center gap-0.5 rounded-md bg-zinc-800/95 opacity-0 group-hover/fleet:opacity-100 group-focus-within/fleet:opacity-100 empty:hidden">
@@ -407,8 +409,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       onEditKwant(k);
                     }}
                     className="opacity-0 group-hover/fleet:opacity-100 group-focus-within/fleet:opacity-100 focus-visible:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400 p-0.5 rounded text-zinc-500 hover:text-sky-300 hover:bg-sky-500/10 transition-all"
-                    title={`Edit or delete ${k.name}`}
-                    aria-label={`Edit or delete ${k.name}`}
+                    title={t('Edit or delete {name}', { name: k.name })}
+                    aria-label={t('Edit or delete {name}', { name: k.name })}
                   >
                     <Pencil size={11} />
                   </button>
@@ -424,8 +426,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       setMemberMenu({ team: team!, kwant: k, confirmRemove: true });
                     }}
                     className="opacity-0 group-hover/fleet:opacity-100 group-focus-within/fleet:opacity-100 focus-visible:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400 p-0.5 rounded text-zinc-500 hover:text-rose-300 hover:bg-rose-500/10 transition-all"
-                    title={`Remove ${k.name} from @${team!.name}`}
-                    aria-label={`Remove ${k.name} from @${team!.name}`}
+                    title={t('Remove {name} from @{team}', { name: k.name, team: team!.name })}
+                    aria-label={t('Remove {name} from @{team}', { name: k.name, team: team!.name })}
                   >
                     <X size={11} />
                   </button>
@@ -452,7 +454,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             }}
             data-member-opener={`${team.id}:${k.id}`}
             aria-haspopup="dialog"
-            aria-label={`More for ${k.name}`}
+            aria-label={t('More for {name}', { name: k.name })}
             className="-mr-1 shrink-0 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 active:bg-zinc-800 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400"
           >
             <MoreHorizontal size={16} />
@@ -466,8 +468,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onEditKwant(k);
             }}
             className="shrink-0 -my-1 rounded-lg text-zinc-400 hover:text-sky-300 hover:bg-sky-500/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400"
-            title={`Edit or delete ${k.name}`}
-            aria-label={`Edit or delete ${k.name}`}
+            title={t('Edit or delete {name}', { name: k.name })}
+            aria-label={t('Edit or delete {name}', { name: k.name })}
           >
             <Pencil size={16} />
           </button>
@@ -477,18 +479,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   // A team's chat row: opens the team chat; collapses its members, opens its settings.
-  const teamRow = (t: Team, withMembers: boolean) => {
-    const active = isTeamActive(t);
-    const count = memberIdsOf(t).length;
-    const expanded = withMembers && !collapsedTeams.has(t.id);
+  const teamRow = (tm: Team, withMembers: boolean) => {
+    const active = isTeamActive(tm);
+    const count = memberIdsOf(tm).length;
+    const expanded = withMembers && !collapsedTeams.has(tm.id);
     return (
       <div
         role="button"
         tabIndex={0}
-        onClick={() => onSelectTeam(t)}
-        onKeyDown={(e) => e.key === 'Enter' && e.target === e.currentTarget && onSelectTeam(t)}
-        data-team-row={t.id}
-        title={`Open the @${t.name} team chat`}
+        onClick={() => onSelectTeam(tm)}
+        onKeyDown={(e) => e.key === 'Enter' && e.target === e.currentTarget && onSelectTeam(tm)}
+        data-team-row={tm.id}
+        title={t('Open the @{team} team chat', { team: tm.name })}
         className={`w-full flex items-center justify-between px-1.5 py-1.5 rounded-lg text-xs font-medium transition-all text-left group cursor-pointer ${
           active ? 'bg-zinc-800 text-zinc-100 shadow-sm border border-zinc-700/50' : 'text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800/50 border border-transparent'
         }`}
@@ -499,21 +501,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                toggleTeam(t.id);
+                toggleTeam(tm.id);
               }}
               aria-expanded={expanded}
-              aria-label={expanded ? `Hide @${t.name} members` : `Show @${t.name} members`}
+              aria-label={expanded ? t('Hide @{team} members', { team: tm.name }) : t('Show @{team} members', { team: tm.name })}
               className="p-0.5 rounded text-zinc-500 hover:text-zinc-200 hover:bg-zinc-700/60"
             >
               <ChevronDown size={12} className={`transition-transform duration-150 ${expanded ? '' : '-rotate-90'}`} />
             </button>
           )}
           <Users size={14} className={active ? 'text-sky-400' : 'text-zinc-500 group-hover:text-zinc-400'} aria-hidden="true" />
-          <span className="truncate">@{t.name}</span>
+          <span className="truncate">@{tm.name}</span>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
           {(!expanded || !withMembers) && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full tabular-nums bg-zinc-800/80 text-zinc-400 border border-zinc-800" title={`${count} ${count === 1 ? 'member' : 'members'}`}>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full tabular-nums bg-zinc-800/80 text-zinc-400 border border-zinc-800" title={t(count === 1 ? '{n} member' : '{n} members', { n: count })}>
               {count}
             </span>
           )}
@@ -523,11 +525,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onClick={(e) => {
                 e.stopPropagation();
                 playSfx('click');
-                onManageTeam(t);
+                onManageTeam(tm);
               }}
               className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 max-md:opacity-100 p-1 hover:text-zinc-100 hover:bg-zinc-700/60 rounded transition-all text-zinc-400"
-              title={`Team settings for @${t.name}`}
-              aria-label={`Team settings for @${t.name}`}
+              title={t('Team settings for @{team}', { team: tm.name })}
+              aria-label={t('Team settings for @{team}', { team: tm.name })}
             >
               <Settings2 size={12} />
             </button>
@@ -537,16 +539,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
     );
   };
 
-  const addMember = (t: Team) => {
-    const memberIds = memberIdsOf(t);
+  const addMember = (tm: Team) => {
+    const memberIds = memberIdsOf(tm);
     const candidates = kwants.filter((k) => !memberIds.includes(k.id));
     if (!onUpdateTeamMembers) return null;
-    if (addingTo !== t.id) {
+    if (addingTo !== tm.id) {
       return (
         <button
           type="button"
           onClick={() => {
-            setAddingTo(t.id);
+            setAddingTo(tm.id);
             playSfx('click');
           }}
           className="w-full flex items-center gap-2 px-2 py-1 rounded-md text-[11px] text-sky-400/90 hover:text-sky-300 hover:bg-sky-500/10 transition-colors"
@@ -554,15 +556,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <span className="w-[18px] h-[18px] flex items-center justify-center rounded border border-dashed border-sky-500/40">
             <Plus size={11} />
           </span>
-          <span>Add member</span>
+          <span>{t('Add member')}</span>
         </button>
       );
     }
     return (
       <div className="rounded-lg border border-zinc-700/60 bg-zinc-900/90 p-1 space-y-0.5">
         <div className="flex items-center justify-between px-1.5 pt-0.5 pb-1 text-[10px] uppercase tracking-wider text-zinc-500">
-          <span>Add to @{t.name}</span>
-          <button type="button" onClick={() => setAddingTo(null)} className="p-0.5 rounded hover:text-zinc-200 hover:bg-zinc-700/60" title="Cancel" aria-label="Cancel">
+          <span>{t('Add to @{team}', { team: tm.name })}</span>
+          <button type="button" onClick={() => setAddingTo(null)} className="p-0.5 rounded hover:text-zinc-200 hover:bg-zinc-700/60" title={t('Cancel')} aria-label={t('Cancel')}>
             <X size={11} />
           </button>
         </div>
@@ -571,7 +573,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             key={k.id}
             type="button"
             onClick={() => {
-              onUpdateTeamMembers(t, [...memberIds, k.id]);
+              onUpdateTeamMembers(tm, [...memberIds, k.id]);
               setAddingTo(null);
             }}
             className="w-full flex items-center gap-2 px-1.5 py-1 rounded-md text-[11px] text-zinc-300 hover:bg-sky-500/10 hover:text-zinc-100 text-left"
@@ -581,17 +583,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <span className="shrink-0 text-[10px] text-zinc-500 truncate max-w-[80px]">{k.title}</span>
           </button>
         ))}
-        {candidates.length === 0 && <div className="px-1.5 py-1 text-[11px] text-zinc-500">Every bot is already in this team.</div>}
+        {candidates.length === 0 && <div className="px-1.5 py-1 text-[11px] text-zinc-500">{t('Every bot is already in this team.')}</div>}
         <button
           type="button"
           onClick={() => {
             setAddingTo(null);
-            onSummonKwant(t);
+            onSummonKwant(tm);
           }}
           className="w-full flex items-center gap-2 px-1.5 py-1 rounded-md text-[11px] text-sky-400 hover:bg-sky-500/10 border-t border-zinc-800 mt-0.5 pt-1.5"
         >
           <UserPlus size={13} />
-          <span>Create a new bot…</span>
+          <span>{t('Create a new bot…')}</span>
         </button>
       </div>
     );
@@ -616,7 +618,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside
       ref={asideRef}
-      aria-label={`${space.name} chats and kwant bots`}
+      aria-label={t('{space} chats and kwant bots', { space: space.name })}
       className={`${phone ? 'w-full flex-1 min-h-0' : 'w-64 h-full border-r border-zinc-800/80'} bg-zinc-900/40 flex flex-col select-none flex-shrink-0`}
     >
       {/* The open space. Desktop switches spaces on the rail, so this is its name and settings;
@@ -655,8 +657,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onOpenSpaceSettings();
               }}
               data-space-settings-open
-              aria-label={`Settings for ${space.name}`}
-              title={`Settings for ${space.name}`}
+              aria-label={t('Settings for {space}', { space: space.name })}
+              title={t('Settings for {space}', { space: space.name })}
               className="shrink-0 p-1.5 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500"
             >
               <Settings size={15} aria-hidden="true" />
@@ -667,7 +669,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <button
             type="button"
             onClick={onOpenSpaceSettings}
-            title="Bots here act without asking, including deletions, publishing and sign-ins. Payments still ask you. Change it in Settings › This space."
+            title={t('Bots here act without asking, including deletions, publishing and sign-ins. Payments still ask you. Change it in Settings › This space.')}
             className="mt-1 w-full flex items-center gap-1.5 px-2 py-1 rounded-md border border-amber-500/30 bg-amber-500/10 text-[11px] font-medium text-amber-200 hover:bg-amber-500/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-400"
           >
             <ShieldOff size={12} aria-hidden="true" className="shrink-0" />
@@ -693,7 +695,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="space-y-0.5" data-utility-rows>
           <button type="button" onClick={onOpenSearch} className={navRow(false)}>
             <Search size={15} className="text-zinc-500" aria-hidden="true" />
-            <span className="truncate flex-1">Search {space.name}</span>
+            <span className="truncate flex-1">{t('Search {space}', { space: space.name })}</span>
             {!phone && <kbd className="shrink-0 text-[10px] font-sans text-zinc-500">{isMac ? '⌘K' : 'Ctrl K'}</kbd>}
           </button>
           {/* Phones have Inbox as a tab */}
@@ -705,11 +707,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             className={navRow(inboxActive)}
           >
             <Inbox size={15} className={inboxActive ? 'text-sky-400' : 'text-zinc-500'} aria-hidden="true" />
-            <span className="truncate flex-1">Inbox</span>
+            <span className="truncate flex-1">{t('Inbox')}</span>
             {inboxCount > 0 && (
               <span className="shrink-0 min-w-[18px] px-1.5 py-px rounded-full bg-amber-500 text-zinc-950 text-[10px] font-semibold text-center">
                 {badgeText(inboxCount)}
-                <span className="sr-only"> new</span>
+                <span className="sr-only">{t(' new')}</span>
               </span>
             )}
           </button>
@@ -717,14 +719,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {missionBoard && onOpenMissions && (
           <button type="button" onClick={onOpenMissions} aria-current={missionsActive ? 'page' : undefined} className={navRow(missionsActive)}>
             <KanbanSquare size={15} className={missionsActive ? 'text-sky-400' : 'text-zinc-500'} aria-hidden="true" />
-            <span className="truncate flex-1">Mission board</span>
+            <span className="truncate flex-1">{t('Mission board')}</span>
           </button>
           )}
           {onOpenParallel && (
             <MoreMenu
               className={navRow(parallelActive)}
               active={parallelActive}
-              items={[{ label: 'Parallel Universe', icon: <Split size={15} aria-hidden="true" />, active: parallelActive, onClick: onOpenParallel }]}
+              items={[{ label: t('Parallel Universe'), icon: <Split size={15} aria-hidden="true" />, active: parallelActive, onClick: onOpenParallel }]}
             />
           )}
         </div>
@@ -734,8 +736,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {showChats && (
         <div>
           <div className={sectionHead}>
-            <span>Channels</span>
-            {onCreateChannel && kwants.length > 0 && headButton('New channel', `New channel in ${space.name}`, onCreateChannel)}
+            <span>{t('Channels')}</span>
+            {onCreateChannel && kwants.length > 0 && headButton(t('New channel'), t('New channel in {space}', { space: space.name }), onCreateChannel)}
           </div>
           <div className="mt-1 space-y-0.5">
             {displayChannels.map((c) => {
@@ -745,7 +747,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   key={c.id}
                   onClick={() => onSelectChannel(c)}
                   // The channel's header says it too; no pill on every row
-                  title={layaRoutes(c, kwants.length) ? 'Laya picks who answers here' : undefined}
+                  title={layaRoutes(c, kwants.length) ? t('Laya picks who answers here') : undefined}
                   className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all text-left ${
                     active
                       ? 'bg-zinc-800 text-zinc-100 shadow-sm border border-zinc-700/50'
@@ -758,7 +760,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               );
             })}
             {displayChannels.length === 0 && (
-              <div className="px-2.5 py-1.5 text-[11px] text-zinc-500">#general opens once {space.name} has a bot.</div>
+              <div className="px-2.5 py-1.5 text-[11px] text-zinc-500">{t('#general opens once {space} has a bot.', { space: space.name })}</div>
             )}
           </div>
         </div>
@@ -768,7 +770,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {section === 'chats' && teams.length > 0 && (
         <div>
           <div className={sectionHead}>
-            <span>Team chats</span>
+            <span>{t('Team chats')}</span>
           </div>
           <div className="mt-1 space-y-0.5">
             {teams.map((t) => (
@@ -782,15 +784,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {showBots && (
         <div data-bot-list>
           <div className={sectionHead}>
-            <h2>Bots ({kwants.length})</h2>
+            <h2>{t('Bots ({n})', { n: kwants.length })}</h2>
             <span className="flex items-center gap-1">
-              {headButton('New team', `New team in ${space.name}`, onCreateTeam)}
-              {headButton('New bot', `New bot in ${space.name}`, () => onSummonKwant())}
+              {headButton(t('New team'), t('New team in {space}', { space: space.name }), onCreateTeam)}
+              {headButton(t('New bot'), t('New bot in {space}', { space: space.name }), () => onSummonKwant())}
             </span>
           </div>
           <div className="mt-1 space-y-2">
             {kwants.length === 0 && teams.length === 0 && (
-              <div className="px-2.5 py-1.5 text-[11px] text-zinc-500">No bots in {space.name} yet.</div>
+              <div className="px-2.5 py-1.5 text-[11px] text-zinc-500">{t('No bots in {space} yet.', { space: space.name })}</div>
             )}
             {groups.map((g) =>
               g.team ? (
@@ -807,7 +809,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 g.bots.length > 0 && (
                   <div key="no-team" data-team-group="none">
                     {teams.length > 0 && (
-                      <div className="px-2 pt-1 pb-0.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">No team</div>
+                      <div className="px-2 pt-1 pb-0.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">{t('No team')}</div>
                     )}
                     <div className="space-y-0.5">{g.bots.map((k) => botRow(k))}</div>
                   </div>
@@ -831,7 +833,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onClick={offerClaude ? onSignInClaude : onOpenAccounts}
             disabled={!onOpenAccounts && !offerClaude}
             className="w-full flex items-center gap-1.5 min-w-0 hover:text-zinc-300 disabled:hover:text-zinc-500 transition-colors"
-            title={runsOn.length > 1 ? `Runs on ${runsOn.join(', ')}` : undefined}
+            title={runsOn.length > 1 ? t('Runs on {names}', { names: runsOn.join(', ') }) : undefined}
           >
             {readyCount === null ? (
               <Loader2 size={13} className="text-sky-400 animate-spin motion-reduce:animate-none" aria-hidden="true" />
@@ -843,12 +845,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {/* The prompt wraps, so its fix is never cut off */}
             <span className={readyCount === 0 ? 'text-left' : 'truncate'}>
               {readyCount === null
-                ? 'Checking accounts…'
+                ? t('Checking accounts…')
                 : readyCount === 0
                   ? offerClaude
-                    ? 'No account yet · Sign in with Claude'
-                    : 'No account yet · Add an account'
-                  : `Runs on ${runsOn[0]}${runsOn.length > 1 ? ` +${runsOn.length - 1}` : ''}`}
+                    ? t('No account yet · Sign in with Claude')
+                    : t('No account yet · Add an account')
+                  : runsOn.length > 1
+                    ? t('Runs on {name} +{n}', { name: runsOn[0], n: runsOn.length - 1 })
+                    : t('Runs on {names}', { names: runsOn[0] })}
             </span>
           </button>
         </div>
@@ -937,7 +941,7 @@ const MemberSheet: React.FC<{
           <div className="min-w-0">
             <p id={titleId} className="text-sm font-semibold text-zinc-100 truncate">{kwant.name}</p>
             <p className="text-xs text-zinc-500 truncate">
-              {isLead ? `Leads @${team.name}` : `In @${team.name}`}
+              {isLead ? t('Leads @{team}', { team: team.name }) : t('In @{team}', { team: team.name })}
               {kwant.title ? ` · ${kwant.title}` : ''}
             </p>
           </div>
@@ -945,37 +949,37 @@ const MemberSheet: React.FC<{
         {confirmRemove && onRemove ? (
           <div className="px-3 pb-1 space-y-3">
             <p className="text-sm text-zinc-300">
-              Remove {kwant.name} from @{team.name}? The bot stays in this space and keeps its chats.
+              {t('Remove {name} from @{team}? The bot stays in this space and keeps its chats.', { name: kwant.name, team: team.name })}
             </p>
             <div className="grid grid-cols-2 gap-2">
               <button type="button" onClick={onClose} className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800">
-                Cancel
+                {t('Cancel')}
               </button>
               <button type="button" onClick={onRemove} className="rounded-lg bg-rose-600 px-3 py-2 text-sm font-medium text-white hover:bg-rose-500">
-                Remove
+                {t('Remove')}
               </button>
             </div>
           </div>
         ) : (
           <div className="space-y-0.5">
             <button type="button" onClick={onChat} className={`${item} text-zinc-200 hover:bg-zinc-800`}>
-              <MessageSquare size={16} className="text-zinc-400" aria-hidden="true" /> Chat with {kwant.name}
+              <MessageSquare size={16} className="text-zinc-400" aria-hidden="true" /> {t('Chat with {name}', { name: kwant.name })}
             </button>
             {onEdit && (
               <button type="button" onClick={onEdit} className={`${item} text-zinc-200 hover:bg-zinc-800`}>
-                <Pencil size={16} className="text-zinc-400" aria-hidden="true" /> Edit or delete {kwant.name}
+                <Pencil size={16} className="text-zinc-400" aria-hidden="true" /> {t('Edit or delete {name}', { name: kwant.name })}
               </button>
             )}
             {onAskRemove && !isLead && (
               <>
                 <div className="my-1 border-t border-zinc-800" />
                 <button type="button" onClick={onAskRemove} className={`${item} text-rose-300 hover:bg-rose-500/10`}>
-                  <UserMinus size={16} aria-hidden="true" /> Remove from @{team.name}
+                  <UserMinus size={16} aria-hidden="true" /> {t('Remove from @{team}', { team: team.name })}
                 </button>
               </>
             )}
             {isLead && (
-              <p className="px-3 pt-1 text-xs text-zinc-500">The lead can&apos;t be removed. Pick another lead in team settings first.</p>
+              <p className="px-3 pt-1 text-xs text-zinc-500">{t("The lead can't be removed. Pick another lead in team settings first.")}</p>
             )}
           </div>
         )}

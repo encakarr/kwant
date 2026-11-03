@@ -1,5 +1,6 @@
 // "Local computer" vs "VM": which computer kwant's browser and shell use.
 // Contract: GET/PUT /api/settings/computer (docs/browser-service.md)
+import { t } from './i18n';
 
 export type ComputerMode = 'local' | 'vm';
 
@@ -23,26 +24,27 @@ export interface ComputerSettings {
 /** What vm mode isolated before the server said so: never the CLI agents. */
 export const DEFAULT_VM_ISOLATES = ['browser', 'kwnt_shell'];
 
-const ISOLATED_PARTS: Record<string, string> = { browser: 'browser', kwnt_shell: 'built-in shell' };
+const ISOLATED_PARTS: Record<string, string> = { browser: t('browser'), kwnt_shell: t('built-in shell') };
 
 /** VM copy built from what it really isolates, so it can't promise more than the server does. */
 export function vmCopy(isolates: string[]): { label: string; hint: string; note: string | null } {
   if (isolates.includes('cli_agents')) {
-    return { label: 'VM (isolated)', hint: 'Runs bots in Docker containers, away from your files.', note: null };
+    return { label: t('VM (isolated)'), hint: t('Runs bots in Docker containers, away from your files.'), note: null };
   }
   const parts = Object.keys(ISOLATED_PARTS).filter((k) => isolates.includes(k)).map((k) => ISOLATED_PARTS[k]);
+  const joined = parts.join(t(' and '));
   // Without Docker (the compose stack's browser service) there is no executor container.
   if (!isolates.includes('kwnt_shell')) {
     return {
-      label: parts.length ? `VM (${parts.join(' and ')} isolated)` : 'VM',
-      hint: parts.length === 1 ? `The ${parts[0]} runs in a Docker container, away from your files.` : 'Uses Docker containers.',
-      note: "The built-in shell isn't available in this setup. Claude, Codex and Grok use their own shell tools.",
+      label: parts.length ? t('VM ({parts} isolated)', { parts: joined }) : 'VM',
+      hint: parts.length === 1 ? t('The {part} runs in a Docker container, away from your files.', { part: parts[0] }) : t('Uses Docker containers.'),
+      note: t("The built-in shell isn't available in this setup. Claude, Codex and Grok use their own shell tools."),
     };
   }
   return {
-    label: `VM (${parts.join(' and ')} isolated)`,
-    hint: `The ${parts.join(' and ')} run in Docker containers, away from your files.`,
-    note: 'Claude, Codex and Grok still run on this computer, with their own file and shell tools.',
+    label: t('VM ({parts} isolated)', { parts: joined }),
+    hint: t('The {parts} run in Docker containers, away from your files.', { parts: joined }),
+    note: t('Claude, Codex and Grok still run on this computer, with their own file and shell tools.'),
   };
 }
 
@@ -56,7 +58,7 @@ export interface ModeCopy {
 }
 
 export const COMPUTER_MODES: ModeCopy[] = [
-  { id: 'local', label: 'Local computer', short: 'Local', hint: 'Uses your Chrome and your files.', note: null },
+  { id: 'local', label: t('Local computer'), short: t('Local'), hint: t('Uses your Chrome and your files.'), note: null },
   { id: 'vm', short: 'VM', ...vmCopy(DEFAULT_VM_ISOLATES) },
 ];
 
@@ -64,7 +66,7 @@ export const COMPUTER_MODES: ModeCopy[] = [
 export const computerModes = (s: ComputerSettings | null | undefined): ModeCopy[] =>
   s ? COMPUTER_MODES.map((m) => (m.id === 'vm' ? { ...m, ...vmCopy(s.isolates) } : m)) : COMPUTER_MODES;
 
-export const LOCAL_BROWSER_NOTE = "Your bots' Chrome is open as a window on your computer.";
+export const LOCAL_BROWSER_NOTE = t("Your bots' Chrome is open as a window on your computer.");
 
 /** Whether the browser is in its own window instead of the app's live view. */
 export const showsLocalWindow = (s: ComputerSettings | null | undefined) => s?.mode === 'local' && s.window.visible;
@@ -77,9 +79,9 @@ export const isBlankPage = (url: string | null | undefined) => {
 
 /** The browser panel's footer: where Chrome runs and where you see it. */
 export function browserFooterLabel(s: ComputerSettings | null | undefined, ready: boolean): string {
-  if (s?.mode !== 'local') return ready ? 'Browser Ready' : 'Browser Offline';
-  if (s.window.visible) return 'Chrome window on your computer';
-  return ready ? 'Chrome shown here (no window)' : 'Chrome offline';
+  if (s?.mode !== 'local') return ready ? t('Browser Ready') : t('Browser Offline');
+  if (s.window.visible) return t('Chrome window on your computer');
+  return ready ? t('Chrome shown here (no window)') : t('Chrome offline');
 }
 
 /** Fired on window after a successful switch so every open control shows the new mode. */
@@ -115,7 +117,7 @@ export const modeLabel = (m: ComputerMode, s?: ComputerSettings | null) => compu
 /** Why `mode` can't be picked right now, or null when it can. */
 export function unavailableReason(settings: ComputerSettings, mode: ComputerMode): string | null {
   if (settings.available[mode]) return null;
-  return settings.reasons[mode] ?? `${modeLabel(mode, settings)} isn't available on this computer.`;
+  return settings.reasons[mode] ?? t("{mode} isn't available on this computer.", { mode: modeLabel(mode, settings) });
 }
 
 export interface SwitchState {
@@ -171,19 +173,19 @@ async function putSettings(path: string, body: unknown, failed: string): Promise
       body: JSON.stringify(body),
     });
   } catch {
-    return { ok: false, error: 'Could not reach the server.' };
+    return { ok: false, error: t('Could not reach the server.') };
   }
   const data = await res.json().catch(() => null);
   if (!res.ok) {
-    const msg = data && typeof data.error === 'string' && data.error.trim() ? data.error : `${failed} (HTTP ${res.status}).`;
+    const msg = data && typeof data.error === 'string' && data.error.trim() ? data.error : t('{what} (HTTP {status}).', { what: failed, status: res.status });
     return { ok: false, error: msg };
   }
   const settings = parseComputerSettings(data);
-  return settings ? { ok: true, settings } : { ok: false, error: 'The server sent an unexpected answer.' };
+  return settings ? { ok: true, settings } : { ok: false, error: t('The server sent an unexpected answer.') };
 }
 
-export const saveComputerMode = (mode: ComputerMode) => putSettings('/api/settings/computer', { mode }, 'Switching failed');
+export const saveComputerMode = (mode: ComputerMode) => putSettings('/api/settings/computer', { mode }, t('Switching failed'));
 
 /** Opens the bots' Chrome as a window (`true`) or puts it back in the app (`false`). */
 export const saveLocalWindow = (visible: boolean) =>
-  putSettings('/api/settings/computer/window', { visible }, visible ? 'Could not open the window' : 'Could not bring the browser back');
+  putSettings('/api/settings/computer/window', { visible }, visible ? t('Could not open the window') : t('Could not bring the browser back'));

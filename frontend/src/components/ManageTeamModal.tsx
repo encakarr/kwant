@@ -8,6 +8,7 @@ import { InstructionsField } from './Instructions';
 import { MAX_INSTRUCTIONS } from '../continuity';
 import { teamNameToSave } from '../teamChannel';
 import { useEscapeLayer } from '../escape';
+import { t } from '../i18n';
 
 interface ManageTeamModalProps {
   isOpen: boolean;
@@ -166,7 +167,7 @@ export const ManageTeamModal: React.FC<ManageTeamModalProps> = ({
     playSfx('click');
     if (memberIds.includes(kwantId)) {
       if (memberIds.length <= 1) {
-        setError('A team needs at least one bot.');
+        setError(t('A team needs at least one bot.'));
         return;
       }
       setError(null);
@@ -185,15 +186,15 @@ export const ManageTeamModal: React.FC<ManageTeamModalProps> = ({
     e.preventDefault();
     const cleanName = teamNameToSave(name, team.name);
     if (!cleanName) {
-      setError('Please provide a valid team name.');
+      setError(t('Please provide a valid team name.'));
       return;
     }
     if (memberIds.length === 0) {
-      setError('Pick at least one bot for this team.');
+      setError(t('Pick at least one bot for this team.'));
       return;
     }
     if (instructions.length > MAX_INSTRUCTIONS) {
-      setError(`Team instructions can be at most ${MAX_INSTRUCTIONS} characters.`);
+      setError(t('Team instructions can be at most {n} characters.', { n: MAX_INSTRUCTIONS }));
       return;
     }
 
@@ -214,7 +215,7 @@ export const ManageTeamModal: React.FC<ManageTeamModalProps> = ({
       onClose();
     } catch (err) {
       setIsSaving(false);
-      setError(err instanceof Error && err.message ? err.message : 'Couldn’t save the team. Try again.');
+      setError(err instanceof Error && err.message ? err.message : t('Couldn’t save the team. Try again.'));
     }
   };
 
@@ -234,7 +235,7 @@ export const ManageTeamModal: React.FC<ManageTeamModalProps> = ({
       onClose();
     } catch (err) {
       setIsDeleting(false);
-      setDeleteError(err instanceof Error && err.message ? err.message : 'Couldn’t delete the team.');
+      setDeleteError(err instanceof Error && err.message ? err.message : t('Couldn’t delete the team.'));
     }
   };
 
@@ -248,13 +249,13 @@ export const ManageTeamModal: React.FC<ManageTeamModalProps> = ({
               <Users size={16} />
             </div>
             <div>
-              <h3 id="manage-team-title" className="text-sm font-semibold text-zinc-100">Manage Team: @{team.name}</h3>
-              <p className="text-[11px] text-zinc-400">Members, lead and instructions</p>
+              <h3 id="manage-team-title" className="text-sm font-semibold text-zinc-100">{t('Manage Team: @{name}', { name: team.name })}</h3>
+              <p className="text-[11px] text-zinc-400">{t('Members, lead and instructions')}</p>
             </div>
           </div>
           <button
             type="button"
-            aria-label="Close"
+            aria-label={t('Close')}
             onClick={() => {
               playSfx('click');
               onClose();
@@ -275,7 +276,7 @@ export const ManageTeamModal: React.FC<ManageTeamModalProps> = ({
         <form onSubmit={handleSave} className="space-y-4">
           {/* Team Name */}
           <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1">Team Handle</label>
+            <label className="block text-xs font-medium text-zinc-400 mb-1">{t('Team Handle')}</label>
             <div className="relative flex items-center">
               <span className="absolute left-3 text-zinc-500 text-xs font-mono">@</span>
               <input
@@ -290,12 +291,12 @@ export const ManageTeamModal: React.FC<ManageTeamModalProps> = ({
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1">Mission / Purpose</label>
+            <label className="block text-xs font-medium text-zinc-400 mb-1">{t('Mission / Purpose')}</label>
             <input
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="e.g. Systems architecture, performance & reliability"
+              placeholder={t('e.g. Systems architecture, performance & reliability')}
               className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-100 placeholder-zinc-600 focus:border-sky-500 focus:outline-none transition-colors"
             />
           </div>
@@ -303,15 +304,15 @@ export const ManageTeamModal: React.FC<ManageTeamModalProps> = ({
           <InstructionsField
             value={instructions}
             onChange={setInstructions}
-            label="Team instructions"
-            hint="Pinned for every bot in this team, before each turn. Leave empty to unpin."
+            label={t('Team instructions')}
+            hint={t('Pinned for every bot in this team, before each turn. Leave empty to unpin.')}
             rows={4}
           />
 
           {/* Team Workspace */}
           <div>
             <label className="block text-xs font-medium text-zinc-400 mb-1.5">
-              Team Workspace
+              {t('Team Workspace')}
             </label>
             <div className="grid grid-cols-3 gap-1.5 p-1 bg-zinc-950 rounded-lg border border-zinc-800 text-xs mb-2">
               <button
@@ -327,7 +328,7 @@ export const ManageTeamModal: React.FC<ManageTeamModalProps> = ({
                 }`}
               >
                 <Folder size={13} />
-                <span>Local Folder</span>
+                <span>{t('Local Folder')}</span>
               </button>
               <button
                 type="button"
@@ -342,7 +343,7 @@ export const ManageTeamModal: React.FC<ManageTeamModalProps> = ({
                 }`}
               >
                 <GitBranch size={13} />
-                <span>Git Repo</span>
+                <span>{t('Git Repo')}</span>
               </button>
               <button
                 type="button"
@@ -356,7 +357,7 @@ export const ManageTeamModal: React.FC<ManageTeamModalProps> = ({
                     : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900'
                 }`}
               >
-                <span>Default</span>
+                <span>{t('Default')}</span>
               </button>
             </div>
 
@@ -367,7 +368,7 @@ export const ManageTeamModal: React.FC<ManageTeamModalProps> = ({
                     type="text"
                     value={workspacePath}
                     onChange={(e) => setWorkspacePath(e.target.value)}
-                    placeholder="e.g. ~/projects/my-app or /path/to/folder"
+                    placeholder={t('e.g. ~/projects/my-app or /path/to/folder')}
                     className="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-100 placeholder-zinc-600 focus:border-sky-500 focus:outline-none transition-colors font-mono"
                   />
                   <button
@@ -375,10 +376,10 @@ export const ManageTeamModal: React.FC<ManageTeamModalProps> = ({
                     onClick={handleBrowseFolder}
                     disabled={isBrowsing}
                     className="flex items-center gap-1.5 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 text-zinc-200 border border-zinc-700 rounded-lg text-xs font-medium transition-colors shadow-sm cursor-pointer whitespace-nowrap disabled:opacity-50"
-                    title="Open native folder chooser"
+                    title={t('Open native folder chooser')}
                   >
                     <Folder size={14} className="text-amber-400" />
-                    <span>{isBrowsing ? 'Selecting...' : 'Browse...'}</span>
+                    <span>{isBrowsing ? t('Selecting...') : t('Browse...')}</span>
                   </button>
                   <button
                     type="button"
@@ -387,7 +388,7 @@ export const ManageTeamModal: React.FC<ManageTeamModalProps> = ({
                       setIsFolderBrowserOpen(true);
                     }}
                     className="p-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 rounded-lg transition-colors cursor-pointer"
-                    title="Explore local directories in-app"
+                    title={t('Explore local directories in-app')}
                   >
                     <FolderSearch size={14} className="text-sky-400" />
                   </button>
@@ -395,7 +396,7 @@ export const ManageTeamModal: React.FC<ManageTeamModalProps> = ({
 
                 {/* Quick Directory Chips */}
                 <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-                  <span className="text-zinc-500">Quick:</span>
+                  <span className="text-zinc-500">{t('Quick:')}</span>
                   <button
                     type="button"
                     onClick={() => {
@@ -429,7 +430,7 @@ export const ManageTeamModal: React.FC<ManageTeamModalProps> = ({
                 </div>
 
                 <p className="text-[11px] text-zinc-500">
-                  Team members will execute commands and tools directly in this directory.
+                  {t('Team members will execute commands and tools directly in this directory.')}
                 </p>
               </div>
             )}
@@ -444,21 +445,21 @@ export const ManageTeamModal: React.FC<ManageTeamModalProps> = ({
                   className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-100 placeholder-zinc-600 focus:border-sky-500 focus:outline-none transition-colors font-mono"
                 />
                 <p className="text-[11px] text-zinc-500 mt-1">
-                  Repository will be cloned and managed in team workspace directory on first run.
+                  {t('Repository will be cloned and managed in team workspace directory on first run.')}
                 </p>
               </div>
             )}
 
             {workspaceType === 'default' && (
               <p className="text-[11px] text-zinc-500">
-                Uses the default shared workspace directory.
+                {t('Uses the default shared workspace directory.')}
               </p>
             )}
           </div>
 
           {/* Lead Kwant Selector */}
           <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1">Team Lead</label>
+            <label className="block text-xs font-medium text-zinc-400 mb-1">{t('Team Lead')}</label>
             <select
               value={leadKwantId}
               onChange={(e) => setLeadKwantId(e.target.value)}
@@ -478,9 +479,9 @@ export const ManageTeamModal: React.FC<ManageTeamModalProps> = ({
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <p id="team-roster-label" className="block text-xs font-medium text-zinc-400">
-                Team Roster ({memberIds.length}/{kwants.length} Assigned)
+                {t('Team Roster ({n}/{total} Assigned)', { n: memberIds.length, total: kwants.length })}
               </p>
-              <span className="text-[11px] text-zinc-500">Select a bot to add or remove it</span>
+              <span className="text-[11px] text-zinc-500">{t('Select a bot to add or remove it')}</span>
             </div>
             <div role="group" aria-labelledby="team-roster-label" className="space-y-1.5 max-h-48 overflow-y-auto p-1 bg-zinc-950/60 border border-zinc-800/80 rounded-xl">
               {kwants.map((k) => {
@@ -507,7 +508,7 @@ export const ManageTeamModal: React.FC<ManageTeamModalProps> = ({
                           {isLead && (
                             <span className="text-[9px] font-semibold uppercase px-1 py-0.2 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30 flex items-center gap-0.5">
                               <ShieldCheck size={9} aria-hidden="true" />
-                              Lead
+                              {t('Lead')}
                             </span>
                           )}
                         </span>
@@ -534,7 +535,12 @@ export const ManageTeamModal: React.FC<ManageTeamModalProps> = ({
           {/* Unticked members only leave on Save; say who, so Save is the confirm */}
           {removedNames.length > 0 && (
             <p data-team-removals className="text-[11px] text-amber-200/90">
-              Saving removes {removedNames.join(', ')} from @{team.name}. {removedNames.length === 1 ? 'The bot stays' : 'They stay'} in this space and {removedNames.length === 1 ? 'keeps its' : 'keep their'} chats.
+              {t(
+                removedNames.length === 1
+                  ? 'Saving removes {names} from @{team}. The bot stays in this space and keeps its chats.'
+                  : 'Saving removes {names} from @{team}. They stay in this space and keep their chats.',
+                { names: removedNames.join(', '), team: team.name },
+              )}
             </p>
           )}
 
@@ -551,7 +557,7 @@ export const ManageTeamModal: React.FC<ManageTeamModalProps> = ({
               }`}
             >
               <Trash2 size={13} />
-              <span>{confirmDelete ? 'Confirm Delete?' : 'Delete Team'}</span>
+              <span>{confirmDelete ? t('Confirm Delete?') : t('Delete Team')}</span>
             </button>
 
             <div className="flex items-center gap-2">
@@ -563,7 +569,7 @@ export const ManageTeamModal: React.FC<ManageTeamModalProps> = ({
                 }}
                 className="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
               >
-                Cancel
+                {t('Cancel')}
               </button>
               <button
                 type="submit"
@@ -571,7 +577,7 @@ export const ManageTeamModal: React.FC<ManageTeamModalProps> = ({
                 className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-medium bg-sky-500 hover:bg-sky-400 text-white shadow-sm transition-all"
               >
                 <Check size={14} />
-                <span>{isSaving ? 'Saving...' : 'Save Changes'}</span>
+                <span>{isSaving ? t('Saving...') : t('Save Changes')}</span>
               </button>
             </div>
           </div>

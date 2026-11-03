@@ -1,6 +1,7 @@
 // Agent continuity: pinned instructions, chat search, kwant memory, routines and notifications.
 
 import type { DeletedSkill, Skill } from './skills';
+import { t } from './i18n';
 
 export const MAX_INSTRUCTIONS = 4000;
 export const MAX_MEMORY = 500;
@@ -40,13 +41,13 @@ export const memoriesForDisplay = (list: Memory[]): Memory[] => {
 
 export type Weekday = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
 export const WEEKDAYS: Array<{ id: Weekday; label: string }> = [
-  { id: 'mon', label: 'Mon' },
-  { id: 'tue', label: 'Tue' },
-  { id: 'wed', label: 'Wed' },
-  { id: 'thu', label: 'Thu' },
-  { id: 'fri', label: 'Fri' },
-  { id: 'sat', label: 'Sat' },
-  { id: 'sun', label: 'Sun' },
+  { id: 'mon', label: t('Mon') },
+  { id: 'tue', label: t('Tue') },
+  { id: 'wed', label: t('Wed') },
+  { id: 'thu', label: t('Thu') },
+  { id: 'fri', label: t('Fri') },
+  { id: 'sat', label: t('Sat') },
+  { id: 'sun', label: t('Sun') },
 ];
 
 export type Schedule =
@@ -122,28 +123,28 @@ export type NotifyKind =
   | 'tier_proposed'
   | 'fact_disputed';
 export const NOTIFY_KINDS: Array<{ id: NotifyKind; label: string }> = [
-  { id: 'turn_finished', label: 'A bot finished replying' },
-  { id: 'approval_needed', label: 'A bot needs your approval' },
-  { id: 'routine_failed', label: 'A routine failed' },
-  { id: 'delegation_finished', label: 'A delegated task finished' },
-  { id: 'delegation_stalled', label: 'A delegated task is taking long' },
-  { id: 'skill_proposed', label: 'A bot proposed a skill to review' },
-  { id: 'question_asked', label: 'A bot has a question for you' },
-  { id: 'human_step', label: 'A bot needs you in the browser' },
-  { id: 'fact_disputed', label: 'Two saved facts disagree' },
+  { id: 'turn_finished', label: t('A bot finished replying') },
+  { id: 'approval_needed', label: t('A bot needs your approval') },
+  { id: 'routine_failed', label: t('A routine failed') },
+  { id: 'delegation_finished', label: t('A delegated task finished') },
+  { id: 'delegation_stalled', label: t('A delegated task is taking long') },
+  { id: 'skill_proposed', label: t('A bot proposed a skill to review') },
+  { id: 'question_asked', label: t('A bot has a question for you') },
+  { id: 'human_step', label: t('A bot needs you in the browser') },
+  { id: 'fact_disputed', label: t('Two saved facts disagree') },
 ];
 
 /** Only the Mac app sends it (and only its server accepts it), so it is listed there alone. */
-export const APP_UPDATE_KIND: { id: NotifyKind; label: string } = { id: 'app_update', label: 'App updates' };
+export const APP_UPDATE_KIND: { id: NotifyKind; label: string } = { id: 'app_update', label: t('App updates') };
 
 /** Sent by servers with the proactive-bots settings (`work_ahead` in GET /api/settings). */
-export const WORK_AHEAD_KIND: { id: NotifyKind; label: string } = { id: 'work_ahead', label: 'A bot worked ahead while you were away' };
+export const WORK_AHEAD_KIND: { id: NotifyKind; label: string } = { id: 'work_ahead', label: t('A bot worked ahead while you were away') };
 
 /** Sent by servers with Automation Discovery (`automation_discovery` in GET /api/settings). Not a Needs-you item. */
-export const AUTOMATION_SUGGESTED_KIND: { id: NotifyKind; label: string } = { id: 'automation_suggested', label: 'A routine was suggested' };
+export const AUTOMATION_SUGGESTED_KIND: { id: NotifyKind; label: string } = { id: 'automation_suggested', label: t('A routine was suggested') };
 
 /** Sent by servers with Flight School (C4) when a bot asks for a higher tier. A Needs-you item. */
-export const TIER_PROPOSED_KIND: { id: NotifyKind; label: string } = { id: 'tier_proposed', label: 'A bot asks for a higher tier' };
+export const TIER_PROPOSED_KIND: { id: NotifyKind; label: string } = { id: 'tier_proposed', label: t('A bot asks for a higher tier') };
 
 /**
  * The checkboxes under "Tell me when": App updates only in the Mac app, work ahead and suggested
@@ -252,7 +253,7 @@ export function groupHits(hits: SearchHit[], kwantName: (id: string) => string |
     if (!g) {
       const label = h.channel_id
         ? channelLabel(h.channel_name ?? h.channel_id)
-        : `Direct chat · ${(h.kwant_id && kwantName(h.kwant_id)) || 'bot'}`;
+        : t('Direct chat · {name}', { name: (h.kwant_id && kwantName(h.kwant_id)) || t('bot') });
       g = { key, channel_id: h.channel_id, kwant_id: h.channel_id ? null : h.kwant_id, label, hits: [] };
       groups.set(key, g);
     }
@@ -404,77 +405,81 @@ export function scheduleFromForm(f: ScheduleForm, now = Date.now()): { schedule:
   switch (f.type) {
     case 'once': {
       const at = new Date(f.onceAt);
-      if (!f.onceAt || Number.isNaN(at.getTime())) return { error: 'Pick a date and time.' };
-      if (at.getTime() <= now) return { error: 'Pick a time in the future.' };
+      if (!f.onceAt || Number.isNaN(at.getTime())) return { error: t('Pick a date and time.') };
+      if (at.getTime() <= now) return { error: t('Pick a time in the future.') };
       return { schedule: { type: 'once', at: at.toISOString() } };
     }
     case 'daily':
     case 'weekly':
     case 'monthly': {
-      if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(f.time)) return { error: 'Use a time like 09:00.' };
+      if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(f.time)) return { error: t('Use a time like 09:00.') };
       const tz = canonicalTimeZone(f.tz.trim());
-      if (!tz) return { error: 'Pick a time zone.' };
+      if (!tz) return { error: t('Pick a time zone.') };
       if (f.type === 'daily') return { schedule: { type: 'daily', time: f.time, tz } };
       if (f.type === 'monthly') {
         const days = sortMonthDays(f.monthDays.filter((d) => d === 'last' || (Number.isInteger(d) && d >= 1 && d <= 31)));
-        if (days.length === 0) return { error: 'Pick at least one day of the month.' };
+        if (days.length === 0) return { error: t('Pick at least one day of the month.') };
         return { schedule: { type: 'monthly', time: f.time, days, tz } };
       }
-      if (f.weekdays.length === 0) return { error: 'Pick at least one day.' };
+      if (f.weekdays.length === 0) return { error: t('Pick at least one day.') };
       const days = WEEKDAYS.map((d) => d.id).filter((d) => f.weekdays.includes(d));
       return { schedule: { type: 'weekly', time: f.time, weekdays: days, tz } };
     }
     case 'interval': {
       const n = Number(f.everyMinutes);
-      if (!Number.isInteger(n) || n < 5 || n > 10080) return { error: 'Repeat every 5 to 10080 minutes.' };
+      if (!Number.isInteger(n) || n < 5 || n > 10080) return { error: t('Repeat every 5 to 10080 minutes.') };
       return { schedule: { type: 'interval', every_minutes: n } };
     }
     case 'cron': {
       const expression = f.cron.trim().replace(/\s+/g, ' ');
-      if (!expression) return { error: 'Type a rule, like 0 9 * * MON#2.' };
-      if (expression.startsWith('@')) return { error: 'Shortcuts like @daily aren’t supported. Write the five parts instead.' };
-      if (expression.split(' ').length !== 5) return { error: 'A rule has five parts: minute, hour, day of month, month and weekday.' };
+      if (!expression) return { error: t('Type a rule, like 0 9 * * MON#2.') };
+      if (expression.startsWith('@')) return { error: t('Shortcuts like @daily aren’t supported. Write the five parts instead.') };
+      if (expression.split(' ').length !== 5) return { error: t('A rule has five parts: minute, hour, day of month, month and weekday.') };
       const tz = canonicalTimeZone(f.tz.trim());
-      if (!tz) return { error: 'Pick a time zone.' };
+      if (!tz) return { error: t('Pick a time zone.') };
       return { schedule: { type: 'cron', expression, tz } };
     }
   }
 }
 
 const ordinal = (n: number) => {
-  const t = n % 100;
-  if (t >= 11 && t <= 13) return `${n}th`;
-  return `${n}${['th', 'st', 'nd', 'rd'][n % 10] ?? 'th'}`;
+  const r = n % 100;
+  const suffix = r >= 11 && r <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] ?? 'th';
+  if (suffix === 'st') return t('{n}st', { n });
+  if (suffix === 'nd') return t('{n}nd', { n });
+  if (suffix === 'rd') return t('{n}rd', { n });
+  return t('{n}th', { n });
 };
+
+/** "a, b, c": the words joined by commas. */
+const joined = (words: string[]) => (words.length ? words.reduce((a, b) => t('{a}, {b}', { a, b })) : '');
 
 /** "the 1st, 15th and last day". */
 export function monthDaysText(days: MonthDay[]): string {
-  const words = sortMonthDays(days).map((d) => (d === 'last' ? 'last day' : ordinal(d)));
-  if (words.length === 0) return 'no day';
-  const list = words.length > 1 ? `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}` : words[0];
-  return `the ${list}`;
+  const words = sortMonthDays(days).map((d) => (d === 'last' ? t('last day') : ordinal(d)));
+  if (words.length === 0) return t('no day');
+  const list = words.length > 1 ? t('{list} and {last}', { list: joined(words.slice(0, -1)), last: words[words.length - 1] }) : words[0];
+  return t('the {list}', { list });
 }
 
 export function describeSchedule(s: Schedule): string {
   switch (s.type) {
     case 'once':
-      return `Once, ${formatWhen(s.at)}`;
+      return t('Once, {when}', { when: formatWhen(s.at) });
     case 'daily':
-      return `Every day at ${s.time} (${s.tz})`;
+      return t('Every day at {time} ({tz})', { time: s.time, tz: s.tz });
     case 'weekly': {
-      const days = s.weekdays.length === 7 ? 'every day' : s.weekdays.map((d) => WEEKDAYS.find((w) => w.id === d)?.label ?? d).join(', ');
-      return `${days} at ${s.time} (${s.tz})`;
+      const days = s.weekdays.length === 7 ? t('every day') : joined(s.weekdays.map((d) => WEEKDAYS.find((w) => w.id === d)?.label ?? d));
+      return t('{days} at {time} ({tz})', { days, time: s.time, tz: s.tz });
     }
     case 'interval':
-      return s.every_minutes % 60 === 0
-        ? `Every ${s.every_minutes / 60} h`
-        : `Every ${s.every_minutes} min`;
+      return s.every_minutes % 60 === 0 ? t('Every {n} h', { n: s.every_minutes / 60 }) : t('Every {n} min', { n: s.every_minutes });
     case 'monthly':
-      return `Every month on ${monthDaysText(s.days)} at ${s.time} (${s.tz})`;
+      return t('Every month on {days} at {time} ({tz})', { days: monthDaysText(s.days), time: s.time, tz: s.tz });
     case 'cron':
-      return `Custom rule ${s.expression} (${s.tz})`;
+      return t('Custom rule {expression} ({tz})', { expression: s.expression, tz: s.tz });
     default:
-      return 'Unknown schedule';
+      return t('Unknown schedule');
   }
 }
 
@@ -513,10 +518,10 @@ export function webhookUrlError(url: string): string | null {
   try {
     u = new URL(v);
   } catch {
-    return 'Enter a full URL, like https://ntfy.sh/your-topic.';
+    return t('Enter a full URL, like https://ntfy.sh/your-topic.');
   }
-  if (u.protocol !== 'https:') return 'Use an https:// URL.';
-  if (u.username || u.password) return 'Leave the user name and password out of the URL.';
+  if (u.protocol !== 'https:') return t('Use an https:// URL.');
+  if (u.username || u.password) return t('Leave the user name and password out of the URL.');
   return null;
 }
 
@@ -582,7 +587,7 @@ async function request<T>(method: string, url: string, body?: unknown): Promise<
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   if (!res.ok) {
-    let message = res.status === 404 ? 'It no longer exists.' : `Request failed (HTTP ${res.status}).`;
+    let message = res.status === 404 ? t('It no longer exists.') : t('Request failed (HTTP {status}).', { status: res.status });
     try {
       const data = await res.json();
       if (data && typeof data.error === 'string' && data.error) message = data.error;

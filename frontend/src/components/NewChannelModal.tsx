@@ -4,6 +4,7 @@ import { ModernAvatar } from './ModernAvatar';
 import type { Channel, Kwant } from './Sidebar';
 import { playSfx } from '../audio/chiptune';
 import { channelNameError, channelSlug, newChannelBody, routingHint } from '../channels';
+import { t, tj } from '../i18n';
 
 export interface NewChannelModalProps {
   isOpen: boolean;
@@ -85,12 +86,12 @@ export const NewChannelModal: React.FC<NewChannelModalProps> = ({ isOpen, onClos
               <Hash size={15} />
             </div>
             <h3 id={titleId} className="text-sm font-semibold text-zinc-100">
-              New channel
+              {t('New channel')}
             </h3>
           </div>
           <button
             type="button"
-            aria-label="Close"
+            aria-label={t('Close')}
             onClick={() => {
               playSfx('click');
               onClose();
@@ -109,12 +110,12 @@ export const NewChannelModal: React.FC<NewChannelModalProps> = ({ isOpen, onClos
         )}
 
         {kwants.length === 0 ? (
-          <p className="text-xs text-zinc-400">Add a bot to this space first. A channel needs at least one bot to answer.</p>
+          <p className="text-xs text-zinc-400">{t('Add a bot to this space first. A channel needs at least one bot to answer.')}</p>
         ) : (
           <form onSubmit={submit} className="space-y-4" noValidate>
             <div>
               <label htmlFor={nameId} className="block text-xs font-medium text-zinc-400 mb-1">
-                Name
+                {t('Name')}
               </label>
               <div className="relative">
                 <Hash size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" aria-hidden />
@@ -125,7 +126,7 @@ export const NewChannelModal: React.FC<NewChannelModalProps> = ({ isOpen, onClos
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   onBlur={() => name && setTouched(true)}
-                  placeholder="e.g. launch-plan"
+                  placeholder={t('e.g. launch-plan')}
                   autoComplete="off"
                   aria-invalid={showNameError}
                   aria-describedby={showNameError ? `${nameId}-err` : undefined}
@@ -140,7 +141,7 @@ export const NewChannelModal: React.FC<NewChannelModalProps> = ({ isOpen, onClos
                 slug &&
                 slug !== name.trim() && (
                   <p className="text-[11px] text-zinc-500 mt-1">
-                    Saved as <span className="font-mono text-sky-400">#{slug}</span>
+                    {tj('Saved as {name}', { name: <span className="font-mono text-sky-400">#{slug}</span> })}
                   </p>
                 )
               )}
@@ -148,12 +149,12 @@ export const NewChannelModal: React.FC<NewChannelModalProps> = ({ isOpen, onClos
 
             <div>
               <label className="block text-xs font-medium text-zinc-400 mb-1">
-                What it's for <span className="text-zinc-600 font-normal">(optional)</span>
+                {t("What it's for")} <span className="text-zinc-600 font-normal">{t('(optional)')}</span>
                 <input
                   type="text"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="e.g. Planning the spring launch"
+                  placeholder={t('e.g. Planning the spring launch')}
                   className={`${input} mt-1 font-normal`}
                 />
               </label>
@@ -161,8 +162,8 @@ export const NewChannelModal: React.FC<NewChannelModalProps> = ({ isOpen, onClos
 
             <fieldset aria-describedby={hintId} className="min-w-0">
               <div className="flex items-center justify-between mb-1.5">
-                <legend className="text-xs font-medium text-zinc-400">Bots in this channel</legend>
-                <span className="text-[11px] font-mono text-zinc-500">{members.length} picked</span>
+                <legend className="text-xs font-medium text-zinc-400">{t('Bots in this channel')}</legend>
+                <span className="text-[11px] font-mono text-zinc-500">{t('{n} picked', { n: members.length })}</span>
               </div>
               <div className="space-y-1 max-h-52 overflow-y-auto pr-1">
                 {kwants.map((k) => {
@@ -203,7 +204,7 @@ export const NewChannelModal: React.FC<NewChannelModalProps> = ({ isOpen, onClos
                 }}
                 className="px-3.5 py-2 rounded-lg text-xs font-medium text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
               >
-                Cancel
+                {t('Cancel')}
               </button>
               <button
                 type="submit"
@@ -211,7 +212,7 @@ export const NewChannelModal: React.FC<NewChannelModalProps> = ({ isOpen, onClos
                 className="px-4 py-2 rounded-lg text-xs font-medium text-white bg-sky-600 hover:bg-sky-500 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
               >
                 <Hash size={14} />
-                <span>{submitting ? 'Creating…' : 'Create channel'}</span>
+                <span>{submitting ? t('Creating…') : t('Create channel')}</span>
               </button>
             </div>
           </form>

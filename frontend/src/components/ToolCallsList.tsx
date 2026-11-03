@@ -1,12 +1,13 @@
 import React from 'react';
 import { CheckCircle2, AlertCircle, Ban, ShieldCheck, ChevronRight, Wrench } from 'lucide-react';
 import { RecordedToolCall, formatArgs, humanizeToolName, parseToolCalls } from '../mcp';
+import { t } from '../i18n';
 
 const STATUS: Record<string, { icon: React.ReactNode; label: string; cls: string }> = {
-  ok: { icon: <CheckCircle2 size={12} />, label: 'Done', cls: 'text-emerald-300' },
-  allowed: { icon: <ShieldCheck size={12} />, label: 'Allowed', cls: 'text-emerald-300' },
-  error: { icon: <AlertCircle size={12} />, label: 'Failed', cls: 'text-rose-300' },
-  denied: { icon: <Ban size={12} />, label: 'Denied', cls: 'text-zinc-400' },
+  ok: { icon: <CheckCircle2 size={12} />, label: t('Done'), cls: 'text-emerald-300' },
+  allowed: { icon: <ShieldCheck size={12} />, label: t('Allowed'), cls: 'text-emerald-300' },
+  error: { icon: <AlertCircle size={12} />, label: t('Failed'), cls: 'text-rose-300' },
+  denied: { icon: <Ban size={12} />, label: t('Denied'), cls: 'text-zinc-400' },
 };
 
 const ToolCallRow: React.FC<{ call: RecordedToolCall }> = ({ call }) => {
@@ -22,7 +23,7 @@ const ToolCallRow: React.FC<{ call: RecordedToolCall }> = ({ call }) => {
       {call.server && <span className="text-zinc-500 truncate">· {call.server}</span>}
       <span className="ml-auto flex items-center gap-2 flex-shrink-0 text-[10px] text-zinc-500">
         <span className={status.cls}>{status.label}</span>
-        {typeof call.duration_ms === 'number' && <span className="font-mono">{call.duration_ms} ms</span>}
+        {typeof call.duration_ms === 'number' && <span className="font-mono">{t('{n} ms', { n: call.duration_ms })}</span>}
         {hasDetail && <ChevronRight size={12} className="transition-transform group-open:rotate-90" />}
       </span>
     </>
@@ -38,13 +39,13 @@ const ToolCallRow: React.FC<{ call: RecordedToolCall }> = ({ call }) => {
         <div className="px-3 pb-2.5 space-y-1.5">
           {args && (
             <div>
-              <p className="text-[10px] uppercase tracking-wide text-zinc-500 mb-0.5">Input</p>
+              <p className="text-[10px] uppercase tracking-wide text-zinc-500 mb-0.5">{t('Input')}</p>
               <pre className="font-mono text-[11px] text-zinc-300 bg-zinc-950/80 border border-zinc-800 rounded-md p-2 whitespace-pre-wrap break-all max-h-40 overflow-y-auto">{args}</pre>
             </div>
           )}
           {call.result && (
             <div>
-              <p className="text-[10px] uppercase tracking-wide text-zinc-500 mb-0.5">Result</p>
+              <p className="text-[10px] uppercase tracking-wide text-zinc-500 mb-0.5">{t('Result')}</p>
               <pre className="font-mono text-[11px] text-zinc-300 bg-zinc-950/80 border border-zinc-800 rounded-md p-2 whitespace-pre-wrap break-all max-h-40 overflow-y-auto">{call.result}</pre>
             </div>
           )}
@@ -62,7 +63,7 @@ export const ToolCallsList: React.FC<{ raw: unknown }> = ({ raw }) => {
     <div className="mt-2 w-full max-w-2xl rounded-xl border border-zinc-800 bg-zinc-950/50 overflow-hidden">
       <p className="flex items-center gap-1.5 px-3 pt-2 pb-1 text-[10px] font-medium uppercase tracking-wide text-zinc-500">
         <Wrench size={11} className="text-sky-400/80" />
-        Used {calls.length} {calls.length === 1 ? 'tool' : 'tools'}
+        {t(calls.length === 1 ? 'Used {n} tool' : 'Used {n} tools', { n: calls.length })}
       </p>
       <ul className="divide-y divide-zinc-800/70">
         {calls.map((call, i) => (

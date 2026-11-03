@@ -4,6 +4,7 @@
 // sign-in link and its QR code, drawn here in the browser so the code never leaves it.
 
 import { encode } from 'uqr';
+import { t } from './i18n';
 
 /** What `POST /api/auth/device` started: the secret stays in this browser, the user code is shown. */
 export interface DeviceRequest {
@@ -47,7 +48,7 @@ export async function startDeviceRequest(send: typeof fetch = (...a) => fetch(..
     const retryAfter = Number(body?.retry_after ?? res.headers.get('Retry-After')) || 60;
     return { kind: 'too_many', retryAfter };
   }
-  if (!res.ok) throw new Error(`The server answered ${res.status}.`);
+  if (!res.ok) throw new Error(t('The server answered {status}.', { status: res.status }));
   return { kind: 'started', request: await res.json() };
 }
 
@@ -56,7 +57,7 @@ export async function pollDeviceRequest(deviceCode: string, send: typeof fetch =
   const res = await send('/api/auth/device/poll', { method: 'POST', headers: json, body: JSON.stringify({ device_code: deviceCode }) });
   if (res.status === 403) return 'denied';
   if (res.status === 410) return 'expired';
-  if (!res.ok) throw new Error(`The server answered ${res.status}.`);
+  if (!res.ok) throw new Error(t('The server answered {status}.', { status: res.status }));
   const body = await res.json().catch(() => null);
   return body?.status === 'approved' ? 'approved' : 'pending';
 }
@@ -78,41 +79,41 @@ export async function decideDeviceRequest(userCode: string, approve: boolean, se
     body: JSON.stringify({ user_code: userCode }),
   });
   if (res.status === 404) return 'gone';
-  if (!res.ok) throw new Error(`The server answered ${res.status}.`);
+  if (!res.ok) throw new Error(t('The server answered {status}.', { status: res.status }));
   return 'ok';
 }
 
 export async function listSessions(send: typeof fetch = (...a) => fetch(...a)): Promise<SignedInSession[]> {
   const res = await send('/api/signin/sessions', { cache: 'no-store' });
-  if (!res.ok) throw new Error(`The server answered ${res.status}.`);
+  if (!res.ok) throw new Error(t('The server answered {status}.', { status: res.status }));
   return res.json();
 }
 
 /** Signs that browser out. A session that is already gone counts as done. */
 export async function revokeSession(id: string, send: typeof fetch = (...a) => fetch(...a)): Promise<void> {
   const res = await send(`/api/signin/sessions/${encodeURIComponent(id)}`, { method: 'DELETE' });
-  if (!res.ok && res.status !== 404) throw new Error(`The server answered ${res.status}.`);
+  if (!res.ok && res.status !== 404) throw new Error(t('The server answered {status}.', { status: res.status }));
 }
 
 /** How a session was made, in words. */
 export function viaLabel(via: SignedInSession['via']): string {
-  if (via === 'link') return 'Signed in with a link';
-  if (via === 'device') return 'Approved from another device';
-  return 'Signed in with the token';
+  if (via === 'link') return t('Signed in with a link');
+  if (via === 'device') return t('Approved from another device');
+  return t('Signed in with the token');
 }
 
 /** "just now", "5 min ago", "3 h ago", "2 days ago". */
 export function ago(iso: string, now: number = Date.now()): string {
-  const t = Date.parse(iso);
-  if (Number.isNaN(t)) return '';
-  const s = Math.max(0, Math.round((now - t) / 1000));
-  if (s < 60) return 'just now';
+  const ms = Date.parse(iso);
+  if (Number.isNaN(ms)) return '';
+  const s = Math.max(0, Math.round((now - ms) / 1000));
+  if (s < 60) return t('just now');
   const min = Math.floor(s / 60);
-  if (min < 60) return `${min} min ago`;
+  if (min < 60) return t('{n} min ago', { n: min });
   const h = Math.floor(min / 60);
-  if (h < 24) return `${h} h ago`;
+  if (h < 24) return t('{n} h ago', { n: h });
   const d = Math.floor(h / 24);
-  return d === 1 ? '1 day ago' : `${d} days ago`;
+  return t(d === 1 ? '{n} day ago' : '{n} days ago', { n: d });
 }
 
 /** "9:41" left until `expiresAt` (ms), never negative. */
@@ -143,9 +144,9 @@ export async function createSigninLink(
   send: typeof fetch = (...a) => fetch(...a),
 ): Promise<MintedLink> {
   const res = await send('/api/signin/links', { method: 'POST', headers: json, body: '{}', cache: 'no-store' });
-  if (!res.ok) throw new Error(`The server answered ${res.status}.`);
+  if (!res.ok) throw new Error(t('The server answered {status}.', { status: res.status }));
   const body = await res.json().catch(() => null);
-  if (!body || typeof body.code !== 'string' || !body.code) throw new Error('The server sent no sign-in code.');
+  if (!body || typeof body.code !== 'string' || !body.code) throw new Error(t('The server sent no sign-in code.'));
   const url = typeof body.url === 'string' && body.url ? body.url : `${origin}/#kwnt_token=${encodeURIComponent(body.code)}`;
   const ttl = Number(body.expires_in) > 0 ? Number(body.expires_in) : 900;
   return { url, expiresAt: now + ttl * 1000 };

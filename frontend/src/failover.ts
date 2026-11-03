@@ -6,15 +6,16 @@ import type { EngineInfo } from './engines';
 import { accountStatus } from './components/EngineAccounts';
 import { Engine, Profile, ProfileSwitchedEvent, accountState, activeLimit } from './profiles';
 import { parseMetaObject } from './questions';
+import { t } from './i18n';
 
-export const FAILOVER_CAPTION = 'When one runs out, kwant bots move to the next that still works, in this order.';
+export const FAILOVER_CAPTION = t('When one runs out, kwant bots move to the next that still works, in this order.');
 
-export const ENGINE_NAMES: Record<Engine, string> = { claude: 'Claude', codex: 'Codex', grok: 'Grok', custom: 'Custom API' };
+export const ENGINE_NAMES: Record<Engine, string> = { claude: 'Claude', codex: 'Codex', grok: 'Grok', custom: t('Custom API') };
 
 /** The engine and kind in plain words: "Claude", "Claude API key", "Custom API". */
 export function engineLabel(p: Pick<Profile, 'engine' | 'kind'>): string {
   const base = ENGINE_NAMES[p.engine] ?? p.engine;
-  return p.kind === 'api_key' ? `${base} API key` : base;
+  return p.kind === 'api_key' ? t('{engine} API key', { engine: base }) : base;
 }
 
 /** The accounts in the order turns try them: lowest priority number first; ties keep "This machine"
@@ -100,7 +101,8 @@ export function priorityUpdates(order: Profile[], rest: Profile[] = []): Array<{
 }
 
 /** What a screen reader hears after a move: "Codex moved to position 2 of 5." */
-export const moveAnnouncement = (name: string, index: number, total: number) => `${name} moved to position ${index + 1} of ${total}.`;
+export const moveAnnouncement = (name: string, index: number, total: number) =>
+  t('{name} moved to position {position} of {total}.', { name, position: index + 1, total });
 
 // ---- The switch notice in chat ----
 
@@ -126,9 +128,14 @@ export function failoverNotice(e: FailoverEvent, now = Date.now()): string {
   const from = engineName(e.from_engine, e.from_name);
   const to = engineName(e.to_engine, e.to_name);
   const limit = activeLimit(e.retry_at ?? null, now);
-  const why = e.class === 'auth' ? `${from} is signed out` : limit ? `${from} is out until ${clockTime(limit, now)}` : `${from} is out of usage`;
+  const why =
+    e.class === 'auth'
+      ? t('{from} is signed out', { from })
+      : limit
+        ? t('{from} is out until {time}', { from, time: clockTime(limit, now) })
+        : t('{from} is out of usage', { from });
   const model = e.to_model_label || e.to_model;
-  return `${why} · answered on ${to}${model ? ` (${model})` : ''}`;
+  return model ? t('{why} · answered on {to} ({model})', { why, to, model }) : t('{why} · answered on {to}', { why, to });
 }
 
 /** One outage, for "once per chat": the same chat, the same account that ran out, the same reset. */

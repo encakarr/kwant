@@ -2,6 +2,7 @@
 // risky calls; the rest run and are recorded) or "off" (it runs and is recorded). Set per space, with a per-bot override. Only the person changes it; a bot's token
 // gets 403. No event fires on a change, so callers load bots and spaces again after a save.
 
+import { t } from './i18n';
 import { StoreStatus, autofillGapNote, needsBitwardenFrom } from './passwordStore';
 
 export type SpaceApprovals = 'ask' | 'smart' | 'off';
@@ -40,38 +41,40 @@ export function parseBotApprovals(raw: unknown): BotApprovalsState | null {
 }
 
 export const SPACE_OPTIONS: Array<{ value: SpaceApprovals; label: string; hint: string }> = [
-  { value: 'ask', label: 'Ask before running commands', hint: 'A card asks you before a bot runs a command, writes a file or uses a tool.' },
+  { value: 'ask', label: t('Ask before running commands'), hint: t('A card asks you before a bot runs a command, writes a file or uses a tool.') },
   {
     value: 'smart',
-    label: 'Ask only when risky',
-    hint: 'Ordinary work in the bot’s folder runs on its own; a card asks before network calls, git fetch and push, publishing, anything outside the folder or anything unclear. Not a sandbox: scripts, make and npm install inside the folder run without a card, and can do anything you can.',
+    label: t('Ask only when risky'),
+    hint: t(
+      'Ordinary work in the bot’s folder runs on its own; a card asks before network calls, git fetch and push, publishing, anything outside the folder or anything unclear. Not a sandbox: scripts, make and npm install inside the folder run without a card, and can do anything you can.',
+    ),
   },
-  { value: 'off', label: 'Don’t ask', hint: 'Bots act without asking, including sending, deleting, publishing and signing in. Payments still ask you.' },
+  { value: 'off', label: t('Don’t ask'), hint: t('Bots act without asking, including sending, deleting, publishing and signing in. Payments still ask you.') },
 ];
 
 /** The per-bot choices; "Same as space" names what the space is set to. */
 export function botOptions(space: SpaceApprovals): Array<{ value: BotApprovals; label: string }> {
   return [
-    { value: 'inherit', label: `Same as space (${space === 'off' ? 'Don’t ask' : space === 'smart' ? 'Ask only when risky' : 'Ask'})` },
-    { value: 'ask', label: 'Ask before running commands' },
-    { value: 'smart', label: 'Ask only when risky' },
-    { value: 'off', label: 'Don’t ask' },
+    { value: 'inherit', label: t('Same as space ({mode})', { mode: space === 'off' ? t('Don’t ask') : space === 'smart' ? t('Ask only when risky') : t('Ask') }) },
+    { value: 'ask', label: t('Ask before running commands') },
+    { value: 'smart', label: t('Ask only when risky') },
+    { value: 'off', label: t('Don’t ask') },
   ];
 }
 
 /** What turning approvals off means, said plainly on the confirm (Oleks, 2026-10-27: off means off, with the risks said first). */
 export const OFF_CONSEQUENCES = [
-  'Bots can send messages and emails, delete files or data, publish, and sign in to your accounts without asking you.',
-  'Shell commands, file writes anywhere the computer allows, and tools (MCP servers, browser, web) run without a card.',
-  'Payments still ask you first, though a payment made by filling in a card form on a website may not be caught.',
-  'Everything that runs is still recorded.',
+  t('Bots can send messages and emails, delete files or data, publish, and sign in to your accounts without asking you.'),
+  t('Shell commands, file writes anywhere the computer allows, and tools (MCP servers, browser, web) run without a card.'),
+  t('Payments still ask you first, though a payment made by filling in a card form on a website may not be caught.'),
+  t('Everything that runs is still recorded.'),
 ];
 
 /** Under the list: who shouldn't be on "Don't ask". */
-export const OFF_ADVICE = 'For bots with access to money or your accounts, keep approvals on or choose “Ask only when risky”.';
+export const OFF_ADVICE = t('For bots with access to money or your accounts, keep approvals on or choose “Ask only when risky”.');
 
 /** Next to the setting for as long as it's off. */
-export const OFF_HINT = 'Approvals are off: bots act without asking, including deletions, publishing and sign-ins. Payments still ask you.';
+export const OFF_HINT = t('Approvals are off: bots act without asking, including deletions, publishing and sign-ins. Payments still ask you.');
 
 /** True when a change newly turns approvals off, so the confirm comes before the save. Takes effective values. */
 export const needsOffConfirm = (current: SpaceApprovals, next: SpaceApprovals): boolean => next === 'off' && current !== 'off';
@@ -90,17 +93,19 @@ export class NeedsBitwardenError extends Error {
 export const APPROVALS_CHANGED_EVENT = 'kwnt:approvals-changed';
 
 export function offConfirmTitle(who: { space: string } | { bot: string }): string {
-  return 'space' in who ? `Turn off approvals for every bot in ${who.space}?` : `Let ${who.bot} run everything without approval?`;
+  return 'space' in who ? t('Turn off approvals for every bot in {space}?', { space: who.space }) : t('Let {name} run everything without approval?', { name: who.bot });
 }
 
 /** A line for the space header: null when nothing runs without asking. */
 export function spaceOffLine(space: SpaceApprovals | undefined, bots: Array<{ approvals_effective?: string | null }>): string | null {
   if (space === 'off') {
     const asking = bots.filter((b) => b.approvals_effective === 'ask').length;
-    return asking ? `Approvals off (${asking} ${asking === 1 ? 'bot still asks' : 'bots still ask'})` : 'Approvals off';
+    return asking
+      ? t(asking === 1 ? 'Approvals off ({n} bot still asks)' : 'Approvals off ({n} bots still ask)', { n: asking })
+      : t('Approvals off');
   }
   const off = bots.filter(approvalsOff).length;
-  return off ? `Approvals off for ${off} ${off === 1 ? 'bot' : 'bots'}` : null;
+  return off ? t(off === 1 ? 'Approvals off for {n} bot' : 'Approvals off for {n} bots', { n: off }) : null;
 }
 
 async function errorText(res: Response, fallback: string): Promise<string | NeedsBitwardenError> {
@@ -109,15 +114,15 @@ async function errorText(res: Response, fallback: string): Promise<string | Need
     const needs = needsBitwardenFrom(res.status, body);
     if (needs) return new NeedsBitwardenError(needs.message, needs.local_count);
     if (typeof body?.error === 'string' && body.error) {
-      if (res.status === 403) return 'Only you can change approvals, from the app.';
-      if (res.status === 409) return 'This space is archived. Restore it to change its approvals.';
-      return `${fallback} (${body.error}).`;
+      if (res.status === 403) return t('Only you can change approvals, from the app.');
+      if (res.status === 409) return t('This space is archived. Restore it to change its approvals.');
+      return t('{message} ({detail}).', { message: fallback, detail: body.error });
     }
   } catch {
     /* not JSON */
   }
-  if (res.status === 404 || res.status === 405) return 'This server can’t change approvals yet. Update the app and try again.';
-  return `${fallback} (HTTP ${res.status}).`;
+  if (res.status === 404 || res.status === 405) return t('This server can’t change approvals yet. Update the app and try again.');
+  return t('{message} (HTTP {status}).', { message: fallback, status: res.status });
 }
 
 async function put(url: string, approvals: string, fallback: string): Promise<unknown> {
@@ -125,7 +130,7 @@ async function put(url: string, approvals: string, fallback: string): Promise<un
   try {
     res = await fetch(url, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ approvals }) });
   } catch {
-    throw new Error('Couldn’t reach the server. Check your connection and try again.');
+    throw new Error(t('Couldn’t reach the server. Check your connection and try again.'));
   }
   if (!res.ok) {
     const e = await errorText(res, fallback);
@@ -139,7 +144,7 @@ const enc = encodeURIComponent;
 export const approvalModeApi = {
   /** Resolves to the space's new value. */
   setSpace: async (spaceId: string, approvals: SpaceApprovals): Promise<SpaceApprovals> => {
-    const body = (await put(`/api/spaces/${enc(spaceId)}/approvals`, approvals, 'Couldn’t change approvals')) as { approvals?: unknown };
+    const body = (await put(`/api/spaces/${enc(spaceId)}/approvals`, approvals, t('Couldn’t change approvals'))) as { approvals?: unknown };
     return spaceMode(body?.approvals);
   },
   /** null when the server has no such endpoint or the call fails. */
@@ -153,8 +158,8 @@ export const approvalModeApi = {
   },
   setBot: async (kwantId: string, approvals: BotApprovals, spaceId?: string): Promise<BotApprovalsState> => {
     const url = `/api/kwants/${enc(kwantId)}/approvals${spaceId ? `?space=${enc(spaceId)}` : ''}`;
-    const state = parseBotApprovals(await put(url, approvals, 'Couldn’t change this bot’s approvals'));
-    if (!state) throw new Error('The server sent an answer the app can’t read. Reload and check the setting.');
+    const state = parseBotApprovals(await put(url, approvals, t('Couldn’t change this bot’s approvals')));
+    if (!state) throw new Error(t('The server sent an answer the app can’t read. Reload and check the setting.'));
     return state;
   },
   /**
@@ -166,7 +171,7 @@ export const approvalModeApi = {
     let failed = 0;
     const list = async (url: string): Promise<Array<Record<string, unknown>>> => {
       const res = await fetch(url, { cache: 'no-store' });
-      if (!res.ok) throw new Error('Couldn’t load your spaces. Try again.');
+      if (!res.ok) throw new Error(t('Couldn’t load your spaces. Try again.'));
       const body = await res.json();
       return Array.isArray(body) ? body : [];
     };
@@ -176,7 +181,7 @@ export const approvalModeApi = {
       const [active, archived] = await Promise.all([list('/api/spaces'), list('/api/spaces?archived=1').catch(() => [])]);
       spaces = [...active, ...archived];
     } catch {
-      throw new Error('Couldn’t reach the server. Check your connection and try again.');
+      throw new Error(t('Couldn’t reach the server. Check your connection and try again.'));
     }
     const attempt = async (f: () => Promise<unknown>) => {
       try {

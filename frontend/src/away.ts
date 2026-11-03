@@ -1,6 +1,8 @@
 // "While you were away" (batch 3): what agents need from you, finished and failed since you last
 // looked. Pure helpers, so the page and the node tests share them; the API calls are at the bottom.
 
+import { t } from './i18n';
+
 export type AwayKind = 'question' | 'approval' | 'delegation' | 'routine_run';
 export type AwaySection = 'waiting' | 'finished' | 'failed';
 export type ApprovalDecision = 'allow_once' | 'always_allow' | 'deny';
@@ -49,33 +51,33 @@ export interface AwayResponse {
 }
 
 export const AWAY_SECTIONS: { key: AwaySection; label: string; empty: string }[] = [
-  { key: 'waiting', label: 'Waiting on you', empty: 'No questions or approvals waiting.' },
-  { key: 'finished', label: 'Finished', empty: 'Nothing finished since you last looked.' },
-  { key: 'failed', label: 'Failed or stuck', empty: 'Nothing failed or stuck.' },
+  { key: 'waiting', label: t('Waiting on you'), empty: t('No questions or approvals waiting.') },
+  { key: 'finished', label: t('Finished'), empty: t('Nothing finished since you last looked.') },
+  { key: 'failed', label: t('Failed or stuck'), empty: t('Nothing failed or stuck.') },
 ];
 
 /** "just now", "5 min ago", "3 h ago", "yesterday", "4 days ago", else the date. */
 export function relativeTime(ts: string, now: number = Date.now()): string {
-  const t = Date.parse(ts);
-  if (Number.isNaN(t)) return '';
-  const s = Math.max(0, Math.round((now - t) / 1000));
-  if (s < 60) return 'just now';
+  const at = Date.parse(ts);
+  if (Number.isNaN(at)) return '';
+  const s = Math.max(0, Math.round((now - at) / 1000));
+  if (s < 60) return t('just now');
   const m = Math.floor(s / 60);
-  if (m < 60) return `${m} min ago`;
+  if (m < 60) return t('{n} min ago', { n: m });
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h} h ago`;
+  if (h < 24) return t('{n} h ago', { n: h });
   const d = Math.floor(h / 24);
-  if (d === 1) return 'yesterday';
-  if (d < 7) return `${d} days ago`;
-  return new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  if (d === 1) return t('yesterday');
+  if (d < 7) return t('{n} days ago', { n: d });
+  return new Date(at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
 /** Page subtitle: the 7-day default window, or since the last visit. */
 export function windowLabel(since: string, now: number = Date.now()): string {
-  const t = Date.parse(since);
-  if (Number.isNaN(t)) return '';
-  if (now - t >= 7 * 86400_000 - 60_000) return 'From the last 7 days';
-  return `Since you last looked, ${relativeTime(since, now)}`;
+  const at = Date.parse(since);
+  if (Number.isNaN(at)) return '';
+  if (now - at >= 7 * 86400_000 - 60_000) return t('From the last 7 days');
+  return t('Since you last looked, {when}', { when: relativeTime(since, now) });
 }
 
 export type Tone = 'amber' | 'emerald' | 'rose' | 'sky' | 'zinc';
@@ -84,22 +86,22 @@ export type Tone = 'amber' | 'emerald' | 'rose' | 'sky' | 'zinc';
 export function itemLabel(item: Pick<AwayItem, 'kind' | 'status'>): { label: string; tone: Tone } {
   switch (item.kind) {
     case 'question':
-      return { label: 'Question', tone: 'amber' };
+      return { label: t('Question'), tone: 'amber' };
     case 'approval':
       // Its turn stopped waiting, but the card is open and a late Allow resumes the work.
-      return item.status === 'waiting' ? { label: 'Still open', tone: 'sky' } : { label: 'Needs approval', tone: 'amber' };
+      return item.status === 'waiting' ? { label: t('Still open'), tone: 'sky' } : { label: t('Needs approval'), tone: 'amber' };
     case 'routine_run':
-      return item.status === 'ok' ? { label: 'Routine ran', tone: 'emerald' } : { label: 'Routine failed', tone: 'rose' };
+      return item.status === 'ok' ? { label: t('Routine ran'), tone: 'emerald' } : { label: t('Routine failed'), tone: 'rose' };
     case 'delegation':
       switch (item.status) {
         case 'completed':
-          return { label: 'Handoff done', tone: 'emerald' };
+          return { label: t('Handoff done'), tone: 'emerald' };
         case 'stuck':
-          return { label: 'Stuck', tone: 'amber' };
+          return { label: t('Stuck'), tone: 'amber' };
         case 'interrupted':
-          return { label: 'Interrupted', tone: 'rose' };
+          return { label: t('Interrupted'), tone: 'rose' };
         default:
-          return { label: 'Handoff failed', tone: 'rose' };
+          return { label: t('Handoff failed'), tone: 'rose' };
       }
   }
   return { label: item.status, tone: 'zinc' };
@@ -143,7 +145,7 @@ export function withoutItem(r: AwayResponse, section: AwaySection, id: string): 
 
 /** The message for a failed one-tap action; a 409 means the request lapsed meanwhile. */
 export const actionErrorText = (status: number, fallback: string): string =>
-  status === 409 || status === 404 ? 'This request expired' : fallback;
+  status === 409 || status === 404 ? t('This request expired') : fallback;
 
 /** Outcome of a one-tap action; `info` is neither a success nor a failure (a card that expired). */
 export interface AwayNotice {
@@ -157,8 +159,8 @@ export interface AwayNotice {
  * the server's own sentence ("This card expired: … Ask the bot again.") is shown as a plain notice.
  */
 export function actionFailureNotice(status: number, serverMessage: string, title: string): AwayNotice {
-  if (status === 409 && /^This card expired\b/.test(serverMessage)) return { text: `${serverMessage} (“${title}”)`, error: false, info: true };
-  return { text: `${actionErrorText(status, `Couldn't send it: ${serverMessage}`)}: “${title}”`, error: true };
+  if (status === 409 && /^This card expired\b/.test(serverMessage)) return { text: t('{message} (“{title}”)', { message: serverMessage, title }), error: false, info: true };
+  return { text: t('{error}: “{title}”', { error: actionErrorText(status, t("Couldn't send it: {error}", { error: serverMessage })), title }), error: true };
 }
 
 export class AwayError extends Error {
@@ -174,7 +176,7 @@ async function call<T>(method: string, url: string, body?: unknown): Promise<T> 
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   if (!res.ok) {
-    let message = `Request failed (HTTP ${res.status}).`;
+    let message = t('Request failed (HTTP {status}).', { status: res.status });
     try {
       const data = await res.json();
       if (data && typeof data.error === 'string' && data.error) message = data.error;

@@ -3,6 +3,7 @@ import { AlertTriangle, Check, Gauge, Info, Loader2, PauseCircle, Play, RotateCc
 import { BudgetPausedMeta, HandoffCappedMeta, handoffCappedText, isAlreadyContinued, isChainGone } from '../chainBudget';
 import { compactTokens } from '../modelUsage';
 import { Interruption, RetryState, RetryTarget, interruptionText, runRetryOnce } from '../interruptions';
+import { t } from '../i18n';
 
 /** A note kwnt itself wrote (e.g. "Growth wasn't asked: …"): a quiet line, not a bot's reply. */
 export const SystemNotice: React.FC<{ messageId: string; text: string; flash?: boolean }> = ({ messageId, text, flash }) => (
@@ -15,7 +16,7 @@ export const SystemNotice: React.FC<{ messageId: string; text: string; flash?: b
     <p className="flex items-start gap-1.5 max-w-full px-3 py-1.5 rounded-full text-xs text-zinc-400 bg-zinc-900/60 border border-zinc-800 break-words">
       <Info size={12} className="mt-0.5 shrink-0 text-zinc-500" aria-hidden="true" />
       <span className="min-w-0">
-        <span className="sr-only">Notice: </span>
+        <span className="sr-only">{t('Notice:')} </span>
         {text}
       </span>
     </p>
@@ -55,7 +56,7 @@ export const InterruptedNotice: React.FC<InterruptedNoticeProps> = ({ messageId,
           <AlertTriangle size={15} className="mt-0.5 shrink-0 text-amber-400" aria-hidden="true" />
           <span className="min-w-0">
             {interruptionText(interruption)}
-            {canRetry && state !== 'sent' && <span className="text-amber-200/70"> Retry sends your message again.</span>}
+            {canRetry && state !== 'sent' && <span className="text-amber-200/70"> {t('Retry sends your message again.')}</span>}
           </span>
         </p>
         {canRetry && (
@@ -73,7 +74,7 @@ export const InterruptedNotice: React.FC<InterruptedNoticeProps> = ({ messageId,
             ) : (
               <RotateCcw size={13} aria-hidden="true" />
             )}
-            <span>{state === 'sending' ? 'Sending…' : state === 'sent' ? 'Sent again' : 'Retry'}</span>
+            <span>{state === 'sending' ? t('Sending…') : state === 'sent' ? t('Sent again') : t('Retry')}</span>
           </button>
         )}
       </div>
@@ -107,7 +108,7 @@ export const BudgetPausedNotice: React.FC<BudgetPausedNoticeProps> = ({ messageI
     } catch (e) {
       lock.current = false;
       setState('error');
-      setError(e instanceof Error ? e.message : 'Could not continue.');
+      setError(e instanceof Error ? e.message : t('Could not continue.'));
     }
   };
   const done = state === 'sent';
@@ -125,7 +126,7 @@ export const BudgetPausedNotice: React.FC<BudgetPausedNoticeProps> = ({ messageI
             <span className="min-w-0">{text}</span>
           </p>
           <p className="mt-1 pl-[23px] text-[11px] text-amber-200/60 font-mono">
-            {compactTokens(meta.used)} of {compactTokens(meta.budget)} fresh tokens
+            {t('{used} of {budget} fresh tokens', { used: compactTokens(meta.used), budget: compactTokens(meta.budget) })}
           </p>
         </div>
         {onContinue && (
@@ -143,7 +144,7 @@ export const BudgetPausedNotice: React.FC<BudgetPausedNoticeProps> = ({ messageI
             ) : (
               <Play size={13} aria-hidden="true" />
             )}
-            <span>{state === 'sending' ? 'Continuing…' : done ? 'Continued' : 'Continue'}</span>
+            <span>{state === 'sending' ? t('Continuing…') : done ? t('Continued') : t('Continue')}</span>
           </button>
         )}
       </div>
@@ -179,7 +180,7 @@ export const HandoffCappedNotice: React.FC<HandoffCappedNoticeProps> = ({ messag
   const stopped = done || state === 'gone';
   const text = handoffCappedText({ ...meta, resumed: stopped });
   const headline = text.headline;
-  const detail = state === 'already' ? 'Already continued.' : state === 'gone' ? null : text.detail;
+  const detail = state === 'already' ? t('Already continued.') : state === 'gone' ? null : text.detail;
   const run = async () => {
     if (!onContinue || lock.current) return;
     lock.current = true;
@@ -193,11 +194,11 @@ export const HandoffCappedNotice: React.FC<HandoffCappedNoticeProps> = ({ messag
       if (isAlreadyContinued(e)) return setState('already');
       if (isChainGone(e)) {
         setState('gone');
-        return setError("Can't continue: the lead of this chat was removed. Send a new message to start again.");
+        return setError(t("Can't continue: the lead of this chat was removed. Send a new message to start again."));
       }
       lock.current = false;
       setState('error');
-      const why = e instanceof Error && e.message ? e.message : 'Could not continue.';
+      const why = e instanceof Error && e.message ? e.message : t('Could not continue.');
       setError(why.charAt(0).toUpperCase() + why.slice(1));
     }
   };
@@ -232,7 +233,7 @@ export const HandoffCappedNotice: React.FC<HandoffCappedNoticeProps> = ({ messag
             className="shrink-0 inline-flex items-center justify-center gap-1.5 min-h-[40px] sm:min-h-[36px] px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer disabled:cursor-default text-white bg-sky-600 hover:bg-sky-500 disabled:opacity-70 disabled:hover:bg-sky-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
           >
             {state === 'sending' ? <Loader2 size={13} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Play size={13} aria-hidden="true" />}
-            <span>{state === 'sending' ? 'Continuing…' : 'Continue'}</span>
+            <span>{state === 'sending' ? t('Continuing…') : t('Continue')}</span>
           </button>
         )}
       </div>

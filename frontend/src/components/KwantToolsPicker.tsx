@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Plug, Terminal, Globe, Info, Loader2 } from 'lucide-react';
 import { McpServer, EngineKeys, mcpSupportFor } from '../mcp';
+import { t, tj } from '../i18n';
 
 interface KwantToolsPickerProps {
   /** Engine the kwant runs on (preferred_model), to say honestly when tools won't work. */
@@ -49,22 +50,23 @@ export const KwantToolsPicker: React.FC<KwantToolsPickerProps> = ({ model, selec
     <div>
       <div className="flex items-center justify-between mb-1">
         <label className="text-xs font-medium text-zinc-400">
-          Tools this bot can use{' '}
+          {t('Tools this bot can use')}{' '}
           <span className={`font-normal ${approvalsOff ? 'text-amber-300/90' : 'text-zinc-600'}`}>
-            {approvalsOff ? '· runs them without asking (approvals off)' : '· asks you before each use'}
+            {approvalsOff ? t('· runs them without asking (approvals off)') : t('· asks you before each use')}
           </span>
         </label>
         {onManageServers && servers && servers.length > 0 && (
           <button type="button" onClick={onManageServers} className="text-[11px] text-sky-300 hover:text-sky-200">
-            Manage servers
+            {t('Manage servers')}
           </button>
         )}
       </div>
 
       {servers && servers.length > 0 && (
         <p className="mb-1.5 text-[11px] text-zinc-500 leading-snug">
-          Every tool server is on by default, including ones you add later. Switch off any this bot shouldn’t have
-          {offCount > 0 && <span className="text-zinc-400"> · {offCount} off</span>}.
+          {tj('Every tool server is on by default, including ones you add later. Switch off any this bot shouldn’t have{off}.', {
+            off: offCount > 0 ? <span className="text-zinc-400"> · {t('{n} off', { n: offCount })}</span> : '',
+          })}
         </p>
       )}
 
@@ -83,17 +85,17 @@ export const KwantToolsPicker: React.FC<KwantToolsPickerProps> = ({ model, selec
 
       {servers === null ? (
         <div className="py-3 flex justify-center text-zinc-500">
-          <Loader2 size={16} className="animate-spin" aria-label="Loading tool servers" />
+          <Loader2 size={16} className="animate-spin" aria-label={t('Loading tool servers')} />
         </div>
       ) : servers.length === 0 ? (
         <div className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg border border-dashed border-zinc-800 text-[11px] text-zinc-500">
           <span className="flex items-center gap-1.5">
             <Plug size={13} />
-            No tool servers yet.
+            {t('No tool servers yet.')}
           </span>
           {onManageServers && (
             <button type="button" onClick={onManageServers} className="font-medium text-sky-300 hover:text-sky-200">
-              Add one
+              {t('Add one')}
             </button>
           )}
         </div>
@@ -110,7 +112,7 @@ export const KwantToolsPicker: React.FC<KwantToolsPickerProps> = ({ model, selec
                   aria-checked={on}
                   aria-disabled={paused || undefined}
                   disabled={paused}
-                  aria-label={paused ? `${s.name}, paused in Tools` : undefined}
+                  aria-label={paused ? t('{name}, paused in Tools', { name: s.name }) : undefined}
                   onClick={() => toggle(s.id)}
                   className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors ${
                     paused ? 'cursor-not-allowed opacity-60' : 'hover:bg-zinc-900/60'
@@ -121,7 +123,7 @@ export const KwantToolsPicker: React.FC<KwantToolsPickerProps> = ({ model, selec
                     <span className="block text-xs text-zinc-200 truncate">{s.name}</span>
                     {paused && (
                       <span className="block text-[10px] text-zinc-500">
-                        Paused in Tools{selected.includes(s.id) ? '. This bot gets it once it’s on.' : ''}
+                        {selected.includes(s.id) ? t('Paused in Tools. This bot gets it once it’s on.') : t('Paused in Tools')}
                       </span>
                     )}
                   </span>

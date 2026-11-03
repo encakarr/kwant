@@ -4,6 +4,7 @@ import { ClaudeLoginError, ClaudeLoginSession, claudeLoginApi, isClaudeSignInUrl
 import type { EngineInfo } from '../engines';
 import { playSfx } from '../audio/chiptune';
 import { inDesktopApp } from '../externalLinks';
+import { t } from '../i18n';
 
 const POLL_MS = 2000;
 
@@ -56,25 +57,25 @@ export const ClaudeSignIn: React.FC<{ onSignedIn: () => void; focusRequest?: num
 
   /** Sends the blank tab to the link once there is one; once only. */
   const showLink = useCallback((s: ClaudeLoginSession) => {
-    const t = tab.current;
+    const w = tab.current;
     if (!isClaudeSignInUrl(s.url)) return;
-    if (!t && toBrowser.current) {
+    if (!w && toBrowser.current) {
       toBrowser.current = false;
       window.location.assign(s.url);
       return;
     }
-    if (!t) return;
+    if (!w) return;
     tab.current = null;
-    if (t.closed) setBlocked(true);
-    else t.location.replace(s.url);
+    if (w.closed) setBlocked(true);
+    else w.location.replace(s.url);
   }, []);
 
   const start = async () => {
     playSfx('click');
-    const t = openBlankTab();
-    tab.current = t;
+    const w = openBlankTab();
+    tab.current = w;
     toBrowser.current = inDesktopApp();
-    setBlocked(!t && !toBrowser.current);
+    setBlocked(!w && !toBrowser.current);
     setBusy('start');
     setError(null);
     setCode('');
@@ -90,11 +91,11 @@ export const ClaudeSignIn: React.FC<{ onSignedIn: () => void; focusRequest?: num
       if (!alive.current) return;
       setSession(s);
       if (isLoginActive(s.state)) showLink(s);
-      else t?.close();
+      else w?.close();
     } catch (e) {
-      t?.close();
+      w?.close();
       tab.current = null;
-      if (alive.current) setError(e instanceof Error ? e.message : 'Couldn’t start the sign-in.');
+      if (alive.current) setError(e instanceof Error ? e.message : t('Couldn’t start the sign-in.'));
     } finally {
       if (alive.current) setBusy(null);
     }
@@ -117,11 +118,11 @@ export const ClaudeSignIn: React.FC<{ onSignedIn: () => void; focusRequest?: num
       if (!alive.current) return;
       if (err instanceof ClaudeLoginError && err.status === 404) {
         setCode('');
-        setSession({ ...session, state: 'expired', detail: 'This sign-in has stopped. Start it again.' });
+        setSession({ ...session, state: 'expired', detail: t('This sign-in has stopped. Start it again.') });
       } else {
         // A malformed code: the sign-in is still waiting for a good one.
         setSession({ ...session, state: 'waiting_for_code' });
-        setError(err instanceof Error ? err.message : 'Couldn’t send the code.');
+        setError(err instanceof Error ? err.message : t('Couldn’t send the code.'));
       }
     } finally {
       if (alive.current) setBusy(null);
@@ -138,7 +139,7 @@ export const ClaudeSignIn: React.FC<{ onSignedIn: () => void; focusRequest?: num
     } catch (err) {
       // Already gone is as good as cancelled.
       if (!(err instanceof ClaudeLoginError && err.status === 404)) {
-        if (alive.current) setError(err instanceof Error ? err.message : 'Couldn’t cancel the sign-in.');
+        if (alive.current) setError(err instanceof Error ? err.message : t('Couldn’t cancel the sign-in.'));
         if (alive.current) setBusy(null);
         return;
       }
@@ -158,7 +159,7 @@ export const ClaudeSignIn: React.FC<{ onSignedIn: () => void; focusRequest?: num
   useEffect(() => {
     if (!session || !active || busy) return;
     const sid = session.session_id;
-    const t = window.setTimeout(async () => {
+    const timer = window.setTimeout(async () => {
       try {
         const s = await claudeLoginApi.get(sid);
         if (!alive.current) return;
@@ -166,12 +167,12 @@ export const ClaudeSignIn: React.FC<{ onSignedIn: () => void; focusRequest?: num
         if (s.state === 'waiting_for_code') showLink(s);
       } catch (err) {
         if (alive.current && err instanceof ClaudeLoginError && err.status === 404) {
-          setSession((cur) => (cur?.session_id === sid ? { ...cur, state: 'expired', detail: 'This sign-in has stopped. Start it again.' } : cur));
+          setSession((cur) => (cur?.session_id === sid ? { ...cur, state: 'expired', detail: t('This sign-in has stopped. Start it again.') } : cur));
         }
         // Anything else: try again next time.
       }
     }, POLL_MS);
-    return () => window.clearTimeout(t);
+    return () => window.clearTimeout(timer);
   }, [session, active, busy, showLink]);
 
   // Done: the server has re-checked Claude already.
@@ -209,19 +210,19 @@ export const ClaudeSignIn: React.FC<{ onSignedIn: () => void; focusRequest?: num
         <div className="flex items-center gap-2 flex-wrap">
           <button ref={startRef} type="button" onClick={start} disabled={busy === 'start'} className={primaryBtn}>
             {busy === 'start' ? <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <LogIn size={12} aria-hidden="true" />}
-            {busy === 'start' ? 'Starting…' : 'Sign in with Claude'}
+            {busy === 'start' ? t('Starting…') : t('Sign in with Claude')}
           </button>
-          <span className="text-[10.5px] text-zinc-500">Opens claude.ai in a new tab, then you paste back a one-time code.</span>
+          <span className="text-[10.5px] text-zinc-500">{t('Opens claude.ai in a new tab, then you paste back a one-time code.')}</span>
         </div>
       )}
 
       {state === 'starting' && (
         <div className="flex items-center gap-2 flex-wrap">
           <p className="flex items-center gap-1.5 text-[11px] text-zinc-300" role="status">
-            <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> Starting Claude Code’s sign-in…
+            <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> {t('Starting Claude Code’s sign-in…')}
           </p>
           <button type="button" onClick={cancel} disabled={busy === 'cancel'} className={quietBtn}>
-            Cancel
+            {t('Cancel')}
           </button>
         </div>
       )}
@@ -229,19 +230,19 @@ export const ClaudeSignIn: React.FC<{ onSignedIn: () => void; focusRequest?: num
       {(state === 'waiting_for_code' || state === 'verifying') && session && (
         <form onSubmit={submit} className="rounded-lg border border-sky-500/30 bg-sky-500/5 p-2.5 space-y-2">
           <p id={`claude-code-help-${session.session_id}`} className="text-[11px] text-zinc-200 leading-snug">
-            Finish signing in on claude.ai, then paste the code it shows you here.
+            {t('Finish signing in on claude.ai, then paste the code it shows you here.')}
           </p>
           {url && (
             <p className="text-[11px] text-zinc-400">
-              {blocked ? 'Your browser didn’t open a new tab. ' : inDesktopApp() ? 'Opened claude.ai in your browser. ' : 'Closed the tab? '}
+              {blocked ? t('Your browser didn’t open a new tab.') : inDesktopApp() ? t('Opened claude.ai in your browser.') : t('Closed the tab?')}{' '}
               <a href={url} target="_blank" rel="noopener noreferrer" className={link} onClick={() => setBlocked(false)}>
-                {blocked ? 'Open claude.ai to sign in' : 'Open claude.ai again'} <ExternalLink size={10} aria-hidden="true" />
+                {blocked ? t('Open claude.ai to sign in') : t('Open claude.ai again')} <ExternalLink size={10} aria-hidden="true" />
               </a>
             </p>
           )}
           <div className="flex items-center gap-1.5 flex-wrap">
             <label htmlFor={`claude-code-${session.session_id}`} className="sr-only">
-              Code from claude.ai
+              {t('Code from claude.ai')}
             </label>
             <input
               ref={codeRef}
@@ -254,29 +255,29 @@ export const ClaudeSignIn: React.FC<{ onSignedIn: () => void; focusRequest?: num
               value={code}
               onChange={(e) => setCode(e.target.value)}
               readOnly={state === 'verifying'}
-              placeholder="Paste the code"
+              placeholder={t('Paste the code')}
               className="flex-1 min-w-[10rem] bg-zinc-950 border border-zinc-700 rounded-md px-2 py-1 text-[11px] font-mono text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-sky-500 select-text"
             />
             <button type="submit" disabled={state === 'verifying' || !code.trim()} className={primaryBtn}>
               {state === 'verifying' && <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />}
-              {state === 'verifying' ? 'Checking…' : 'Finish sign-in'}
+              {state === 'verifying' ? t('Checking…') : t('Finish sign-in')}
             </button>
             <button type="button" onClick={cancel} disabled={busy === 'cancel' || busy === 'code'} className={quietBtn}>
-              Cancel
+              {t('Cancel')}
             </button>
           </div>
           <p className="text-[10.5px] text-zinc-500 leading-snug">
-            Why a code? The server runs the sign-in in the background, so claude.ai can’t hand the login back by itself. The code works once and isn’t kept.
+            {t('Why a code? The server runs the sign-in in the background, so claude.ai can’t hand the login back by itself. The code works once and isn’t kept.')}
           </p>
           <p className="sr-only" role="status">
-            {state === 'verifying' ? 'Checking the code with Claude…' : ''}
+            {state === 'verifying' ? t('Checking the code with Claude…') : ''}
           </p>
         </form>
       )}
 
       {state === 'done' && (
         <p className="flex items-center gap-1.5 text-[11px] text-emerald-300" role="status">
-          <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> Signed in. Updating…
+          <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> {t('Signed in. Updating…')}
         </p>
       )}
 
@@ -286,7 +287,7 @@ export const ClaudeSignIn: React.FC<{ onSignedIn: () => void; focusRequest?: num
             <AlertTriangle size={12} className="shrink-0" aria-hidden="true" /> {failure}
           </p>
           <button ref={retryRef} type="button" onClick={start} disabled={busy === 'start'} className={quietBtn}>
-            <RotateCcw size={11} aria-hidden="true" /> Try again
+            <RotateCcw size={11} aria-hidden="true" /> {t('Try again')}
           </button>
         </div>
       )}
@@ -331,7 +332,7 @@ export const ClaudeSignOut: React.FC<{ onSignedOut: (engines: EngineInfo[]) => v
       if (Array.isArray(d?.engines)) onSignedOut(d.engines);
     } catch (e) {
       setBusy(false);
-      setError(e instanceof Error ? e.message : 'Couldn’t sign out.');
+      setError(e instanceof Error ? e.message : t('Couldn’t sign out.'));
     }
   };
 
@@ -361,7 +362,7 @@ export const ClaudeSignOut: React.FC<{ onSignedOut: (engines: EngineInfo[]) => v
         }}
         className="mt-1 inline-flex items-center gap-1 text-[10.5px] text-zinc-500 hover:text-rose-300 underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500 rounded"
       >
-        <LogOut size={10} aria-hidden="true" /> Sign out
+        <LogOut size={10} aria-hidden="true" /> {t('Sign out')}
       </button>
       {open && (
         <div className="kw-dialog kw-dialog-bottom fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-4" onMouseDown={(e) => e.target === e.currentTarget && close()}>
@@ -374,11 +375,11 @@ export const ClaudeSignOut: React.FC<{ onSignedOut: (engines: EngineInfo[]) => v
             className="kw-dialog-panel w-full max-w-sm bg-zinc-900 border border-zinc-700 rounded-xl p-4 shadow-2xl space-y-3 text-zinc-100"
           >
             <h4 id="claude-signout-title" className="text-sm font-semibold">
-              Sign out of Claude?
+              {t('Sign out of Claude?')}
             </h4>
             <div id="claude-signout-desc" className="space-y-1.5 text-xs text-zinc-300 leading-relaxed">
-              <p>Every bot in this space will stop using this account until you sign in again.</p>
-              <p className="text-zinc-400">This signs Claude Code out on this computer, so anything else here that uses the same Claude Code login is signed out too.</p>
+              <p>{t('Every bot in this space will stop using this account until you sign in again.')}</p>
+              <p className="text-zinc-400">{t('This signs Claude Code out on this computer, so anything else here that uses the same Claude Code login is signed out too.')}</p>
             </div>
             {error && (
               <p className="flex items-center gap-1.5 text-[11px] text-rose-300" role="alert">
@@ -387,7 +388,7 @@ export const ClaudeSignOut: React.FC<{ onSignedOut: (engines: EngineInfo[]) => v
             )}
             <div className="flex justify-end gap-2 pt-1">
               <button ref={cancelRef} type="button" onClick={close} disabled={busy} className={quietBtn}>
-                Cancel
+                {t('Cancel')}
               </button>
               <button
                 ref={confirmRef}
@@ -397,7 +398,7 @@ export const ClaudeSignOut: React.FC<{ onSignedOut: (engines: EngineInfo[]) => v
                 className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium text-white bg-rose-600 hover:bg-rose-500 disabled:opacity-50 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-400"
               >
                 {busy && <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />}
-                {busy ? 'Signing out…' : 'Sign out'}
+                {busy ? t('Signing out…') : t('Sign out')}
               </button>
             </div>
           </div>

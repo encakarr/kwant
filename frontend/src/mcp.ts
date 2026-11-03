@@ -1,5 +1,6 @@
 // MCP server helpers shared by the servers screen, the per-kwant picker and chat.
 // Contract: docs/mcp-api.md
+import { t, tc } from './i18n';
 
 export type McpTransport = 'stdio' | 'http';
 
@@ -79,17 +80,26 @@ export type McpPresetCategory = 'files' | 'web' | 'data' | 'productivity' | 'bus
 
 /** Catalog groups, in display order. */
 export const MCP_PRESET_CATEGORIES: Array<{ id: McpPresetCategory; label: string }> = [
-  { id: 'files', label: 'Files & code' },
-  { id: 'web', label: 'Web' },
-  { id: 'data', label: 'Data' },
-  { id: 'productivity', label: 'Productivity' },
-  { id: 'business', label: 'Payments & customers' },
-  { id: 'creative', label: 'Design & media' },
-  { id: 'devtools', label: 'Dev tools & hosting' },
+  { id: 'files', label: t('Files & code') },
+  { id: 'web', label: t('Web') },
+  { id: 'data', label: t('Data') },
+  { id: 'productivity', label: t('Productivity') },
+  { id: 'business', label: t('Payments & customers') },
+  { id: 'creative', label: t('Design & media') },
+  { id: 'devtools', label: t('Dev tools & hosting') },
 ];
 
 /** What a preset needs before it works, shown as small tags on its card. */
 export type McpPresetNeed = 'Node.js' | 'uv' | 'API key' | 'Token' | 'Sign-in';
+
+/** How each need reads on a card; the values above stay as they are for logic and search. */
+export const MCP_NEED_LABELS: Record<McpPresetNeed, string> = {
+  'Node.js': 'Node.js',
+  uv: 'uv',
+  'API key': t('API key'),
+  Token: t('Token'),
+  'Sign-in': tc('needed', 'Sign-in'),
+};
 
 export interface McpPreset {
   id: string;
@@ -133,8 +143,8 @@ export const MCP_PRESETS: McpPreset[] = [
   {
     // npm @modelcontextprotocol/server-filesystem 1.0.0
     id: 'files',
-    label: 'Files in a folder',
-    blurb: 'Read and write files in one folder you choose.',
+    label: t('Files in a folder'),
+    blurb: t('Read and write files in one folder you choose.'),
     category: 'files',
     needs: ['Node.js'],
     source: 'https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem',
@@ -144,7 +154,7 @@ export const MCP_PRESETS: McpPreset[] = [
     // PyPI mcp-server-git 2026.10.10
     id: 'git',
     label: 'Git',
-    blurb: 'Status, diffs, history and commits in one local repository.',
+    blurb: t('Status, diffs, history and commits in one local repository.'),
     category: 'files',
     needs: ['uv'],
     source: 'https://github.com/modelcontextprotocol/servers/tree/main/src/git',
@@ -155,7 +165,7 @@ export const MCP_PRESETS: McpPreset[] = [
     // takes a personal access token. Replaces the deprecated @modelcontextprotocol/server-github.
     id: 'github',
     label: 'GitHub',
-    blurb: 'Issues, pull requests, code search and Actions. Paste “Bearer” and your token.',
+    blurb: t('Issues, pull requests, code search and Actions. Paste “Bearer” and your token.'),
     category: 'files',
     needs: ['Token'],
     source: 'https://github.com/github/github-mcp-server',
@@ -164,8 +174,8 @@ export const MCP_PRESETS: McpPreset[] = [
   {
     // PyPI mcp-server-fetch 2026.10.10
     id: 'fetch',
-    label: 'Read web pages',
-    blurb: 'Fetch a URL and turn the page into readable text.',
+    label: t('Read web pages'),
+    blurb: t('Fetch a URL and turn the page into readable text.'),
     category: 'web',
     needs: ['uv'],
     source: 'https://github.com/modelcontextprotocol/servers/tree/main/src/fetch',
@@ -174,8 +184,8 @@ export const MCP_PRESETS: McpPreset[] = [
   {
     // npm @playwright/mcp 0.0.83. Headless so it also runs on a server without a screen.
     id: 'playwright',
-    label: 'Playwright browser',
-    blurb: 'Drive a real browser: open pages, click, fill forms, take screenshots.',
+    label: t('Playwright browser'),
+    blurb: t('Drive a real browser: open pages, click, fill forms, take screenshots.'),
     category: 'web',
     needs: ['Node.js'],
     source: 'https://github.com/microsoft/playwright-mcp',
@@ -185,17 +195,17 @@ export const MCP_PRESETS: McpPreset[] = [
     // npm @brave/brave-search-mcp-server 2.1.4. Replaces the deprecated @modelcontextprotocol/server-brave-search.
     id: 'brave-search',
     label: 'Brave Search',
-    blurb: 'Web, news and image search through the Brave Search API.',
+    blurb: t('Web, news and image search through the Brave Search API.'),
     category: 'web',
     needs: ['Node.js', 'API key'],
     source: 'https://github.com/brave/brave-search-mcp-server',
-    form: stdioPreset('brave-search', 'npx -y @brave/brave-search-mcp-server --transport stdio', [['BRAVE_API_KEY', 'From api-dashboard.search.brave.com', true]]),
+    form: stdioPreset('brave-search', 'npx -y @brave/brave-search-mcp-server --transport stdio', [['BRAVE_API_KEY', t('From api-dashboard.search.brave.com'), true]]),
   },
   {
     // Upstash's hosted server; works without a key, a key (Authorization: Bearer …) raises limits.
     id: 'context7',
-    label: 'Context7 docs',
-    blurb: 'Up-to-date docs and code examples for libraries and frameworks.',
+    label: t('Context7 docs'),
+    blurb: t('Up-to-date docs and code examples for libraries and frameworks.'),
     category: 'web',
     needs: [],
     source: 'https://github.com/upstash/context7',
@@ -206,7 +216,7 @@ export const MCP_PRESETS: McpPreset[] = [
     // Restricted mode keeps it read-only.
     id: 'postgres',
     label: 'PostgreSQL',
-    blurb: 'Read-only queries, schema browsing and index advice for a Postgres database.',
+    blurb: t('Read-only queries, schema browsing and index advice for a Postgres database.'),
     category: 'data',
     needs: ['uv'],
     source: 'https://github.com/crystaldba/postgres-mcp',
@@ -216,7 +226,7 @@ export const MCP_PRESETS: McpPreset[] = [
     // Supabase's hosted server with sign-in.
     id: 'supabase',
     label: 'Supabase',
-    blurb: 'Projects, tables, SQL, logs and edge functions. Sign in after adding.',
+    blurb: t('Projects, tables, SQL, logs and edge functions. Sign in after adding.'),
     category: 'data',
     needs: ['Sign-in'],
     source: 'https://supabase.com/docs/guides/getting-started/mcp',
@@ -225,8 +235,8 @@ export const MCP_PRESETS: McpPreset[] = [
   {
     // npm @modelcontextprotocol/server-memory 1.0.0
     id: 'memory',
-    label: 'Memory',
-    blurb: 'A small knowledge graph bots can save facts to and recall later.',
+    label: t('Memory'),
+    blurb: t('A small knowledge graph bots can save facts to and recall later.'),
     category: 'data',
     needs: ['Node.js'],
     source: 'https://github.com/modelcontextprotocol/servers/tree/main/src/memory',
@@ -236,7 +246,7 @@ export const MCP_PRESETS: McpPreset[] = [
     // Notion's hosted server with sign-in.
     id: 'notion',
     label: 'Notion',
-    blurb: 'Search, read and edit pages and databases. Sign in after adding.',
+    blurb: t('Search, read and edit pages and databases. Sign in after adding.'),
     category: 'productivity',
     needs: ['Sign-in'],
     source: 'https://developers.notion.com/docs/mcp',
@@ -246,7 +256,7 @@ export const MCP_PRESETS: McpPreset[] = [
     // Linear's hosted server with sign-in.
     id: 'linear',
     label: 'Linear',
-    blurb: 'Find, create and update issues, projects and comments. Sign in after adding.',
+    blurb: t('Find, create and update issues, projects and comments. Sign in after adding.'),
     category: 'productivity',
     needs: ['Sign-in'],
     source: 'https://linear.app/docs/mcp',
@@ -256,7 +266,7 @@ export const MCP_PRESETS: McpPreset[] = [
     // Atlassian's hosted Rovo MCP server with sign-in.
     id: 'atlassian',
     label: 'Jira & Confluence',
-    blurb: 'Search and update Jira issues and Confluence pages. Sign in after adding.',
+    blurb: t('Search and update Jira issues and Confluence pages. Sign in after adding.'),
     category: 'productivity',
     needs: ['Sign-in'],
     source: 'https://github.com/atlassian/atlassian-mcp-server',
@@ -266,7 +276,7 @@ export const MCP_PRESETS: McpPreset[] = [
     // Sentry's hosted server with sign-in.
     id: 'sentry',
     label: 'Sentry',
-    blurb: 'Look into errors, issues and releases. Sign in after adding.',
+    blurb: t('Look into errors, issues and releases. Sign in after adding.'),
     category: 'devtools',
     needs: ['Sign-in'],
     source: 'https://github.com/getsentry/sentry-mcp',
@@ -275,8 +285,8 @@ export const MCP_PRESETS: McpPreset[] = [
   {
     // npm @modelcontextprotocol/server-sequential-thinking 1.0.0
     id: 'sequential-thinking',
-    label: 'Sequential thinking',
-    blurb: 'Helps a bot plan step by step and revise its plan on hard problems.',
+    label: t('Sequential thinking'),
+    blurb: t('Helps a bot plan step by step and revise its plan on hard problems.'),
     category: 'devtools',
     needs: ['Node.js'],
     source: 'https://github.com/modelcontextprotocol/servers/tree/main/src/sequentialthinking',
@@ -287,7 +297,7 @@ export const MCP_PRESETS: McpPreset[] = [
     // Checked 2026-10-24: automatic client registration at mcp.cloudflare.com/register.
     id: 'cloudflare',
     label: 'Cloudflare',
-    blurb: 'Workers, DNS, R2, D1 and the rest of your Cloudflare account. Sign in after adding.',
+    blurb: t('Workers, DNS, R2, D1 and the rest of your Cloudflare account. Sign in after adding.'),
     category: 'devtools',
     needs: ['Sign-in'],
     source: 'https://developers.cloudflare.com/agents/model-context-protocol/mcp-servers-for-cloudflare/',
@@ -297,7 +307,7 @@ export const MCP_PRESETS: McpPreset[] = [
     // Vercel's hosted server with sign-in. Checked 2026-10-24: registration at api.vercel.com.
     id: 'vercel',
     label: 'Vercel',
-    blurb: 'Projects, deployments and build logs. Sign in after adding.',
+    blurb: t('Projects, deployments and build logs. Sign in after adding.'),
     category: 'devtools',
     needs: ['Sign-in'],
     source: 'https://vercel.com/docs/mcp/vercel-mcp',
@@ -307,7 +317,7 @@ export const MCP_PRESETS: McpPreset[] = [
     // Neon's hosted server with sign-in. Checked 2026-10-24: registration at mcp.neon.tech/api/register.
     id: 'neon',
     label: 'Neon Postgres',
-    blurb: 'Neon projects, branches and SQL. Sign in after adding.',
+    blurb: t('Neon projects, branches and SQL. Sign in after adding.'),
     category: 'data',
     needs: ['Sign-in'],
     source: 'https://neon.com/docs/ai/neon-mcp-server',
@@ -317,7 +327,7 @@ export const MCP_PRESETS: McpPreset[] = [
     // Airtable's hosted server with sign-in. Checked 2026-10-24: registration at airtable.com/oauth2/v1/register.
     id: 'airtable',
     label: 'Airtable',
-    blurb: 'Read and update bases, tables and records. Sign in after adding.',
+    blurb: t('Read and update bases, tables and records. Sign in after adding.'),
     category: 'data',
     needs: ['Sign-in'],
     source: 'https://airtable.com/developers/agents/mcp/getting-started',
@@ -327,7 +337,7 @@ export const MCP_PRESETS: McpPreset[] = [
     // PostHog's hosted server with sign-in. Checked 2026-10-24: registration at oauth.posthog.com.
     id: 'posthog',
     label: 'PostHog',
-    blurb: 'Product analytics, feature flags and errors. Sign in after adding.',
+    blurb: t('Product analytics, feature flags and errors. Sign in after adding.'),
     category: 'data',
     needs: ['Sign-in'],
     source: 'https://posthog.com/docs/model-context-protocol',
@@ -337,7 +347,7 @@ export const MCP_PRESETS: McpPreset[] = [
     // monday.com's hosted server with sign-in. Checked 2026-10-24: registration at auth.monday.com.
     id: 'monday',
     label: 'monday.com',
-    blurb: 'Boards, items and updates. Sign in after adding.',
+    blurb: t('Boards, items and updates. Sign in after adding.'),
     category: 'productivity',
     needs: ['Sign-in'],
     source: 'https://github.com/mondaycom/mcp',
@@ -348,7 +358,7 @@ export const MCP_PRESETS: McpPreset[] = [
     // Checked 2026-10-24: registration at mcp.zapier.com/api/v1/oauth/register.
     id: 'zapier',
     label: 'Zapier',
-    blurb: 'Thousands of apps through the Zapier actions you pick. Sign in after adding.',
+    blurb: t('Thousands of apps through the Zapier actions you pick. Sign in after adding.'),
     category: 'productivity',
     needs: ['Sign-in'],
     source: 'https://docs.zapier.com/mcp/get-started/connect/other',
@@ -358,7 +368,7 @@ export const MCP_PRESETS: McpPreset[] = [
     // Stripe's hosted server with sign-in. Checked 2026-10-24: registration at access.stripe.com.
     id: 'stripe',
     label: 'Stripe',
-    blurb: 'Customers, payments, invoices and Stripe docs. Sign in after adding.',
+    blurb: t('Customers, payments, invoices and Stripe docs. Sign in after adding.'),
     category: 'business',
     needs: ['Sign-in'],
     source: 'https://docs.stripe.com/mcp',
@@ -368,7 +378,7 @@ export const MCP_PRESETS: McpPreset[] = [
     // Intercom's hosted server with sign-in. Checked 2026-10-24: registration at mcp.intercom.com/register.
     id: 'intercom',
     label: 'Intercom',
-    blurb: 'Search conversations and contacts. Sign in after adding.',
+    blurb: t('Search conversations and contacts. Sign in after adding.'),
     category: 'business',
     needs: ['Sign-in'],
     source: 'https://developers.intercom.com/docs/guides/mcp',
@@ -379,7 +389,7 @@ export const MCP_PRESETS: McpPreset[] = [
     // Checked 2026-10-24: registration at auth.picsart.com/api/oauth2/register.
     id: 'picsart',
     label: 'Picsart',
-    blurb: 'Generate and edit images and video, remove backgrounds. Sign in after adding.',
+    blurb: t('Generate and edit images and video, remove backgrounds. Sign in after adding.'),
     category: 'creative',
     needs: ['Sign-in'],
     source: 'https://picsart.github.io/picsart-mcp-cli-docs/guide/mcp-quickstart',
@@ -410,46 +420,46 @@ export const COMPOSIO_ONLY_APPS: ComposioOnlyApp[] = [
   {
     id: 'gmail',
     label: 'Gmail',
-    blurb: 'Read, search, draft and send email.',
+    blurb: t('Read, search, draft and send email.'),
     category: 'productivity',
     toolkit: 'gmail',
-    why: 'Google’s own Gmail server is a preview that needs your own Google Cloud sign-in app.',
+    why: t('Google’s own Gmail server is a preview that needs your own Google Cloud sign-in app.'),
     source: 'https://docs.composio.dev/toolkits/gmail',
   },
   {
     id: 'google-calendar',
     label: 'Google Calendar',
-    blurb: 'See, create and move events.',
+    blurb: t('See, create and move events.'),
     category: 'productivity',
     toolkit: 'googlecalendar',
-    why: 'Google has no Calendar server that apps can sign in to on their own.',
+    why: t('Google has no Calendar server that apps can sign in to on their own.'),
     source: 'https://docs.composio.dev/toolkits/googlecalendar',
   },
   {
     id: 'google-drive',
     label: 'Google Drive',
-    blurb: 'Find, read and upload files.',
+    blurb: t('Find, read and upload files.'),
     category: 'productivity',
     toolkit: 'googledrive',
-    why: 'Google has no Drive server that apps can sign in to on their own.',
+    why: t('Google has no Drive server that apps can sign in to on their own.'),
     source: 'https://docs.composio.dev/toolkits/googledrive',
   },
   {
     id: 'slack',
     label: 'Slack',
-    blurb: 'Read channels and send messages.',
+    blurb: t('Read channels and send messages.'),
     category: 'productivity',
     toolkit: 'slack',
-    why: 'Slack’s own server only works with a Slack app you register first.',
+    why: t('Slack’s own server only works with a Slack app you register first.'),
     source: 'https://docs.composio.dev/toolkits/slack',
   },
   {
     id: 'figma',
     label: 'Figma',
-    blurb: 'Read files, frames and comments.',
+    blurb: t('Read files, frames and comments.'),
     category: 'creative',
     toolkit: 'figma',
-    why: 'Figma’s own server only accepts the apps on Figma’s list.',
+    why: t('Figma’s own server only accepts the apps on Figma’s list.'),
     source: 'https://docs.composio.dev/toolkits/figma',
   },
 ];
@@ -537,19 +547,19 @@ export const toServerName = (label: string): string =>
 /** Returns a friendly message for the first problem in the form, or null when it can be saved. */
 export const validateMcpForm = (form: McpFormState): string | null => {
   const name = form.name.trim();
-  if (!name) return 'Give the server a short name.';
+  if (!name) return t('Give the server a short name.');
   if (!NAME_RE.test(name) || name.includes('__'))
-    return 'Use letters, numbers, - or _ for the name (no spaces, up to 48 characters).';
-  if (name.toLowerCase() === 'kwnt') return 'That name is reserved for the built-in tools, pick another.';
+    return t('Use letters, numbers, - or _ for the name (no spaces, up to 48 characters).');
+  if (name.toLowerCase() === 'kwnt') return t('That name is reserved for the built-in tools, pick another.');
   if (form.transport === 'stdio') {
-    if (splitCommandLine(form.commandLine).length === 0) return 'Add the command that starts the server.';
+    if (splitCommandLine(form.commandLine).length === 0) return t('Add the command that starts the server.');
     const bad = form.env.find((r) => r.key.trim() && !ENV_KEY_RE.test(r.key.trim()));
-    if (bad) return `"${bad.key}" isn't a valid variable name (letters, numbers and _ only).`;
+    if (bad) return t('"{key}" isn\'t a valid variable name (letters, numbers and _ only).', { key: bad.key });
   } else {
-    if (!/^https?:\/\/\S+$/.test(form.url.trim())) return 'The URL should start with http:// or https://.';
+    if (!/^https?:\/\/\S+$/.test(form.url.trim())) return t('The URL should start with http:// or https://.');
   }
   if (!Number.isInteger(form.timeout_secs) || form.timeout_secs < 1 || form.timeout_secs > 600)
-    return 'Timeout should be between 1 and 600 seconds.';
+    return t('Timeout should be between 1 and 600 seconds.');
   return null;
 };
 
@@ -675,26 +685,26 @@ export const mcpSupportFor = (preferredModel: string, keys: EngineKeys): { suppo
   if (model === 'local_ollama' || model.startsWith('ollama/')) return { supported: true, note: null };
   // A Custom API pin, before the name checks: its model ids often say gpt or claude.
   if (model === 'custom' || /^custom[:/]/.test(model)) {
-    return { supported: true, note: 'Tools work through an OpenAI-compatible server. An Anthropic-compatible one runs without them.' };
+    return { supported: true, note: t('Tools work through an OpenAI-compatible server. An Anthropic-compatible one runs without them.') };
   }
   if (model.includes('claude')) {
     return keys.anthropic
-      ? { supported: false, note: 'With an Anthropic API key set, Claude runs through the Anthropic API, which can’t use MCP tools yet. Remove the key to use the Claude Code CLI instead.' }
+      ? { supported: false, note: t('With an Anthropic API key set, Claude runs through the Anthropic API, which can’t use MCP tools yet. Remove the key to use the Claude Code CLI instead.') }
       : { supported: true, note: null };
   }
   if (model.includes('grok')) {
     return keys.xai
       ? { supported: true, note: null }
-      : { supported: false, note: 'The Grok CLI can’t use MCP tools yet. Add an xAI API key in Settings to use them with Grok.' };
+      : { supported: false, note: t('The Grok CLI can’t use MCP tools yet. Add an xAI API key in Settings to use them with Grok.') };
   }
   if (model.includes('codex') || model.includes('gpt') || model.includes('openai')) {
     return keys.openai
       ? { supported: true, note: null }
-      : { supported: false, note: 'The Codex CLI can’t use MCP tools yet. Add an OpenAI API key in Settings to use them with this engine.' };
+      : { supported: false, note: t('The Codex CLI can’t use MCP tools yet. Add an OpenAI API key in Settings to use them with this engine.') };
   }
   return {
     supported: true,
-    note: 'Laya picks the engine for each message. Tools work with Claude Code, Ollama and API keys, but not through the Codex or Grok CLIs.',
+    note: t('Laya picks the engine for each message. Tools work with Claude Code, Ollama and API keys, but not through the Codex or Grok CLIs.'),
   };
 };
 
@@ -715,7 +725,7 @@ export interface StoredStatus {
 
 export const toStoredStatus = (result: Pick<McpTestResult, 'ok' | 'tools' | 'auth_required'>, at: string): StoredStatus => ({
   ok: result.ok === true,
-  tools: (result.tools ?? []).map((t) => t.name).filter((n): n is string => typeof n === 'string'),
+  tools: (result.tools ?? []).map((tool) => tool.name).filter((n): n is string => typeof n === 'string'),
   at,
   ...(result.ok !== true && result.auth_required === true ? { auth_required: true } : {}),
 });

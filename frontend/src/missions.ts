@@ -5,6 +5,7 @@
 // and every non-GET route is person-only on the server.
 
 import { PersonCancelledError, personFetch } from './auth';
+import { locale, t, tc } from './i18n';
 import { relativeTime } from './away';
 import { Capabilities, CapabilityChange, CapabilityChangedEvent, ENGINE_CANT_SANDBOX, ProposalDecision, ProposalStatus, Scorecard, TaskTier, Tier, TierProposal } from './flightSchool';
 import type { Risk, RiskResolution, TaskRisks } from './auditor';
@@ -456,11 +457,11 @@ export interface Insights {
 export type Column = 'ready' | 'working' | 'needs_you' | 'review' | 'verified';
 
 export const COLUMNS: Array<{ key: Column; label: string; hint: string; empty: string }> = [
-  { key: 'ready', label: 'Ready', hint: 'Can start, or waiting on another task', empty: 'Nothing waiting to start.' },
-  { key: 'working', label: 'Working', hint: 'A bot is on it now', empty: 'No bot is working on a task right now.' },
-  { key: 'needs_you', label: 'Needs you', hint: 'A question, approval or step only you can do', empty: 'Nothing needs you.' },
-  { key: 'review', label: 'Review', hint: 'Bot says done; waiting for a check', empty: 'Nothing waiting for a check.' },
-  { key: 'verified', label: 'Verified', hint: 'A check passed', empty: 'Nothing verified yet. A task gets here only when a check passes.' },
+  { key: 'ready', label: t('Ready'), hint: t('Can start, or waiting on another task'), empty: t('Nothing waiting to start.') },
+  { key: 'working', label: t('Working'), hint: t('A bot is on it now'), empty: t('No bot is working on a task right now.') },
+  { key: 'needs_you', label: t('Needs you'), hint: t('A question, approval or step only you can do'), empty: t('Nothing needs you.') },
+  { key: 'review', label: tc('task status', 'Review'), hint: t('Bot says done; waiting for a check'), empty: t('Nothing waiting for a check.') },
+  { key: 'verified', label: t('Verified'), hint: t('A check passed'), empty: t('Nothing verified yet. A task gets here only when a check passes.') },
 ];
 
 /**
@@ -529,52 +530,52 @@ export function groupByColumn(tasks: Task[]): Record<Column, Task[]> {
 export type Tone = 'emerald' | 'amber' | 'rose' | 'sky' | 'violet' | 'zinc';
 
 export const STATE_LABELS: Record<TaskState, { label: string; tone: Tone }> = {
-  backlog: { label: 'Waiting', tone: 'zinc' },
-  ready: { label: 'Ready', tone: 'sky' },
-  working: { label: 'Working', tone: 'violet' },
-  needs_you: { label: 'Needs you', tone: 'amber' },
-  review: { label: 'Review', tone: 'sky' },
-  verified: { label: 'Verified', tone: 'emerald' },
-  blocked: { label: 'Blocked', tone: 'rose' },
-  failed: { label: 'Failed', tone: 'rose' },
-  cancelled: { label: 'Cancelled', tone: 'zinc' },
+  backlog: { label: t('Waiting'), tone: 'zinc' },
+  ready: { label: t('Ready'), tone: 'sky' },
+  working: { label: t('Working'), tone: 'violet' },
+  needs_you: { label: t('Needs you'), tone: 'amber' },
+  review: { label: tc('task status', 'Review'), tone: 'sky' },
+  verified: { label: t('Verified'), tone: 'emerald' },
+  blocked: { label: t('Blocked'), tone: 'rose' },
+  failed: { label: t('Failed'), tone: 'rose' },
+  cancelled: { label: t('Cancelled'), tone: 'zinc' },
 };
 
 export const stateLabel = (s: string): { label: string; tone: Tone } => STATE_LABELS[s as TaskState] ?? { label: humanize(s), tone: 'zinc' };
 
 /** The note a one-way hand-off's card is closed with: nothing to review, so not Cancelled but Closed. */
 export const NOTICE_CLOSED_NOTE = 'Notice, no review needed';
-const CLOSED = { label: 'Closed', tone: 'zinc' as Tone };
+const CLOSED = { label: t('Closed'), tone: 'zinc' as Tone };
 
 /** A task's state label: a closed notice reads "Closed", everything else as its state. */
 export const taskStateLabel = (t: Pick<Task, 'state' | 'closed_note'>): { label: string; tone: Tone } =>
   t.state === 'cancelled' && t.closed_note ? CLOSED : stateLabel(t.state);
 
-export const PRIORITY_LABELS = ['Low', 'Normal', 'High', 'Urgent'];
-export const priorityLabel = (p: number): string => PRIORITY_LABELS[Math.max(0, Math.min(3, Math.round(p)))] ?? 'Normal';
+export const PRIORITY_LABELS = [t('Low'), t('Normal'), t('High'), t('Urgent')];
+export const priorityLabel = (p: number): string => PRIORITY_LABELS[Math.max(0, Math.min(3, Math.round(p)))] ?? t('Normal');
 
 const SOURCES: Record<string, string> = {
-  mission: 'Mission plan',
-  person: 'Added by you',
-  delegation: 'Hand-off',
-  routine: 'Routine run',
-  zombie: 'Loose end',
-  work_ahead: 'Worked ahead',
-  chat: 'Chat',
+  mission: t('Mission plan'),
+  person: t('Added by you'),
+  delegation: t('Hand-off'),
+  routine: t('Routine run'),
+  zombie: t('Loose end'),
+  work_ahead: t('Worked ahead'),
+  chat: t('Chat'),
 };
 export const sourceLabel = (k: string): string => SOURCES[k] ?? humanize(k);
 
 export const MISSION_STATUS: Record<MissionStatus, { label: string; tone: Tone }> = {
-  draft: { label: 'Waiting for your OK', tone: 'amber' },
-  active: { label: 'Active', tone: 'sky' },
-  done: { label: 'Done', tone: 'emerald' },
-  cancelled: { label: 'Cancelled', tone: 'zinc' },
+  draft: { label: t('Waiting for your OK'), tone: 'amber' },
+  active: { label: t('Active'), tone: 'sky' },
+  done: { label: t('Done'), tone: 'emerald' },
+  cancelled: { label: t('Cancelled'), tone: 'zinc' },
 };
 export const missionStatusLabel = (s: string) => MISSION_STATUS[s as MissionStatus] ?? { label: humanize(s), tone: 'zinc' as Tone };
 
 export function humanize(s: string): string {
-  const t = s.replace(/[_-]+/g, ' ').trim();
-  return t ? t[0].toUpperCase() + t.slice(1) : 'Other';
+  const w = s.replace(/[_-]+/g, ' ').trim();
+  return w ? w[0].toUpperCase() + w.slice(1) : t('Other');
 }
 
 /** 950 → "950", 12 400 → "12.4k", 2 000 000 → "2M". */
@@ -621,16 +622,14 @@ export interface MeasuresView {
   trendText: string;
 }
 
-const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
-
 /** The day a rolling week ends on, as "Oct 25". The last week ends now, so it reads "This week". */
 export function weekLabel(endIso: string, last: boolean, timeZone?: string): string {
-  if (last) return 'This week';
+  if (last) return t('This week');
   const d = new Date(endIso);
   if (Number.isNaN(d.getTime())) return '';
   // The week runs up to `end`, exclusive: label it with its last whole day.
   const day = new Date(d.getTime() - 1);
-  return `Week to ${day.toLocaleDateString('en-US', { month: 'short', day: 'numeric', ...(timeZone ? { timeZone } : {}) })}`;
+  return t('Week to {date}', { date: day.toLocaleDateString(locale === 'zh-CN' ? 'zh-CN' : 'en-US', { month: 'short', day: 'numeric', ...(timeZone ? { timeZone } : {}) }) });
 }
 
 /**
@@ -643,7 +642,7 @@ export function measuresView(i: Insights | null | undefined, timeZone?: string):
   const max = Math.max(1, ...weeks.map((w) => w.verified));
   const bars: WeekBar[] = weeks.map((w, n) => {
     const label = weekLabel(w.end, n === weeks.length - 1, timeZone);
-    const text = `${label}: ${w.verified} verified${w.active ? '' : ', no activity'}`;
+    const text = w.active ? t('{week}: {n} verified', { week: label, n: w.verified }) : t('{week}: {n} verified, no activity', { week: label, n: w.verified });
     return { label, verified: w.verified, active: w.active, height: w.verified / max, text };
   });
   const active = i.active_weeks ?? weeks.filter((w) => w.active).length;
@@ -651,8 +650,8 @@ export function measuresView(i: Insights | null | undefined, timeZone?: string):
   const headline = typeof per === 'number' && active > 0 ? per.toFixed(1).replace(/\.0$/, '') : '—';
   const headlineSub =
     active > 0
-      ? `Average over ${plural(active, 'active week')} of the last ${weeks.length}`
-      : `No task activity in the last ${weeks.length} weeks yet`;
+      ? t(active === 1 ? 'Average over {n} active week of the last {weeks}' : 'Average over {n} active weeks of the last {weeks}', { n: active, weeks: weeks.length })
+      : t('No task activity in the last {weeks} weeks yet', { weeks: weeks.length });
 
   const settled = i.settled_7d ?? 0;
   const unpriced = i.unpriced_7d ?? 0;
@@ -665,33 +664,36 @@ export function measuresView(i: Insights | null | undefined, timeZone?: string):
   let costSub: string;
   if (perCost) {
     cost = perCost;
-    costSub = `${total ?? '$0.00'} over ${plural(settled, 'settled task')} this week, failed runs included`;
+    costSub = t(settled === 1 ? '{total} over {n} settled task this week, failed runs included' : '{total} over {n} settled tasks this week, failed runs included', { total: total ?? '$0.00', n: settled });
   } else if (settled === 0) {
     cost = '—';
-    costSub = 'No tasks settled this week';
+    costSub = t('No tasks settled this week');
   } else if (total && verified === 0) {
     // Money went out but nothing was verified: there's no "per result" to show, so show what it cost.
     cost = '—';
-    costSub = `${total} spent on ${plural(settled, 'settled task')} with nothing verified yet`;
+    costSub = t(settled === 1 ? '{total} spent on {n} settled task with nothing verified yet' : '{total} spent on {n} settled tasks with nothing verified yet', { total, n: settled });
   } else if (total) {
     // Some runs reported a cost, but none of the verified ones did: no honest per-result figure.
-    cost = 'Not reported';
-    costSub = `None of the ${plural(verified, 'verified result')} reported a cost; ${total} came from other runs`;
+    cost = t('Not reported');
+    costSub = t(verified === 1 ? 'None of the {n} verified result reported a cost; {total} came from other runs' : 'None of the {n} verified results reported a cost; {total} came from other runs', { n: verified, total });
   } else {
-    cost = 'Not reported';
-    costSub = `None of the ${plural(settled, 'settled task')} this week reported a cost`;
+    cost = t('Not reported');
+    costSub = t(settled === 1 ? 'None of the {n} settled task this week reported a cost' : 'None of the {n} settled tasks this week reported a cost', { n: settled });
   }
   // With runs missing a cost, the figure is an estimate from the priced ones: say what it rests on.
   const costWarning =
     unpriced > 0 && perCost
-      ? `Based on ${plural(priced, 'verified result')} that reported a cost; ${plural(unpriced, 'run')} reported none.`
+      ? t(priced === 1 ? 'Based on {n} verified result that reported a cost; {runs} reported none.' : 'Based on {n} verified results that reported a cost; {runs} reported none.', {
+          n: priced,
+          runs: t(unpriced === 1 ? '{n} run' : '{n} runs', { n: unpriced }),
+        })
       : null;
   return { headline, headlineSub, weeks: bars, cost, costSub, costWarning, trendText: weeks.map((w) => w.verified).join(', ') };
 }
 
 /** "12.4k of 50k tokens"; "64.9k tokens used" when there's no limit (budget 0). */
 export function costText(spent: number, budget: number): string {
-  return budget > 0 ? `${formatTokens(spent)} of ${formatTokens(budget)} tokens` : `${formatTokens(spent)} tokens used`;
+  return budget > 0 ? t('{spent} of {budget} tokens', { spent: formatTokens(spent), budget: formatTokens(budget) }) : t('{n} tokens used', { n: formatTokens(spent) });
 }
 
 // ---------------------------------------------------------------------------
@@ -717,15 +719,15 @@ export function parseLimit(raw: string): number | null {
 export function limitError(raw: string, scope: LimitScope, above = 0): string | null {
   const n = parseLimit(raw);
   const [lo, hi] = LIMIT_RANGE[scope];
-  if (n === null) return 'Enter a number of tokens, like 300k or 2M.';
-  if (n < lo) return `At least ${formatTokens(lo)} tokens.`;
-  if (n > hi) return `At most ${formatTokens(hi)} tokens.`;
-  if (above > 0 && n <= above) return `It has already used ${formatTokens(above)}, so pick more than that.`;
+  if (n === null) return t('Enter a number of tokens, like 300k or 2M.');
+  if (n < lo) return t('At least {n} tokens.', { n: formatTokens(lo) });
+  if (n > hi) return t('At most {n} tokens.', { n: formatTokens(hi) });
+  if (above > 0 && n <= above) return t('It has already used {n}, so pick more than that.', { n: formatTokens(above) });
   return null;
 }
 
 /** "No limit" or "50k tokens". */
-export const limitLabel = (budget: number): string => (budget > 0 ? `${formatTokens(budget)} tokens` : 'No limit');
+export const limitLabel = (budget: number): string => (budget > 0 ? t('{n} tokens', { n: formatTokens(budget) }) : t('No limit'));
 
 /** Settings' default limits for new tasks and missions (0 = none); null on a server without them. */
 export interface DefaultLimits {
@@ -755,23 +757,23 @@ export const costRatio = (spent: number, budget: number): number => (budget > 0 
 /** "45 min", "3 h", "1.5 h", "2 d": a plain length of time from minutes. */
 export function durationText(minutes: number): string {
   const m = Math.max(0, Math.round(minutes));
-  if (m < 60) return `${m} min`;
+  if (m < 60) return t('{n} min', { n: m });
   const h = m / 60;
-  if (h < 48) return `${h < 10 ? trim(Math.round(h * 2) / 2) : Math.round(h)} h`;
+  if (h < 48) return t('{n} h', { n: h < 10 ? trim(Math.round(h * 2) / 2) : Math.round(h) });
   const d = h / 24;
-  return `${d < 10 ? trim(Math.round(d * 2) / 2) : Math.round(d)} d`;
+  return t('{n} d', { n: d < 10 ? trim(Math.round(d * 2) / 2) : Math.round(d) });
 }
 
 /** "Waiting for you to allow 1 check" when checks wait for the person's OK, else null. */
 export function waitingApprovalText(n: number | null | undefined): string | null {
   if (!n || n <= 0) return null;
-  return n === 1 ? 'Waiting for you to allow 1 check' : `Waiting for you to allow ${n} checks`;
+  return t(n === 1 ? 'Waiting for you to allow {n} check' : 'Waiting for you to allow {n} checks', { n });
 }
 
 /** "Optional check waiting for your OK": it waits for the person but doesn't hold the task. */
 export function optionalWaitingText(n: number | null | undefined): string | null {
   if (!n || n <= 0) return null;
-  return n === 1 ? 'Optional check waiting for your OK' : `${n} optional checks waiting for your OK`;
+  return n === 1 ? t('Optional check waiting for your OK') : t('{n} optional checks waiting for your OK', { n });
 }
 
 /**
@@ -795,12 +797,15 @@ function optionalWaitingCount(s: ChecksSummary): number {
  * been checked says so, plainly.
  */
 export function checksText(s: ChecksSummary): { text: string; tone: Tone } {
-  const n = (k: number, one: string, many: string) => (k === 1 ? one : many.replace('#', String(k)));
-  if (approvalHolds(s)) return { text: n(s.required_needs_approval ?? 0, '1 check needs your OK', '# checks need your OK'), tone: 'amber' };
-  if (s.status === 'not_checked') return { text: 'Not checked', tone: 'zinc' };
-  if (s.status === 'failed') return { text: n(s.failed, '1 check failed', '# checks failed'), tone: 'rose' };
-  if (s.status === 'pending') return { text: s.passed > 0 ? n(s.passed, '1 check passed, still checking', '# checks passed, still checking') : 'Checking', tone: 'zinc' };
-  return { text: s.passed > 1 ? `${s.passed} checks passed` : 'Check passed', tone: 'emerald' };
+  if (approvalHolds(s)) {
+    const k = s.required_needs_approval ?? 0;
+    return { text: t(k === 1 ? '{n} check needs your OK' : '{n} checks need your OK', { n: k }), tone: 'amber' };
+  }
+  if (s.status === 'not_checked') return { text: t('Not checked'), tone: 'zinc' };
+  if (s.status === 'failed') return { text: t(s.failed === 1 ? '{n} check failed' : '{n} checks failed', { n: s.failed }), tone: 'rose' };
+  if (s.status === 'pending')
+    return { text: s.passed > 0 ? t(s.passed === 1 ? '{n} check passed, still checking' : '{n} checks passed, still checking', { n: s.passed }) : t('Checking'), tone: 'zinc' };
+  return { text: s.passed > 1 ? t('{n} checks passed', { n: s.passed }) : t('Check passed'), tone: 'emerald' };
 }
 
 /**
@@ -811,61 +816,67 @@ export function checksText(s: ChecksSummary): { text: string; tone: Tone } {
 export function optionalChecksNote(s: ChecksSummary): string | null {
   const k = optionalWaitingCount(s);
   if (k <= 0) return null;
-  return k === 1 ? '1 optional check waiting' : `${k} optional checks waiting`;
+  return t(k === 1 ? '{n} optional check waiting' : '{n} optional checks waiting', { n: k });
 }
 
 /** "in 12 min", "in 1 h", or "now" once it has passed. */
 export function untilText(iso: string, now: number = Date.now()): string {
-  const t = Date.parse(iso);
-  if (Number.isNaN(t)) return '';
-  const m = Math.round((t - now) / 60000);
-  if (m <= 0) return 'now';
-  if (m < 60) return `in ${m} min`;
+  const at = Date.parse(iso);
+  if (Number.isNaN(at)) return '';
+  const m = Math.round((at - now) / 60000);
+  if (m <= 0) return t('now');
+  if (m < 60) return t('in {n} min', { n: m });
   const h = Math.round(m / 60);
-  return `in ${h} h`;
+  return t('in {n} h', { n: h });
 }
 
 export const ago = relativeTime;
 
 /** Who did something: "you", "kwant", or the bot's name. */
 export function actorName(actor: string, name: string | null | undefined, names: Record<string, string> = {}): string {
-  if (actor === 'person') return 'you';
+  if (actor === 'person') return t('you');
   if (actor === 'kwant') return 'kwant';
-  return name || names[actor] || 'a bot';
+  return name || names[actor] || t('a bot');
 }
 
 /** The short status line under a card title. */
-export function cardStatus(t: Task, names: Record<string, string> = {}, now: number = Date.now()): string | null {
-  switch (t.state) {
+export function cardStatus(task: Task, names: Record<string, string> = {}, now: number = Date.now()): string | null {
+  switch (task.state) {
     case 'blocked':
-      if (t.needs_you.some((n) => n.kind === ENGINE_CANT_SANDBOX)) return 'Blocked: its engine can’t be held to its tier';
-      return t.blocked_reason === 'budget' ? 'Reached its token limit' : t.blocked_reason ? `Blocked: ${t.blocked_reason}` : 'Blocked';
+      if (task.needs_you.some((n) => n.kind === ENGINE_CANT_SANDBOX)) return t('Blocked: its engine can’t be held to its tier');
+      return task.blocked_reason === 'budget'
+        ? t('Reached its token limit')
+        : task.blocked_reason
+          ? t('Blocked: {reason}', { reason: task.blocked_reason })
+          : t('Blocked');
     case 'failed': {
-      const auto = autofixCardText(t, now);
+      const auto = autofixCardText(task, now);
       if (auto) return auto;
-      if (t.last_failure) return `${failureClassLabel(t.last_failure.class)} (try ${t.attempts} of ${t.max_attempts})`;
-      return `Checks failed ${t.attempts} of ${t.max_attempts} times`;
+      if (task.last_failure) return t('{failure} (try {n} of {max})', { failure: failureClassLabel(task.last_failure.class), n: task.attempts, max: task.max_attempts });
+      return t('Checks failed {n} of {max} times', { n: task.attempts, max: task.max_attempts });
     }
     case 'backlog':
-      if (t.held_at) return 'On hold after restore. Press Run to start it';
-      if (t.waiting_on.length) return t.waiting_on.length === 1 ? 'Waiting on 1 task' : `Waiting on ${t.waiting_on.length} tasks`;
-      return 'Waiting for the mission to be approved';
+      if (task.held_at) return t('On hold after restore. Press Run to start it');
+      if (task.waiting_on.length) return t(task.waiting_on.length === 1 ? 'Waiting on {n} task' : 'Waiting on {n} tasks', { n: task.waiting_on.length });
+      return t('Waiting for the mission to be approved');
     case 'working':
-      return t.claim ? `${names[t.claim.kwant_id] || t.owner_name || 'A bot'} started ${ago(t.claim.claimed_at, now)}` : 'Starting';
+      return task.claim
+        ? t('{name} started {when}', { name: names[task.claim.kwant_id] || task.owner_name || t('A bot'), when: ago(task.claim.claimed_at, now) })
+        : t('Starting');
     case 'needs_you':
-      return t.needs_you[0]?.text ?? 'A bot is waiting for you';
+      return task.needs_you[0]?.text ?? t('A bot is waiting for you');
     case 'review':
-      if (approvalHolds(t.checks_summary)) return waitingApprovalText(t.checks_summary.required_needs_approval);
-      if (t.checks_summary.status === 'not_checked') {
-        return t.reviewer?.name ? `Waiting for ${t.reviewer.name} to review` : 'Bot says done. Not checked yet';
+      if (approvalHolds(task.checks_summary)) return waitingApprovalText(task.checks_summary.required_needs_approval);
+      if (task.checks_summary.status === 'not_checked') {
+        return task.reviewer?.name ? t('Waiting for {name} to review', { name: task.reviewer.name }) : t('Bot says done. Not checked yet');
       }
       // While a required check runs the card reads as checking; the grey note covers optional ones.
-      if (t.checks_summary.status === 'pending') return 'Bot says done. Checking';
-      return optionalWaitingText(optionalWaitingCount(t.checks_summary)) ?? 'Bot says done. Checking';
+      if (task.checks_summary.status === 'pending') return t('Bot says done. Checking');
+      return optionalWaitingText(optionalWaitingCount(task.checks_summary)) ?? t('Bot says done. Checking');
     case 'verified':
-      return t.finished_at ? `Verified ${ago(t.finished_at, now)}` : 'Verified';
+      return task.finished_at ? t('Verified {when}', { when: ago(task.finished_at, now) }) : t('Verified');
     case 'ready':
-      return t.held_at ? 'On hold after restore. Press Run to start it' : null;
+      return task.held_at ? t('On hold after restore. Press Run to start it') : null;
     default:
       return null;
   }
@@ -883,7 +894,7 @@ export interface OpenFlag {
   createdAt: string | null;
 }
 
-const quote = (s: string | null | undefined) => (s && s.trim() ? `“${s.trim()}”` : 'a task it builds on');
+const quote = (s: string | null | undefined) => (s && s.trim() ? `“${s.trim()}”` : t('a task it builds on'));
 
 /** One plain sentence for why a task may no longer hold. */
 export function flagText(f: Pick<TaskFlag, 'cause' | 'cause_title' | 'detail'>): string {
@@ -891,14 +902,14 @@ export function flagText(f: Pick<TaskFlag, 'cause' | 'cause_title' | 'detail'>):
   const path = str(d.path);
   switch (f.cause) {
     case 'evidence_changed':
-      if (path && d.new_sha256 === null) return `Its file ${path} is gone since it was verified`;
-      return path ? `Its file ${path} changed since it was verified` : 'A file it was verified with changed';
+      if (path && d.new_sha256 === null) return t('Its file {path} is gone since it was verified', { path });
+      return path ? t('Its file {path} changed since it was verified', { path }) : t('A file it was verified with changed');
     case 'upstream_evidence_changed':
-      return `A file from ${quote(f.cause_title)}, which this builds on, changed`;
+      return t('A file from {task}, which this builds on, changed', { task: quote(f.cause_title) });
     case 'upstream_forked':
-      return `${quote(f.cause_title)}, which this builds on, is being redone`;
+      return t('{task}, which this builds on, is being redone', { task: quote(f.cause_title) });
     default:
-      return 'Something it depends on changed';
+      return t('Something it depends on changed');
   }
 }
 
@@ -906,13 +917,13 @@ export function flagText(f: Pick<TaskFlag, 'cause' | 'cause_title' | 'detail'>):
  * The task's open flags: from `flags` when the server sends them, plus any `may_be_invalid` needs_you
  * item without one (so a flag is never hidden). Older servers send neither: no flags.
  */
-export function openFlags(t: Pick<Task, 'flags' | 'needs_you'>): OpenFlag[] {
-  const out: OpenFlag[] = (t.flags ?? [])
+export function openFlags(task: Pick<Task, 'flags' | 'needs_you'>): OpenFlag[] {
+  const out: OpenFlag[] = (task.flags ?? [])
     .filter((f) => !f.resolved_at)
     .map((f) => ({ id: f.id, cause: f.cause, causeTaskId: f.cause_task_id, text: flagText(f), createdAt: f.created_at }));
-  for (const n of t.needs_you ?? []) {
+  for (const n of task.needs_you ?? []) {
     if (n.kind === 'may_be_invalid' && !out.some((f) => f.id === n.id)) {
-      out.push({ id: n.id, cause: null, causeTaskId: null, text: n.text.replace(/^Check this still holds:\s*/i, '') || 'Something it depends on changed', createdAt: null });
+      out.push({ id: n.id, cause: null, causeTaskId: null, text: n.text.replace(/^Check this still holds:\s*/i, '') || t('Something it depends on changed'), createdAt: null });
     }
   }
   return out;
@@ -933,41 +944,41 @@ export interface ResolveOption {
 export function resolveOptions(state: TaskState): ResolveOption[] {
   const running = state === 'working' || state === 'needs_you';
   const redoHint: Partial<Record<TaskState, string>> = {
-    verified: 'Makes a copy of this task that starts running on its own. This one stays as it is.',
-    review: 'Sends it back to Ready for another try, with its tries reset.',
-    failed: 'Sends it back to Ready for another try, with its tries reset.',
-    blocked: 'Moves it back to Waiting so it can run again.',
-    backlog: 'It hasn’t run yet, so it will run again anyway. This just closes the flag.',
-    ready: 'It hasn’t run yet, so it will run again anyway. This just closes the flag.',
+    verified: t('Makes a copy of this task that starts running on its own. This one stays as it is.'),
+    review: t('Sends it back to Ready for another try, with its tries reset.'),
+    failed: t('Sends it back to Ready for another try, with its tries reset.'),
+    blocked: t('Moves it back to Waiting so it can run again.'),
+    backlog: t('It hasn’t run yet, so it will run again anyway. This just closes the flag.'),
+    ready: t('It hasn’t run yet, so it will run again anyway. This just closes the flag.'),
   };
   return [
-    { choice: 'still_valid', label: 'Still valid', hint: 'You checked: it still holds. Nothing else changes.', disabled: null },
+    { choice: 'still_valid', label: t('Still valid'), hint: t('You checked: it still holds. Nothing else changes.'), disabled: null },
     {
       choice: 'redo',
-      label: 'Redo',
+      label: t('Redo'),
       hint: redoHint[state] ?? '',
-      disabled: running ? 'A bot is working on it. Decide once it stops.' : state === 'cancelled' ? 'It’s cancelled, so there’s nothing to redo.' : null,
+      disabled: running ? t('A bot is working on it. Decide once it stops.') : state === 'cancelled' ? t('It’s cancelled, so there’s nothing to redo.') : null,
     },
     {
       choice: 'cancelled',
-      label: 'Cancel',
-      hint: state === 'cancelled' ? 'It’s already cancelled. This just closes the flag.' : 'Cancels the task.',
-      disabled: state === 'verified' ? 'A verified task can’t be cancelled. Choose Still valid or Redo.' : null,
+      label: t('Cancel'),
+      hint: state === 'cancelled' ? t('It’s already cancelled. This just closes the flag.') : t('Cancels the task.'),
+      disabled: state === 'verified' ? t('A verified task can’t be cancelled. Choose Still valid or Redo.') : null,
     },
   ];
 }
 
 export const RESOLVE_DONE: Record<ResolveChoice, string> = {
-  still_valid: 'Marked still valid.',
-  redo: 'Sent back for another try.',
-  cancelled: 'Cancelled.',
+  still_valid: t('Marked still valid.'),
+  redo: t('Sent back for another try.'),
+  cancelled: t('Cancelled.'),
 };
 
 /** What happened after a resolve, in one sentence. A fork says plainly that it runs on its own. */
 export function resolvedText(choice: ResolveChoice, r: Pick<ResolveFlagResult, 'fork' | 'task'>): string {
-  if (choice === 'redo' && r.fork) return `Made a copy to redo it: “${r.fork.title}”. It starts running on its own; this task stays as it was.`;
-  if (choice === 'redo' && (r.task.state === 'backlog' || r.task.state === 'ready')) return 'Flag closed. It will run again.';
-  if (choice === 'cancelled' && r.task.state === 'cancelled') return 'Cancelled.';
+  if (choice === 'redo' && r.fork) return t('Made a copy to redo it: “{title}”. It starts running on its own; this task stays as it was.', { title: r.fork.title });
+  if (choice === 'redo' && (r.task.state === 'backlog' || r.task.state === 'ready')) return t('Flag closed. It will run again.');
+  if (choice === 'cancelled' && r.task.state === 'cancelled') return t('Cancelled.');
   return RESOLVE_DONE[choice];
 }
 
@@ -975,14 +986,14 @@ export function resolvedText(choice: ResolveChoice, r: Pick<ResolveFlagResult, '
 export function flagErrorText(e: unknown): string {
   if (e instanceof MissionError && e.status === 409) {
     const msg = e.message.toLowerCase();
-    if (msg.includes('already resolved')) return 'This flag was already settled, maybe in another tab. The board now shows the latest.';
-    if (msg.includes('running')) return 'A bot is working on it now. Decide once it stops.';
-    if (msg.includes('verified task can')) return 'A verified task can’t be cancelled. Choose Still valid or Redo.';
-    if (msg.includes('mission is cancelled')) return 'Its mission is cancelled, so it can’t be redone.';
-    if (msg.includes('cancelled')) return 'The task is cancelled, so there’s nothing to redo.';
-    return 'The task changed while you were deciding. The board now shows the latest; try again.';
+    if (msg.includes('already resolved')) return t('This flag was already settled, maybe in another tab. The board now shows the latest.');
+    if (msg.includes('running')) return t('A bot is working on it now. Decide once it stops.');
+    if (msg.includes('verified task can')) return t('A verified task can’t be cancelled. Choose Still valid or Redo.');
+    if (msg.includes('mission is cancelled')) return t('Its mission is cancelled, so it can’t be redone.');
+    if (msg.includes('cancelled')) return t('The task is cancelled, so there’s nothing to redo.');
+    return t('The task changed while you were deciding. The board now shows the latest; try again.');
   }
-  return e instanceof Error ? e.message : 'Something went wrong.';
+  return e instanceof Error ? e.message : t('Something went wrong.');
 }
 
 /** A fresh Idempotency-Key for one press, so a repeat of the same press can't make a second copy. */
@@ -996,56 +1007,59 @@ export function newIdempotencyKey(): string {
 // AutoFix and restore holds (Phase B3, docs/mission-control.md §12–§13)
 
 export const FAILURE_LABELS: Record<FailureClass, { label: string; tone: Tone }> = {
-  transient: { label: 'A temporary error', tone: 'amber' },
-  stalled: { label: 'Stopped before finishing', tone: 'amber' },
-  check_failed: { label: 'A check failed', tone: 'rose' },
-  bad_spec: { label: 'A check can’t run as written', tone: 'amber' },
-  auth: { label: 'Signed out, or the key was rejected', tone: 'rose' },
-  quota: { label: 'Usage limit reached', tone: 'amber' },
-  budget: { label: 'Reached its token limit', tone: 'rose' },
-  denied: { label: 'An action was denied', tone: 'rose' },
-  needs_input: { label: 'Waiting for you', tone: 'amber' },
-  unknown: { label: 'An unexpected error', tone: 'rose' },
+  transient: { label: t('A temporary error'), tone: 'amber' },
+  stalled: { label: t('Stopped before finishing'), tone: 'amber' },
+  check_failed: { label: t('A check failed'), tone: 'rose' },
+  bad_spec: { label: t('A check can’t run as written'), tone: 'amber' },
+  auth: { label: t('Signed out, or the key was rejected'), tone: 'rose' },
+  quota: { label: t('Usage limit reached'), tone: 'amber' },
+  budget: { label: t('Reached its token limit'), tone: 'rose' },
+  denied: { label: t('An action was denied'), tone: 'rose' },
+  needs_input: { label: t('Waiting for you'), tone: 'amber' },
+  unknown: { label: t('An unexpected error'), tone: 'rose' },
 };
 export const failureClassLabel = (c: string): string => FAILURE_LABELS[c as FailureClass]?.label ?? humanize(c);
 export const failureTone = (c: string): Tone => FAILURE_LABELS[c as FailureClass]?.tone ?? 'rose';
 
 const STRATEGY_LABELS: Record<AutofixStrategy, string> = {
-  wait_and_retry: 'Wait, then try again',
-  retry_from_checkpoint: 'Carry on from where it stopped',
-  retry_with_diagnostics: 'Try again with the check’s output',
-  retry_same: 'Try again',
-  propose_change: 'Propose a change for you to approve',
-  none: 'No retry',
+  wait_and_retry: t('Wait, then try again'),
+  retry_from_checkpoint: t('Carry on from where it stopped'),
+  retry_with_diagnostics: t('Try again with the check’s output'),
+  retry_same: t('Try again'),
+  propose_change: t('Propose a change for you to approve'),
+  none: t('No retry'),
 };
-export const strategyLabel = (s: string): string => STRATEGY_LABELS[s as AutofixStrategy] ?? (s ? humanize(s) : 'Try again');
+export const strategyLabel = (s: string): string => STRATEGY_LABELS[s as AutofixStrategy] ?? (s ? humanize(s) : t('Try again'));
 
 /** Why AutoFix didn't retry, in words: the server's reason starts with a code. */
 export function skipText(reason: string): string {
   const r = reason.trim();
-  if (r.startsWith('no_attempts_left')) return 'no tries left';
-  if (r.startsWith('over_recovery_budget')) return 'another try would go over its retry budget';
-  if (r.startsWith('not_retryable')) return 'this kind of failure isn’t retried';
-  return r || 'it wasn’t retried';
+  if (r.startsWith('no_attempts_left')) return t('no tries left');
+  if (r.startsWith('over_recovery_budget')) return t('another try would go over its retry budget');
+  if (r.startsWith('not_retryable')) return t('this kind of failure isn’t retried');
+  return r || t('it wasn’t retried');
 }
 
 /** One line for an AutoFix attempt: what it does, and when. */
 export function autofixStatusText(a: Pick<AutofixAttempt, 'status' | 'strategy' | 'not_before' | 'reason'>, now: number = Date.now()): string {
   switch (a.status) {
     case 'suggested':
-      return a.strategy === 'propose_change' ? 'AutoFix proposed a change. It waits for your OK.' : `AutoFix suggests: ${strategyLabel(a.strategy).toLowerCase()}. It waits for your OK.`;
+      return a.strategy === 'propose_change'
+        ? t('AutoFix proposed a change. It waits for your OK.')
+        : t('AutoFix suggests: {strategy}. It waits for your OK.', { strategy: strategyLabel(a.strategy).toLowerCase() });
     case 'scheduled': {
-      const when = a.not_before ? untilText(a.not_before, now) : 'now';
-      return `AutoFix will ${strategyLabel(a.strategy).toLowerCase()} ${when === 'now' ? 'shortly' : when}.`;
+      const when = a.not_before ? untilText(a.not_before, now) : t('now');
+      const strategy = strategyLabel(a.strategy).toLowerCase();
+      return when === t('now') ? t('AutoFix will {strategy} shortly.', { strategy }) : t('AutoFix will {strategy} {when}.', { strategy, when });
     }
     case 'running':
-      return 'AutoFix is retrying it now.';
+      return t('AutoFix is retrying it now.');
     case 'succeeded':
-      return 'AutoFix’s retry worked.';
+      return t('AutoFix’s retry worked.');
     case 'failed':
-      return 'AutoFix’s retry failed too.';
+      return t('AutoFix’s retry failed too.');
     default:
-      return `AutoFix didn’t retry: ${skipText(a.reason)}.`;
+      return t('AutoFix didn’t retry: {why}.', { why: skipText(a.reason) });
   }
 }
 
@@ -1078,47 +1092,48 @@ export function skippedWithFixText(a: Pick<AutofixAttempt, 'status' | 'reason'>)
   if (a.status !== 'skipped') return undefined;
   const r = a.reason.trim();
   if (r.startsWith('over_recovery_budget')) return null;
-  if (r.startsWith('no_attempts_left')) return 'AutoFix didn’t retry: no tries left.';
-  return 'AutoFix doesn’t retry this kind of failure.';
+  if (r.startsWith('no_attempts_left')) return t('AutoFix didn’t retry: no tries left.');
+  return t('AutoFix doesn’t retry this kind of failure.');
 }
 
 /** The card line for a failed task AutoFix is handling, else null. */
-export function autofixCardText(t: Pick<Task, 'autofix'>, now: number = Date.now()): string | null {
-  const a = t.autofix;
+export function autofixCardText(task: Pick<Task, 'autofix'>, now: number = Date.now()): string | null {
+  const a = task.autofix;
   if (!a) return null;
-  if (a.status === 'running') return 'AutoFix is retrying';
+  if (a.status === 'running') return t('AutoFix is retrying');
   if (a.status === 'scheduled') {
-    const when = a.not_before ? untilText(a.not_before, now) : 'now';
-    return when === 'now' ? 'AutoFix retries shortly' : `AutoFix retries ${when}`;
+    const when = a.not_before ? untilText(a.not_before, now) : t('now');
+    return when === t('now') ? t('AutoFix retries shortly') : t('AutoFix retries {when}', { when });
   }
-  if (a.status === 'suggested' && a.strategy !== 'propose_change') return 'AutoFix suggests a retry';
+  if (a.status === 'suggested' && a.strategy !== 'propose_change') return t('AutoFix suggests a retry');
   return null;
 }
 
 /** "3.2k of 12.5k tokens for retries"; null on a server without AutoFix. */
-export function recoveryText(t: Pick<Task, 'recovery_spent_tokens' | 'recovery_budget_tokens'>): string | null {
-  if (typeof t.recovery_spent_tokens !== 'number') return null;
-  const spent = formatTokens(t.recovery_spent_tokens);
-  return typeof t.recovery_budget_tokens === 'number' && t.recovery_budget_tokens > 0
-    ? `${spent} of ${formatTokens(t.recovery_budget_tokens)} tokens`
-    : `${spent} tokens`;
+export function recoveryText(task: Pick<Task, 'recovery_spent_tokens' | 'recovery_budget_tokens'>): string | null {
+  if (typeof task.recovery_spent_tokens !== 'number') return null;
+  const spent = formatTokens(task.recovery_spent_tokens);
+  return typeof task.recovery_budget_tokens === 'number' && task.recovery_budget_tokens > 0
+    ? t('{spent} of {budget} tokens', { spent, budget: formatTokens(task.recovery_budget_tokens) })
+    : t('{n} tokens', { n: spent });
 }
 
 /** A plain message for a refused AutoFix retry. */
 export function autofixErrorText(e: unknown): string {
   if (e instanceof MissionError && e.status === 409) {
-    if (e.code === 'no_attempts_left') return 'No tries left. You can still try it again yourself.';
-    if (e.code === 'over_recovery_budget') return 'Another retry would go over this task’s retry budget. You can still try it again yourself.';
-    if (e.code === 'not_retryable') return 'AutoFix doesn’t retry this kind of failure, such as a sign-in problem or a usage limit. See what to fix above, then try it again yourself.';
-    return 'The retry changed while you were deciding. The task now shows the latest.';
+    if (e.code === 'no_attempts_left') return t('No tries left. You can still try it again yourself.');
+    if (e.code === 'over_recovery_budget') return t('Another retry would go over this task’s retry budget. You can still try it again yourself.');
+    if (e.code === 'not_retryable')
+      return t('AutoFix doesn’t retry this kind of failure, such as a sign-in problem or a usage limit. See what to fix above, then try it again yourself.');
+    return t('The retry changed while you were deciding. The task now shows the latest.');
   }
-  return e instanceof Error ? e.message : 'Something went wrong.';
+  return e instanceof Error ? e.message : t('Something went wrong.');
 }
 
 export const AUTOFIX_MODES: { value: AutofixMode; label: string; hint: string }[] = [
-  { value: 'off', label: 'Off', hint: 'Failures are recorded. Nothing is retried on its own.' },
-  { value: 'suggest', label: 'Suggest', hint: 'AutoFix plans a retry and waits for your OK in Needs you.' },
-  { value: 'on', label: 'On', hint: 'AutoFix retries within each task’s tries and retry budget.' },
+  { value: 'off', label: t('Off'), hint: t('Failures are recorded. Nothing is retried on its own.') },
+  { value: 'suggest', label: t('Suggest'), hint: t('AutoFix plans a retry and waits for your OK in Needs you.') },
+  { value: 'on', label: t('On'), hint: t('AutoFix retries within each task’s tries and retry budget.') },
 ];
 
 export interface AutofixSettings {
@@ -1136,13 +1151,13 @@ export function parseAutofixSettings(data: unknown): AutofixSettings | null {
 }
 
 export const WORKFLOW_TARGET_LABELS: Record<WorkflowTarget, string> = {
-  check_spec: 'A check',
-  task_acceptance: 'What done looks like',
-  max_attempts: 'Max tries',
-  routine_instructions: 'The routine’s instructions',
-  routine_schedule: 'The routine’s schedule',
+  check_spec: t('A check'),
+  task_acceptance: t('What done looks like'),
+  max_attempts: t('Max tries'),
+  routine_instructions: t('The routine’s instructions'),
+  routine_schedule: t('The routine’s schedule'),
 };
-export const workflowTargetLabel = (t: string): string => WORKFLOW_TARGET_LABELS[t as WorkflowTarget] ?? humanize(t);
+export const workflowTargetLabel = (x: string): string => WORKFLOW_TARGET_LABELS[x as WorkflowTarget] ?? humanize(x);
 
 export interface ChangeRow {
   key: string;
@@ -1153,19 +1168,19 @@ export interface ChangeRow {
 }
 
 const FIELD_LABELS: Record<string, string> = {
-  kind: 'Kind',
-  spec: 'Check',
-  required: 'Required',
-  instructions: 'Instructions',
-  schedule: 'Schedule',
-  acceptance: 'What done looks like',
-  max_attempts: 'Max tries',
+  kind: t('Kind'),
+  spec: t('Check'),
+  required: t('Required'),
+  instructions: t('Instructions'),
+  schedule: t('Schedule'),
+  acceptance: t('What done looks like'),
+  max_attempts: t('Max tries'),
 };
 
 const showValue = (v: unknown): string => {
   if (v === undefined) return '—';
-  if (v === null) return 'none';
-  if (typeof v === 'boolean') return v ? 'Yes' : 'No';
+  if (v === null) return t('none');
+  if (typeof v === 'boolean') return v ? t('Yes') : t('No');
   if (typeof v === 'string') return v;
   if (typeof v === 'number') return String(v);
   return JSON.stringify(v, null, 2);
@@ -1182,7 +1197,7 @@ export function changeRows(before: unknown, after: unknown): ChangeRow[] {
   if (!b || !a) {
     const x = showValue(before);
     const y = showValue(after);
-    return [{ key: 'value', label: 'Value', before: x, after: y, changed: x !== y }];
+    return [{ key: 'value', label: t('Value'), before: x, after: y, changed: x !== y }];
   }
   const keys = [...new Set([...Object.keys(b), ...Object.keys(a)])].filter((k) => !k.endsWith('_id'));
   const rows = keys.map((k) => {
@@ -1194,54 +1209,57 @@ export function changeRows(before: unknown, after: unknown): ChangeRow[] {
 }
 
 export const CHECKPOINT_LABELS: Record<CheckpointKind, string> = {
-  before_run: 'Before a run',
-  after_run: 'After a run',
-  manual: 'Saved by you',
-  before_restore: 'Before a restore',
+  before_run: t('Before a run'),
+  after_run: t('After a run'),
+  manual: t('Saved by you'),
+  before_restore: t('Before a restore'),
 };
 export const checkpointLabel = (k: string): string => CHECKPOINT_LABELS[k as CheckpointKind] ?? humanize(k);
 
 /** Who changed a conflicting file: a task only on proof (D11), else "outside this task". */
 export function conflictText(c: RestorePreview['conflicts'][number], titleOf: (id: string) => string | undefined = () => undefined): string {
-  if (!c.changed_by_task) return 'Changed outside this task';
-  const t = titleOf(c.changed_by_task);
-  return t ? `Changed by “${t}”` : 'Changed by another task';
+  if (!c.changed_by_task) return t('Changed outside this task');
+  const title = titleOf(c.changed_by_task);
+  return title ? t('Changed by “{title}”', { title }) : t('Changed by another task');
 }
 
-export const RESTORE_ACTION_LABELS: Record<RestoreAction, string> = { overwrite: 'Put back', create: 'Bring back', delete: 'Remove' };
+export const RESTORE_ACTION_LABELS: Record<RestoreAction, string> = { overwrite: t('Put back'), create: t('Bring back'), delete: t('Remove') };
 
 /** A plain message for a refused restore or Run. */
 export function restoreErrorText(e: unknown): string {
   if (e instanceof MissionError) {
     switch (e.code) {
       case 'stale_preview':
-        return 'Files changed since this preview. Look at the new preview, then restore.';
+        return t('Files changed since this preview. Look at the new preview, then restore.');
       case 'running':
-        return 'A bot is working on it now. Restore once it stops.';
+        return t('A bot is working on it now. Restore once it stops.');
       case 'fork_instead':
-        return 'A verified task isn’t restored. Use “Redo as a copy” instead.';
+        return t('A verified task isn’t restored. Use “Redo as a copy” instead.');
       case 'not_restorable':
-        return 'This checkpoint can’t be restored: its snapshot failed or was cleared out.';
+        return t('This checkpoint can’t be restored: its snapshot failed or was cleared out.');
       case 'unknown_force_path':
-        return 'A file you picked isn’t in the preview any more. Look at the new preview.';
+        return t('A file you picked isn’t in the preview any more. Look at the new preview.');
       case 'checkpoint_failed':
-        return 'The safety checkpoint couldn’t be taken, so nothing was restored.';
+        return t('The safety checkpoint couldn’t be taken, so nothing was restored.');
       case 'not_held':
-        return 'It isn’t on hold any more, maybe Run was pressed in another tab.';
+        return t('It isn’t on hold any more, maybe Run was pressed in another tab.');
       default:
         break;
     }
   }
-  return e instanceof Error ? e.message : 'Something went wrong.';
+  return e instanceof Error ? e.message : t('Something went wrong.');
 }
 
 /** What a restore did, in one sentence. */
 export function restoredText(r: Pick<RestoreResult, 'restored' | 'deleted' | 'failed' | 'task'>, rerun: boolean): string {
-  const n = (k: number, one: string, many: string) => (k === 1 ? one : many.replace('#', String(k)));
-  const parts = [r.restored.length ? n(r.restored.length, '1 file put back', '# files put back') : null, r.deleted.length ? n(r.deleted.length, '1 file removed', '# files removed') : null].filter(Boolean);
-  const what = parts.length ? `Restored: ${parts.join(', ')}.` : 'Restored. No files needed changing.';
-  const failed = r.failed.length ? ` ${n(r.failed.length, '1 file couldn’t be written', '# files couldn’t be written')}.` : '';
-  const next = r.task.held_at ? ' It’s on hold until you press Run.' : rerun && (r.task.state === 'ready' || r.task.state === 'backlog') ? ' It will run again.' : '';
+  const k = (x: number) => ({ n: x });
+  const parts = [
+    r.restored.length ? t(r.restored.length === 1 ? '{n} file put back' : '{n} files put back', k(r.restored.length)) : null,
+    r.deleted.length ? t(r.deleted.length === 1 ? '{n} file removed' : '{n} files removed', k(r.deleted.length)) : null,
+  ].filter(Boolean);
+  const what = parts.length ? t('Restored: {parts}.', { parts: parts.join(t(', ')) }) : t('Restored. No files needed changing.');
+  const failed = r.failed.length ? t(r.failed.length === 1 ? ' {n} file couldn’t be written.' : ' {n} files couldn’t be written.', k(r.failed.length)) : '';
+  const next = r.task.held_at ? t(' It’s on hold until you press Run.') : rerun && (r.task.state === 'ready' || r.task.state === 'backlog') ? t(' It will run again.') : '';
   return `${what}${failed}${next}`;
 }
 
@@ -1300,7 +1318,7 @@ export function graphLevels(g: Pick<WorkGraph, 'nodes' | 'edges'>): GraphLevel[]
       node: n,
       after: (parents.get(n.id) ?? []).map((id) => byId.get(id)!),
       flaggedBecause: flagged,
-      notFlaggedText: causes.has(n.id) && rest > 0 ? (rest === 1 ? '1 more task further down wasn’t flagged' : `${rest} more tasks further down weren’t flagged`) : null,
+      notFlaggedText: causes.has(n.id) && rest > 0 ? t(rest === 1 ? '{n} more task further down wasn’t flagged' : '{n} more tasks further down weren’t flagged', { n: rest }) : null,
     };
     if (!steps.has(d)) steps.set(d, []);
     steps.get(d)!.push(row);
@@ -1314,13 +1332,13 @@ export function graphLevels(g: Pick<WorkGraph, 'nodes' | 'edges'>): GraphLevel[]
 // Evidence receipt
 
 export const CHECK_KINDS: Record<string, string> = {
-  command: 'Command',
-  http: 'Web address',
-  file_exists: 'File exists',
-  file_contains: 'File contains',
-  file_sha256: 'File fingerprint',
-  peer_review: 'Teammate review',
-  person: 'You verified',
+  command: t('Command'),
+  http: t('Web address'),
+  file_exists: t('File exists'),
+  file_contains: t('File contains'),
+  file_sha256: t('File fingerprint'),
+  peer_review: t('Teammate review'),
+  person: t('You verified'),
 };
 export const checkKindLabel = (k: string): string => CHECK_KINDS[k] ?? humanize(k);
 
@@ -1331,20 +1349,24 @@ export function checkTarget(c: Pick<Check, 'kind' | 'spec'>): string {
   const s = c.spec ?? {};
   switch (c.kind) {
     case 'command':
-      return str(s.command) ?? 'a command';
+      return str(s.command) ?? t('a command');
     case 'http': {
-      const url = str(s.url) ?? 'an address';
-      const status = typeof s.expect_status === 'number' ? ` answers ${s.expect_status}` : ' answers';
+      const url = str(s.url) ?? t('an address');
       const has = str(s.contains);
-      return `${url}${status}${has ? ` and shows “${has}”` : ''}`;
+      if (typeof s.expect_status === 'number') {
+        const status = s.expect_status;
+        return has ? t('{url} answers {status} and shows “{text}”', { url, status, text: has }) : t('{url} answers {status}', { url, status });
+      }
+      return has ? t('{url} answers and shows “{text}”', { url, text: has }) : t('{url} answers', { url });
     }
     case 'file_exists':
-      return str(s.path) ?? 'a file';
+      return str(s.path) ?? t('a file');
     case 'file_contains':
-      return `${str(s.path) ?? 'a file'} has “${str(s.text) ?? ''}”`;
+      return t('{path} has “{text}”', { path: str(s.path) ?? t('a file'), text: str(s.text) ?? '' });
     case 'file_sha256': {
       const h = str(s.sha256);
-      return `${str(s.path) ?? 'a file'} matches ${h ? h.slice(0, 12) + '…' : 'its fingerprint'}`;
+      const path = str(s.path) ?? t('a file');
+      return h ? t('{path} matches {hash}', { path, hash: h.slice(0, 12) + '…' }) : t('{path} matches its fingerprint', { path });
     }
     case 'peer_review':
     case 'person':
@@ -1355,12 +1377,12 @@ export function checkTarget(c: Pick<Check, 'kind' | 'spec'>): string {
 }
 
 export const CHECK_STATUS: Record<CheckStatus, { label: string; tone: Tone }> = {
-  passed: { label: 'Passed', tone: 'emerald' },
-  failed: { label: 'Failed', tone: 'rose' },
-  error: { label: 'Couldn’t run', tone: 'rose' },
-  running: { label: 'Running', tone: 'violet' },
-  pending: { label: 'Not run yet', tone: 'zinc' },
-  needs_approval: { label: 'Needs your OK', tone: 'amber' },
+  passed: { label: t('Passed'), tone: 'emerald' },
+  failed: { label: t('Failed'), tone: 'rose' },
+  error: { label: t('Couldn’t run'), tone: 'rose' },
+  running: { label: t('Running'), tone: 'violet' },
+  pending: { label: t('Not run yet'), tone: 'zinc' },
+  needs_approval: { label: t('Needs your OK'), tone: 'amber' },
 };
 export const checkStatusLabel = (s: string) => CHECK_STATUS[s as CheckStatus] ?? { label: humanize(s), tone: 'zinc' as Tone };
 
@@ -1412,8 +1434,8 @@ export function buildReceipt(d: Pick<TaskDetail, 'task' | 'checks' | 'evidence'>
         c.counts !== false
           ? null
           : !!owner && c.requested_by === owner
-            ? 'Doesn’t count yet: the task’s own bot added it. It counts once you allow it.'
-            : 'Doesn’t count toward Verified yet.',
+            ? t('Doesn’t count yet: the task’s own bot added it. It counts once you allow it.')
+            : t('Doesn’t count toward Verified yet.'),
     }));
   const ran = lines.some((l) => l.check.status === 'passed' || l.check.status === 'failed' || l.check.status === 'error');
   const verifiedBy = d.task.state === 'verified' ? lines.find((l) => l.check.status === 'passed' && !l.ownClaim && !l.notCounting) ?? null : null;
@@ -1467,82 +1489,113 @@ export function eventText(e: TaskEvent, names: Record<string, string> = {}): str
   const note = str(d.note) ?? str(d.reason);
   switch (e.kind) {
     case 'created':
-      return `${Who} added this task`;
-    case 'state':
-      if (e.to_state === 'cancelled' && note === NOTICE_CLOSED_NOTE) return `${Who} closed it: ${note}`;
-      return `${Who} moved it to ${stateLabel(e.to_state ?? '').label}${note ? `: ${note}` : ''}`;
+      return t('{who} added this task', { who: Who });
+    case 'state': {
+      if (e.to_state === 'cancelled' && note === NOTICE_CLOSED_NOTE) return t('{who} closed it: {note}', { who: Who, note });
+      const state = stateLabel(e.to_state ?? '').label;
+      return note ? t('{who} moved it to {state}: {note}', { who: Who, state, note }) : t('{who} moved it to {state}', { who: Who, state });
+    }
     case 'claimed':
-      return `${Who} took it on`;
+      return t('{who} took it on', { who: Who });
     case 'released':
-      if (e.actor === 'person' && !note) return 'You let it run again';
-      return `${Who} let it go${note ? `: ${note}` : ''}`;
+      if (e.actor === 'person' && !note) return t('You let it run again');
+      return note ? t('{who} let it go: {note}', { who: Who, note }) : t('{who} let it go', { who: Who });
     case 'lease_expired':
-      return 'The claim ran out with no activity, so it went back to Ready';
+      return t('The claim ran out with no activity, so it went back to Ready');
     case 'note':
-      return `${Who}: ${note ?? 'added a note'}`;
-    case 'evidence':
-      return `${Who} attached evidence${str(d.label) ? `: ${str(d.label)}` : ''}`;
+      return `${Who}: ${note ?? t('added a note')}`;
+    case 'evidence': {
+      const label = str(d.label);
+      return label ? t('{who} attached evidence: {label}', { who: Who, label }) : t('{who} attached evidence', { who: Who });
+    }
     case 'check_added':
-      return `${Who} added a check${str(d.kind) ? ` (${checkKindLabel(String(d.kind)).toLowerCase()})` : ''}`;
+      return str(d.kind) ? t('{who} added a check ({kind})', { who: Who, kind: checkKindLabel(String(d.kind)).toLowerCase() }) : t('{who} added a check', { who: Who });
     case 'check_started':
-      return 'A check started';
+      return t('A check started');
     case 'check_result':
-      return `A check ${str(d.status) === 'passed' ? 'passed' : str(d.status) === 'error' ? 'couldn’t run' : 'failed'}`;
-    case 'review':
-      return `${Who} reviewed it: ${str(d.verdict) === 'pass' ? 'pass' : 'fail'}${note ? `. ${note}` : ''}`;
+      return str(d.status) === 'passed' ? t('A check passed') : str(d.status) === 'error' ? t('A check couldn’t run') : t('A check failed');
+    case 'review': {
+      const pass = str(d.verdict) === 'pass';
+      if (note) return pass ? t('{who} reviewed it: pass. {note}', { who: Who, note }) : t('{who} reviewed it: fail. {note}', { who: Who, note });
+      return pass ? t('{who} reviewed it: pass', { who: Who }) : t('{who} reviewed it: fail', { who: Who });
+    }
     case 'budget':
-      return 'It reached its token limit';
+      return t('It reached its token limit');
     case 'edited':
-      return `${Who} edited it`;
+      return t('{who} edited it', { who: Who });
     case 'flagged':
-      return 'Flagged: it may no longer hold';
+      return t('Flagged: it may no longer hold');
     case 'flag_resolved': {
       const r = str(d.resolution);
-      return `${Who} settled a flag: ${r === 'still_valid' ? 'still valid' : r === 'redo' ? 'redo' : r === 'cancelled' ? 'cancel' : 'decided'}`;
+      const how = r === 'still_valid' ? t('still valid') : r === 'redo' ? t('redo') : r === 'cancelled' ? t('cancel') : t('decided');
+      return t('{who} settled a flag: {how}', { who: Who, how });
     }
     case 'forked':
-      return `${Who} made a copy to redo it${note ? `: ${note}` : ''}`;
+      return note ? t('{who} made a copy to redo it: {note}', { who: Who, note }) : t('{who} made a copy to redo it', { who: Who });
     case 'held':
-      return 'On hold after the restore, until you press Run';
+      return t('On hold after the restore, until you press Run');
     case 'restored': {
-      const n = (k: unknown, one: string, many: string) => (typeof k === 'number' && k > 0 ? (k === 1 ? one : many.replace('#', String(k))) : null);
-      const parts = [n(d.restored, '1 file put back', '# files put back'), n(d.deleted, '1 removed', '# removed')].filter(Boolean);
-      return `${Who} restored it from a checkpoint${parts.length ? `: ${parts.join(', ')}` : ''}`;
+      const parts = [
+        typeof d.restored === 'number' && d.restored > 0 ? t(d.restored === 1 ? '{n} file put back' : '{n} files put back', { n: d.restored }) : null,
+        typeof d.deleted === 'number' && d.deleted > 0 ? t('{n} removed', { n: d.deleted }) : null,
+      ].filter(Boolean);
+      return parts.length ? t('{who} restored it from a checkpoint: {parts}', { who: Who, parts: parts.join(t(', ')) }) : t('{who} restored it from a checkpoint', { who: Who });
     }
-    case 'failure':
-      return `It failed: ${failureClassLabel(str(d.class) ?? 'unknown').toLowerCase()}${str(d.summary) ? `. ${str(d.summary)}` : ''}`;
+    case 'failure': {
+      const failure = failureClassLabel(str(d.class) ?? 'unknown').toLowerCase();
+      const summary = str(d.summary);
+      return summary ? t('It failed: {failure}. {summary}', { failure, summary }) : t('It failed: {failure}', { failure });
+    }
     case 'autofix':
-      return `AutoFix sent it back to Ready: ${strategyLabel(str(d.strategy) ?? '').toLowerCase()}`;
+      return t('AutoFix sent it back to Ready: {strategy}', { strategy: strategyLabel(str(d.strategy) ?? '').toLowerCase() });
     case 'autofix_scheduled':
-      return str(d.status) === 'suggested' ? 'AutoFix suggested a retry. It waits for your OK' : `AutoFix planned a retry: ${strategyLabel(str(d.strategy) ?? '').toLowerCase()}`;
+      return str(d.status) === 'suggested'
+        ? t('AutoFix suggested a retry. It waits for your OK')
+        : t('AutoFix planned a retry: {strategy}', { strategy: strategyLabel(str(d.strategy) ?? '').toLowerCase() });
     case 'autofix_started':
-      return 'AutoFix started a retry';
+      return t('AutoFix started a retry');
     case 'autofix_finished': {
       const s = str(d.status);
-      if (s === 'succeeded') return 'AutoFix’s retry worked';
-      if (s === 'skipped') return `AutoFix didn’t retry: ${skipText(str(d.reason) ?? '')}`;
-      return 'AutoFix’s retry failed';
+      if (s === 'succeeded') return t('AutoFix’s retry worked');
+      if (s === 'skipped') return t('AutoFix didn’t retry: {why}', { why: skipText(str(d.reason) ?? '') });
+      return t('AutoFix’s retry failed');
     }
     case 'workflow_change_proposed':
-      return `${Who} proposed a change for you to approve`;
+      return t('{who} proposed a change for you to approve', { who: Who });
     case 'workflow_change_decided':
-      return str(d.status) === 'stale' ? 'A proposed change went out of date, so nothing changed' : `${Who} ${str(d.status) === 'rejected' ? 'rejected' : 'approved'} a proposed change`;
+      return str(d.status) === 'stale'
+        ? t('A proposed change went out of date, so nothing changed')
+        : str(d.status) === 'rejected'
+          ? t('{who} rejected a proposed change', { who: Who })
+          : t('{who} approved a proposed change', { who: Who });
     case 'workflow_change_applied':
-      return 'The approved change was applied';
+      return t('The approved change was applied');
     case 'audit_started':
-      return `An audit started: ${actorName(str(d.challenger) ?? '', null, names)} challenges the work`;
+      return t('An audit started: {name} challenges the work', { name: actorName(str(d.challenger) ?? '', null, names) });
     case 'audit_challenge':
-      return `${Who} raised ${typeof d.risks === 'number' ? (d.risks === 1 ? '1 risk' : `${d.risks} risks`) : 'risks'} in the audit`;
+      return typeof d.risks === 'number'
+        ? t(d.risks === 1 ? '{who} raised {n} risk in the audit' : '{who} raised {n} risks in the audit', { who: Who, n: d.risks })
+        : t('{who} raised risks in the audit', { who: Who });
     case 'audit_rebuttal':
-      return `${Who} answered the audit`;
+      return t('{who} answered the audit', { who: Who });
     case 'audit_done':
-      return str(d.status) === 'done' ? 'The audit finished. It doesn’t change whether the task passed' : `The audit ended: ${str(d.status) ?? 'stopped'}`;
-    case 'audit_skipped':
-      return `No audit: ${str(d.reason) === 'daily_cap' ? 'today’s limit was reached' : str(d.reason) === 'no_challenger' ? 'no other bot could challenge it' : str(d.reason) === 'task_moved' ? 'the task moved on' : 'skipped'}`;
+      return str(d.status) === 'done' ? t('The audit finished. It doesn’t change whether the task passed') : t('The audit ended: {status}', { status: str(d.status) ?? t('stopped') });
+    case 'audit_skipped': {
+      const r = str(d.reason);
+      const why =
+        r === 'daily_cap'
+          ? t('today’s limit was reached')
+          : r === 'no_challenger'
+            ? t('no other bot could challenge it')
+            : r === 'task_moved'
+              ? t('the task moved on')
+              : t('skipped');
+      return t('No audit: {why}', { why });
+    }
     case 'risk_resolved':
-      return `${Who} ${str(d.resolution) === 'dismissed' ? 'dismissed' : 'resolved'} a risk`;
+      return str(d.resolution) === 'dismissed' ? t('{who} dismissed a risk', { who: Who }) : t('{who} resolved a risk', { who: Who });
     case 'class_changed':
-      return `${Who} changed its kind of work${str(d.to) ? ` to ${str(d.to)}` : ''}`;
+      return str(d.to) ? t('{who} changed its kind of work to {to}', { who: Who, to: str(d.to) ?? '' }) : t('{who} changed its kind of work', { who: Who });
     default:
       return `${Who}: ${humanize(e.kind)}`;
   }
@@ -1573,29 +1626,29 @@ export function actionsFor(t: Pick<Task, 'state'>): TaskAction[] {
 }
 
 export const ACTION_LABELS: Record<TaskAction, string> = {
-  verify: 'Mark verified',
-  reject: 'Send back',
-  block: 'Block',
-  unblock: 'Unblock',
-  retry: 'Try again',
-  cancel: 'Cancel task',
-  run_checks: 'Run checks',
+  verify: t('Mark verified'),
+  reject: t('Send back'),
+  block: t('Block'),
+  unblock: t('Unblock'),
+  retry: t('Try again'),
+  cancel: t('Cancel task'),
+  run_checks: t('Run checks'),
 };
 
 /** Actions that need a reason typed first. */
 export const NEEDS_REASON: Partial<Record<TaskAction, string>> = {
-  reject: 'What still needs doing?',
-  block: 'Why is it blocked?',
+  reject: t('What still needs doing?'),
+  block: t('Why is it blocked?'),
 };
 
 export const ACTION_DONE: Record<TaskAction, string> = {
-  verify: 'Marked verified by you.',
-  reject: 'Sent back to Ready.',
-  block: 'Blocked.',
-  unblock: 'Unblocked.',
-  retry: 'Back in Ready for another try.',
-  cancel: 'Cancelled.',
-  run_checks: 'Checks ran.',
+  verify: t('Marked verified by you.'),
+  reject: t('Sent back to Ready.'),
+  block: t('Blocked.'),
+  unblock: t('Unblocked.'),
+  retry: t('Back in Ready for another try.'),
+  cancel: t('Cancelled.'),
+  run_checks: t('Checks ran.'),
 };
 
 // ---------------------------------------------------------------------------
@@ -1659,9 +1712,9 @@ export class MissionError extends Error {
 }
 
 const sentence = (s: string) => {
-  const t = s.trim();
-  if (!t) return t;
-  const c = t[0].toUpperCase() + t.slice(1);
+  const x = s.trim();
+  if (!x) return x;
+  const c = x[0].toUpperCase() + x.slice(1);
   return /[.!?]$/.test(c) ? c : `${c}.`;
 };
 
@@ -1670,9 +1723,9 @@ export function errorFrom(status: number, answer: unknown): MissionError {
   const err = typeof a.error === 'string' && a.error.trim() ? sentence(a.error) : null;
   // A 409 without a `code` may name the state it found instead (a Flight School proposal, or a dispute or fact already decided).
   const code = typeof a.code === 'string' && a.code ? a.code : status === 409 && typeof a.status === 'string' && a.status ? a.status : null;
-  if (status === 403) return new MissionError('Only you can change tasks on the board.', 403);
-  if (status === 404 && !err) return new MissionError('This server doesn’t have the Mission board yet. Update the app and try again.', 404);
-  return new MissionError(err ?? `Something went wrong (HTTP ${status}).`, status, code);
+  if (status === 403) return new MissionError(t('Only you can change tasks on the board.'), 403);
+  if (status === 404 && !err) return new MissionError(t('This server doesn’t have the Mission board yet. Update the app and try again.'), 404);
+  return new MissionError(err ?? t('Something went wrong (HTTP {status}).', { status }), status, code);
 }
 
 async function call<T>(url: string, method = 'GET', body?: unknown, extra?: Record<string, string>, keepalive = false): Promise<T> {
@@ -1688,7 +1741,7 @@ async function call<T>(url: string, method = 'GET', body?: unknown, extra?: Reco
     });
   } catch (e) {
     if (e instanceof PersonCancelledError) throw new MissionError(e.message, 401);
-    throw new MissionError('Couldn’t reach the server. Check your connection and try again.', 0);
+    throw new MissionError(t('Couldn’t reach the server. Check your connection and try again.'), 0);
   }
   const answer = await res.json().catch(() => null);
   if (res.ok) return answer as T;
@@ -1960,13 +2013,13 @@ export interface Lane {
 export function groupIntoLanes(tasks: Task[], by: Exclude<GroupBy, 'none'>, teams: BoardTeam[], names: Record<string, string>): Lane[] {
   const teamOf = teamOfBots(teams);
   const lanes = new Map<string, Lane>();
-  const laneOf = (t: Task): { key: string; label: string } => {
-    const bot = taskBot(t);
+  const laneOf = (task: Task): { key: string; label: string } => {
+    const bot = taskBot(task);
     if (by === 'team') {
       const team = bot ? teamOf[bot] : undefined;
-      return team ? { key: team.id, label: team.name } : { key: NO_TEAM, label: 'No team' };
+      return team ? { key: team.id, label: team.name } : { key: NO_TEAM, label: t('No team') };
     }
-    return bot ? { key: bot, label: names[bot] ?? t.owner_name ?? 'Unknown bot' } : { key: NO_OWNER, label: 'No owner yet' };
+    return bot ? { key: bot, label: names[bot] ?? task.owner_name ?? t('Unknown bot') } : { key: NO_OWNER, label: t('No owner yet') };
   };
   for (const t of sortTasks(tasks)) {
     const c = columnOfTask(t);
@@ -2003,15 +2056,15 @@ export function filterByTeams(tasks: Task[], picked: string[], teams: BoardTeam[
 
 /** "45s", "12m", "1h 05m", "2d 3h": how long a turn has been running. */
 export function elapsedText(since: string | undefined, now: number = Date.now()): string {
-  const t = since ? Date.parse(since) : NaN;
-  if (Number.isNaN(t)) return '';
-  const s = Math.max(0, Math.floor((now - t) / 1000));
-  if (s < 60) return `${s}s`;
+  const at = since ? Date.parse(since) : NaN;
+  if (Number.isNaN(at)) return '';
+  const s = Math.max(0, Math.floor((now - at) / 1000));
+  if (s < 60) return t('{s}s', { s });
   const m = Math.floor(s / 60);
-  if (m < 60) return `${m}m`;
+  if (m < 60) return t('{m}m', { m });
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ${String(m % 60).padStart(2, '0')}m`;
-  return `${Math.floor(h / 24)}d ${h % 24}h`;
+  if (h < 24) return t('{h}h {m}m', { h, m: String(m % 60).padStart(2, '0') });
+  return t('{d}d {h}h', { d: Math.floor(h / 24), h: h % 24 });
 }
 
 export interface LiveBot {
@@ -2052,13 +2105,13 @@ export function describeTurn(turn: BoardTurn, ctx: LiveContext): Pick<LiveBot, '
     (t) => t.state === 'working' && taskBot(t) === turn.kwant_id && (turn.thread_id ? t.thread_id === turn.thread_id : !t.thread_id && (t.channel_id ?? t.direct_kwant_id) === turn.context_id),
   );
   if (task) return { what: task.title, kind: 'task', place, taskId: task.id };
-  if (turn.purpose === 'decide') return { what: 'Deciding how to answer', kind: 'deciding', place, taskId: null };
-  if (room !== undefined) return { what: `In ${room || 'a room'}`, kind: 'room', place, taskId: null };
+  if (turn.purpose === 'decide') return { what: t('Deciding how to answer'), kind: 'deciding', place, taskId: null };
+  if (room !== undefined) return { what: room ? t('In {room}', { room }) : t('In a room'), kind: 'room', place, taskId: null };
   if (turn.thread_id) {
     const title = ctx.threadTitles?.[turn.thread_id];
-    return { what: title ? title : 'In a side conversation', kind: 'thread', place, taskId: null };
+    return { what: title ? title : t('In a side conversation'), kind: 'thread', place, taskId: null };
   }
-  return { what: 'In your chat', kind: 'chat', place, taskId: null };
+  return { what: t('In your chat'), kind: 'chat', place, taskId: null };
 }
 
 /**
@@ -2076,17 +2129,17 @@ export function liveBots(turns: BoardTurn[], ctx: LiveContext): LiveBot[] {
   const out: LiveBot[] = [];
   for (const [kwantId, list] of byBot) {
     // Prefer a task's turn (it says the most), then the longest-running.
-    const described = list.map((t) => ({ t, d: describeTurn(t, ctx) }));
-    described.sort((a, b) => Number(b.d.kind === 'task') - Number(a.d.kind === 'task') || started(a.t) - started(b.t));
-    const { t, d } = described[0];
+    const described = list.map((x) => ({ turn: x, d: describeTurn(x, ctx) }));
+    described.sort((a, b) => Number(b.d.kind === 'task') - Number(a.d.kind === 'task') || started(a.turn) - started(b.turn));
+    const { turn, d } = described[0];
     const team = teamOf[kwantId];
     out.push({
       kwantId,
-      name: ctx.names[kwantId] ?? 'A bot',
+      name: ctx.names[kwantId] ?? t('A bot'),
       teamId: team?.id ?? NO_TEAM,
-      teamName: team?.name ?? 'No team',
+      teamName: team?.name ?? t('No team'),
       ...d,
-      since: list.map((x) => x.since).filter(Boolean).sort()[0] ?? t.since,
+      since: list.map((x) => x.since).filter(Boolean).sort()[0] ?? turn.since,
       more: list.length - 1,
     });
   }
@@ -2107,17 +2160,20 @@ export function liveByTeam(bots: LiveBot[], teams: BoardTeam[]): Array<{ teamId:
 
 /** The Live strip's summary, so it and the Working column never seem to disagree. */
 export function liveSummary(bots: LiveBot[], workingCards: number): string {
-  if (!bots.length) return workingCards ? `All bots idle · ${workingCards === 1 ? '1 task waits' : `${workingCards} tasks wait`} in Working for its bot’s next turn` : 'All bots idle';
+  if (!bots.length)
+    return workingCards
+      ? t(workingCards === 1 ? 'All bots idle · {n} task waits in Working for its bot’s next turn' : 'All bots idle · {n} tasks wait in Working for its bot’s next turn', { n: workingCards })
+      : t('All bots idle');
   const onTasks = bots.filter((b) => b.kind === 'task').length;
-  const head = bots.length === 1 ? '1 bot busy' : `${bots.length} bots busy`;
+  const head = t(bots.length === 1 ? '{n} bot busy' : '{n} bots busy', { n: bots.length });
   const rest = bots.length - onTasks;
-  if (!rest) return `${head}, all on board tasks`;
-  return `${head} · ${onTasks} on board tasks, ${rest} in chats, rooms or routines`;
+  if (!rest) return t('{head}, all on board tasks', { head });
+  return t('{head} · {n} on board tasks, {rest} in chats, rooms or routines', { head, n: onTasks, rest });
 }
 
 /** The Verified column's header count: "5 · 37 all" once older cards are hidden. */
 export function verifiedCountText(recent: number, all: number): string {
-  return recent === all ? String(all) : `${recent} · ${all} all`;
+  return recent === all ? String(all) : t('{recent} · {all} all', { recent, all });
 }
 
 /** The one-tap actions a Review card carries. Dismiss is the server's cancel. */
@@ -2129,23 +2185,23 @@ export function quickActionsFor(t: Pick<Task, 'state'>): QuickAction[] {
   return [];
 }
 
-export const QUICK_LABELS: Record<QuickAction, string> = { verify: 'Mark verified', reject: 'Send back', cancel: 'Dismiss', retry: 'Try again' };
+export const QUICK_LABELS: Record<QuickAction, string> = { verify: t('Mark verified'), reject: t('Send back'), cancel: t('Dismiss'), retry: t('Try again') };
 
 /** Sending back needs a reason on the server; an empty note sends this one. */
 export const DEFAULT_SEND_BACK = 'Take another look: it isn’t done yet.';
 
 /** The undo toast's line for an action on `n` cards. */
 export function quickDoneText(a: QuickAction, n: number, title?: string): string {
-  const what = n === 1 && title ? `“${title}”` : n === 1 ? '1 card' : `${n} cards`;
+  const what = n === 1 && title ? `“${title}”` : t(n === 1 ? '{n} card' : '{n} cards', { n });
   switch (a) {
     case 'verify':
-      return `Marked ${what} verified.`;
+      return t('Marked {what} verified.', { what });
     case 'reject':
-      return `Sent ${what} back to its bot.`;
+      return t('Sent {what} back to its bot.', { what });
     case 'retry':
-      return `${what} goes back to Ready for another try.`;
+      return t('{what} goes back to Ready for another try.', { what });
     default:
-      return `Dismissed ${what}.`;
+      return t('Dismissed {what}.', { what });
   }
 }
 

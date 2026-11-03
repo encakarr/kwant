@@ -1,6 +1,7 @@
 import React, { useId, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { localClock } from '../clock';
+import { t } from '../i18n';
 
 export interface ReplyFacts {
   /** "Claude · Opus 5.5": the engine and model the reply ran on. */
@@ -39,9 +40,9 @@ export const ReplyMeta: React.FC<ReplyMetaProps> = ({ name, at, avatar, ranOn, a
   const panelId = useId();
   const time = localClock(at, now);
   const facts: Array<[string, React.ReactNode]> = [];
-  if (ranOn) facts.push(['Model', ranOn]);
-  if (account) facts.push(['Account', account]);
-  if (tokens) facts.push(['Tokens', <span title={tokens.detail}>{tokens.label}<span className="text-zinc-500"> · {tokens.detail}</span></span>]);
+  if (ranOn) facts.push([t('Model'), ranOn]);
+  if (account) facts.push([t('Account'), account]);
+  if (tokens) facts.push([t('Tokens'), <span title={tokens.detail}>{tokens.label}<span className="text-zinc-500"> · {tokens.detail}</span></span>]);
   const hasDetails = facts.length > 0 || hasContent(children);
   return (
     <div className="w-full max-w-full min-w-0">
@@ -64,7 +65,7 @@ export const ReplyMeta: React.FC<ReplyMetaProps> = ({ name, at, avatar, ranOn, a
               failed && !open ? 'text-rose-300' : 'text-zinc-500'
             }`}
           >
-            {failed && !open ? 'Details · a step failed' : 'Details'}
+            {failed && !open ? t('Details · a step failed') : t('Details')}
             <ChevronRight size={12} className={`transition-transform motion-reduce:transition-none ${open ? 'rotate-90' : ''}`} aria-hidden="true" />
           </button>
         )}

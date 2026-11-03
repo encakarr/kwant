@@ -2,6 +2,7 @@
 // text lives only on the server (src/import/prompts.rs); this file never copies it.
 
 import { PersonCancelledError, personFetch } from './auth';
+import { t } from './i18n';
 
 export type ImportSourceId = 'grok' | 'chatgpt' | 'claude' | 'other';
 
@@ -130,7 +131,7 @@ async function call<T>(method: string, url: string, init: RequestInit = {}): Pro
     res = await personFetch(url, { method, ...init });
   } catch (e) {
     if (e instanceof PersonCancelledError) throw new ImportError(e.message, 'person_cancelled', 401);
-    throw new ImportError('Couldn’t reach the server. Check your connection and try again.', 'network', 0);
+    throw new ImportError(t('Couldn’t reach the server. Check your connection and try again.'), 'network', 0);
   }
   if (!res.ok) {
     let data: any = null;
@@ -172,28 +173,28 @@ export function importErrorText(err: unknown): { title: string; detail: string }
   const detail = e?.message || '';
   switch (e?.code) {
     case 'too_large':
-      return { title: 'That’s too big to import', detail: detail || 'Files can be up to 20 MB, and pasted replies up to 256 KB.' };
+      return { title: t('That’s too big to import'), detail: detail || t('Files can be up to 20 MB, and pasted replies up to 256 KB.') };
     case 'unsupported':
       return {
-        title: 'We can’t read that kind of file',
-        detail: detail || 'Try a .json, .md, .png character card or .zip, or paste the reply your bot gave you.',
+        title: t('We can’t read that kind of file'),
+        detail: detail || t('Try a .json, .md, .png character card or .zip, or paste the reply your bot gave you.'),
       };
     case 'invalid':
-      return { title: 'Something in it isn’t right', detail: detail || 'It looks like a file we know, but part of it is broken.' };
+      return { title: t('Something in it isn’t right'), detail: detail || t('It looks like a file we know, but part of it is broken.') };
     case 'empty':
-      return { title: 'Nothing to import', detail: detail || 'It was empty, or every bot was left out.' };
+      return { title: t('Nothing to import'), detail: detail || t('It was empty, or every bot was left out.') };
     case 'problems':
-      return { title: 'Fix these first', detail: detail || 'Some bots can’t be imported as they are.' };
+      return { title: t('Fix these first'), detail: detail || t('Some bots can’t be imported as they are.') };
     case 'name_taken':
-      return { title: 'A name was just taken', detail: detail || 'Someone made a bot with the same name. Check the preview again.' };
+      return { title: t('A name was just taken'), detail: detail || t('Someone made a bot with the same name. Check the preview again.') };
     case 'not_found':
-      return { title: 'That import is gone', detail: detail || 'It may have been in another space.' };
+      return { title: t('That import is gone'), detail: detail || t('It may have been in another space.') };
     case 'network':
-      return { title: 'No connection', detail };
+      return { title: t('No connection'), detail };
     case 'person_cancelled':
-      return { title: 'Not undone', detail };
+      return { title: t('Not undone'), detail };
     default:
-      return { title: 'Something went wrong', detail: 'The server couldn’t finish this. Try again in a moment.' };
+      return { title: t('Something went wrong'), detail: t('The server couldn’t finish this. Try again in a moment.') };
   }
 }
 
@@ -257,14 +258,14 @@ const SOURCE_NAMES: Record<string, string> = {
   grok: 'Grok',
   chatgpt: 'ChatGPT',
   claude: 'Claude',
-  'claude-code': 'a Claude Code file',
-  skill: 'a SKILL.md',
-  'character-card': 'a character card',
+  'claude-code': t('a Claude Code file'),
+  skill: t('a SKILL.md'),
+  'character-card': t('a character card'),
   grokbot: 'Grok Bot',
   openmaus: 'OpenMausBot',
   'openmaus-grok': 'OpenMausBot',
-  zip: 'a zip',
-  'plain-text': 'pasted text',
+  zip: t('a zip'),
+  'plain-text': t('pasted text'),
 };
 
 /** Where an import comes from, for "from …". `source.label` is often a bot name, so it isn't used. */
@@ -296,7 +297,7 @@ export async function downloadExport(kwantId?: string): Promise<string> {
   try {
     res = await fetch(url);
   } catch {
-    throw new ImportError('Couldn’t reach the server. Check your connection and try again.', 'network', 0);
+    throw new ImportError(t('Couldn’t reach the server. Check your connection and try again.'), 'network', 0);
   }
   if (!res.ok) {
     let msg = '';
@@ -305,7 +306,7 @@ export async function downloadExport(kwantId?: string): Promise<string> {
     } catch {
       // no JSON body
     }
-    throw new ImportError(msg || 'The export didn’t work. Try again in a moment.', res.status === 404 ? 'not_found' : 'internal', res.status);
+    throw new ImportError(msg || t('The export didn’t work. Try again in a moment.'), res.status === 404 ? 'not_found' : 'internal', res.status);
   }
   const name = downloadName(res.headers.get('content-disposition'), 'export.kwant.json');
   const blob = await res.blob();
@@ -337,10 +338,10 @@ const TOOL_NOTE = /^It used tools \((.*)\)\.\s*(.*)$/s;
 
 /** "mcp__gmail__send_email", "gmail.send", "Gmail: send" → "gmail"; a plain name stays whole. */
 function appOf(hint: string): string | null {
-  const t = hint.trim();
-  const mcp = /^mcp__(.+?)__/.exec(t);
+  const h = hint.trim();
+  const mcp = /^mcp__(.+?)__/.exec(h);
   if (mcp) return mcp[1];
-  const sep = /^([^\s.:/]+)\s*(?:\.|:|\/|__)\s*\S/.exec(t);
+  const sep = /^([^\s.:/]+)\s*(?:\.|:|\/|__)\s*\S/.exec(h);
   return sep ? sep[1] : null;
 }
 

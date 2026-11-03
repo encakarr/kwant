@@ -6,6 +6,7 @@
 // saying which kind it is, so an estimate can't pass for a measurement.
 
 import { PersonCancelledError, personFetch } from './auth';
+import { t } from './i18n';
 
 export const MAX_OPTIONS = 3;
 export const MAX_TOTAL_MEMORY_MB = 3072;
@@ -154,31 +155,36 @@ export interface Report {
 export type Tone = 'emerald' | 'amber' | 'violet' | 'rose' | 'sky' | 'zinc';
 
 /** What a number is, in the words the person sees. Unknown tags read as a guess, never as measured. */
-export function figureKind(tag: string): { label: 'Measured' | 'Estimate' | 'Guess'; tone: Tone; hint: string } {
-  if (tag === 'verified') return { label: 'Measured', tone: 'emerald', hint: 'Measured on this server by a load test.' };
-  if (tag === 'estimate') return { label: 'Estimate', tone: 'amber', hint: 'Worked out from a dated price list, not measured.' };
-  return { label: 'Guess', tone: 'violet', hint: 'Neither measured nor priced.' };
+export function figureKind(tag: string): { label: string; tone: Tone; hint: string } {
+  if (tag === 'verified') return { label: t('Measured'), tone: 'emerald', hint: t('Measured on this server by a load test.') };
+  if (tag === 'estimate') return { label: t('Estimate'), tone: 'amber', hint: t('Worked out from a dated price list, not measured.') };
+  return { label: t('Guess'), tone: 'violet', hint: t('Neither measured nor priced.') };
 }
 
 const METRICS: Record<string, string> = {
-  p50_latency: 'Median response',
-  p95_latency: '95% answered within',
-  p99_latency: '99% answered within',
-  requests_per_sec: 'Requests per second',
-  ok_share: 'Requests answered OK',
-  success_rate: 'Requests completed',
-  memory_after_load: 'Memory after load',
-  monthly_cost: 'Monthly cost',
+  p50_latency: t('Median response'),
+  p95_latency: t('95% answered within'),
+  p99_latency: t('99% answered within'),
+  requests_per_sec: t('Requests per second'),
+  ok_share: t('Requests answered OK'),
+  success_rate: t('Requests completed'),
+  memory_after_load: t('Memory after load'),
+  monthly_cost: t('Monthly cost'),
 };
 const humanize = (s: string) => {
-  const t = s.replace(/[_-]+/g, ' ').trim();
-  return t ? t[0].toUpperCase() + t.slice(1) : 'Other';
+  const x = s.replace(/[_-]+/g, ' ').trim();
+  return x ? x[0].toUpperCase() + x.slice(1) : t('Other');
 };
 export const metricLabel = (metric: string): string => METRICS[metric] ?? humanize(metric);
 
-const CRITERIA: Record<string, string> = { cost: 'Cheapest', p95_latency: 'Fastest', ops_burden: 'Easiest to run', rollback: 'Easiest to roll back' };
+const CRITERIA: Record<string, string> = {
+  cost: t('Cheapest'),
+  p95_latency: t('Fastest'),
+  ops_burden: t('Easiest to run'),
+  rollback: t('Easiest to roll back'),
+};
 export const leaderLabel = (c: string): string => CRITERIA[c] ?? humanize(c);
-const NOTE_LABELS: Record<string, string> = { ops_burden: 'Running it', rollback: 'Rolling back' };
+const NOTE_LABELS: Record<string, string> = { ops_burden: t('Running it'), rollback: t('Rolling back') };
 export const noteLabel = (c: string): string => NOTE_LABELS[c] ?? humanize(c);
 
 /** `57.5 ms`, `591 /s`, `99.5 %`, `6.00 USD`. */
@@ -202,17 +208,17 @@ export function sourceHost(url: string): string {
 export const safeHttps = (url: string | null | undefined): string | null => (url && /^https:\/\//i.test(url) ? url : null);
 
 export const RUN_STATUS: Record<RunStatus, { label: string; tone: Tone }> = {
-  running: { label: 'Running', tone: 'sky' },
-  finished: { label: 'Finished', tone: 'emerald' },
-  interrupted: { label: 'Interrupted', tone: 'rose' },
+  running: { label: t('Running'), tone: 'sky' },
+  finished: { label: t('Finished'), tone: 'emerald' },
+  interrupted: { label: t('Interrupted'), tone: 'rose' },
 };
 export const runStatus = (s: string): { label: string; tone: Tone } => RUN_STATUS[s as RunStatus] ?? { label: humanize(s), tone: 'zinc' };
 
 export const BRANCH_STATUS: Record<BranchStatus, { label: string; tone: Tone }> = {
-  pending: { label: 'Waiting', tone: 'zinc' },
-  running: { label: 'Testing', tone: 'sky' },
-  ok: { label: 'Done', tone: 'emerald' },
-  failed: { label: 'Failed', tone: 'rose' },
+  pending: { label: t('Waiting'), tone: 'zinc' },
+  running: { label: t('Testing'), tone: 'sky' },
+  ok: { label: t('Done'), tone: 'emerald' },
+  failed: { label: t('Failed'), tone: 'rose' },
 };
 export const branchStatus = (s: string): { label: string; tone: Tone } => BRANCH_STATUS[s as BranchStatus] ?? { label: humanize(s), tone: 'zinc' };
 
@@ -220,12 +226,13 @@ export const branchStatus = (s: string): { label: string; tone: Tone } => BRANCH
 export function runProgress(run: Pick<Run, 'branches'>): { done: number; total: number; text: string } {
   const total = run.branches.length;
   const done = run.branches.filter((b) => b.status === 'ok' || b.status === 'failed').length;
-  return { done, total, text: `${done} of ${total} option${total === 1 ? '' : 's'} tried` };
+  return { done, total, text: t(total === 1 ? '{done} of {total} option tried' : '{done} of {total} options tried', { done, total }) };
 }
 
 /** What an interrupted run means, said plainly. */
-export const INTERRUPTED_TEXT =
-  'The server stopped before this run finished. Options that hadn’t finished have no numbers, and their containers were removed when the server started again.';
+export const INTERRUPTED_TEXT = t(
+  'The server stopped before this run finished. Options that hadn’t finished have no numbers, and their containers were removed when the server started again.',
+);
 
 // ---------- The form ----------
 
@@ -338,9 +345,9 @@ export function slugify(s: string): string {
 }
 
 const num = (s: string): number | null => {
-  const t = s.trim().replace(',', '.');
-  if (!t) return null;
-  const n = Number(t);
+  const x = s.trim().replace(',', '.');
+  if (!x) return null;
+  const n = Number(x);
   return Number.isFinite(n) ? n : null;
 };
 const isInt = (n: number | null): n is number => n !== null && Number.isInteger(n);
@@ -357,9 +364,9 @@ export type FormErrors = Record<string, string>;
 export function validateScenario(d: ScenarioDraft, planIds?: Set<string>): { errors: FormErrors; body: Omit<Scenario, 'id' | 'created_at' | 'updated_at' | 'requirements' | 'criteria'> | null } {
   const errors: FormErrors = {};
   const title = d.title.trim();
-  if (!title) errors.title = 'Give the scenario a name.';
-  else if ([...title].length > 120) errors.title = 'Keep the name to 120 characters.';
-  if ([...d.question].length > 2000) errors.question = 'Keep the question to 2000 characters.';
+  if (!title) errors.title = t('Give the scenario a name.');
+  else if ([...title].length > 120) errors.title = t('Keep the name to 120 characters.');
+  if ([...d.question].length > 2000) errors.question = t('Keep the question to 2000 characters.');
 
   const traffic = {
     monthly_requests: num(d.monthly_requests),
@@ -368,29 +375,29 @@ export function validateScenario(d: ScenarioDraft, planIds?: Set<string>): { err
     avg_duration_ms: num(d.avg_duration_ms),
   };
   if (!isInt(traffic.monthly_requests) || traffic.monthly_requests < 0 || traffic.monthly_requests > 100_000_000_000)
-    errors.monthly_requests = 'A whole number from 0.';
+    errors.monthly_requests = t('A whole number from 0.');
   for (const k of ['peak_rps', 'avg_response_kb', 'avg_duration_ms'] as const) {
     const v = traffic[k];
-    if (v === null || v < 0 || v > 1e7) errors[k] = 'A number from 0.';
+    if (v === null || v < 0 || v > 1e7) errors[k] = t('A number from 0.');
   }
   const load = { requests: num(d.load_requests), concurrency: num(d.load_concurrency), path: d.load_path.trim() };
-  if (!isInt(load.requests) || load.requests < 1 || load.requests > 100_000) errors.load_requests = 'From 1 to 100,000.';
-  if (!isInt(load.concurrency) || load.concurrency < 1 || load.concurrency > 64) errors.load_concurrency = 'From 1 to 64.';
-  if (!isUrlPath(load.path)) errors.load_path = 'Starts with /, like /health.';
+  if (!isInt(load.requests) || load.requests < 1 || load.requests > 100_000) errors.load_requests = t('From 1 to 100,000.');
+  if (!isInt(load.concurrency) || load.concurrency < 1 || load.concurrency > 64) errors.load_concurrency = t('From 1 to 64.');
+  if (!isUrlPath(load.path)) errors.load_path = t('Starts with /, like /health.');
 
-  if (d.options.length === 0) errors.options = 'Add at least one option.';
-  if (d.options.length > MAX_OPTIONS) errors.options = `At most ${MAX_OPTIONS} options.`;
+  if (d.options.length === 0) errors.options = t('Add at least one option.');
+  if (d.options.length > MAX_OPTIONS) errors.options = t('At most {n} options.', { n: MAX_OPTIONS });
 
   const keys = new Set<string>();
   const options: DeployOption[] = d.options.map((o, i) => {
     const at = (f: string) => `options.${i}.${f}`;
     const label = o.label.trim();
-    if (!label) errors[at('label')] = 'Name this option.';
-    else if ([...label].length > 80) errors[at('label')] = 'Keep it to 80 characters.';
+    if (!label) errors[at('label')] = t('Name this option.');
+    else if ([...label].length > 80) errors[at('label')] = t('Keep it to 80 characters.');
     // A new option gets its key from its name; an existing one keeps its key so past runs still match.
     let key = o.key || slugify(label) || `option-${i + 1}`;
     if (keys.has(key)) {
-      if (o.key) errors[at('label')] = 'Two options have the same key. Rename one.';
+      if (o.key) errors[at('label')] = t('Two options have the same key. Rename one.');
       else {
         let n = 2;
         while (keys.has(`${key.slice(0, 29)}-${n}`)) n++;
@@ -399,43 +406,46 @@ export function validateScenario(d: ScenarioDraft, planIds?: Set<string>): { err
     }
     keys.add(key);
 
-    if (o.plan && planIds && !planIds.has(o.plan)) errors[at('plan')] = 'That plan isn’t in the price table.';
+    if (o.plan && planIds && !planIds.has(o.plan)) errors[at('plan')] = t('That plan isn’t in the price table.');
 
     const app: AppSpec = { port: 0, health_path: o.health_path.trim() || '/' };
     if (o.source === 'image') {
       const image = o.image.trim();
-      if (!isImageRef(image)) errors[at('image')] = 'A Docker image on this server, like myapp:latest.';
+      if (!isImageRef(image)) errors[at('image')] = t('A Docker image on this server, like myapp:latest.');
       app.image = image;
     } else {
       const context = o.context.trim();
       if (!context.startsWith('/') || context.length > 1024 || context.split('/').includes('..'))
-        errors[at('context')] = 'A full folder path on this server, like /home/me/app, without “..”.';
+        errors[at('context')] = t('A full folder path on this server, like /home/me/app, without “..”.');
       app.context = context;
       const df = o.dockerfile.trim();
       if (df) {
-        if (df.startsWith('/') || df.split('/').some((p) => p === '..' || p === '.' || p === '')) errors[at('dockerfile')] = 'A path inside the folder, like Dockerfile.';
+        if (df.startsWith('/') || df.split('/').some((p) => p === '..' || p === '.' || p === '')) errors[at('dockerfile')] = t('A path inside the folder, like Dockerfile.');
         app.dockerfile = df;
       }
     }
     const port = num(o.port);
-    if (!isInt(port) || port < 1 || port > 65535) errors[at('port')] = 'From 1 to 65535.';
+    if (!isInt(port) || port < 1 || port > 65535) errors[at('port')] = t('From 1 to 65535.');
     else app.port = port;
-    if (!isUrlPath(app.health_path)) errors[at('health_path')] = 'Starts with /.';
+    if (!isUrlPath(app.health_path)) errors[at('health_path')] = t('Starts with /.');
 
     const limits = {} as Limits;
     for (const k of Object.keys(LIMIT_RANGES) as LimitKey[]) {
       const r = LIMIT_RANGES[k];
       const v = num(o[k]);
       const ok = v !== null && v >= r.min && v <= r.max && (k === 'cpus' || Number.isInteger(v));
-      if (!ok) errors[at(k)] = `From ${r.min} to ${r.max}.`;
+      if (!ok) errors[at(k)] = t('From {min} to {max}.', { min: r.min, max: r.max });
       limits[k] = v ?? 0;
     }
-    if ([...o.ops_notes].length > 2000 || [...o.rollback_notes].length > 2000) errors[at('ops_notes')] = 'Keep notes to 2000 characters each.';
+    if ([...o.ops_notes].length > 2000 || [...o.rollback_notes].length > 2000) errors[at('ops_notes')] = t('Keep notes to 2000 characters each.');
     return { key, label, plan: o.plan || null, app, limits, ops_notes: o.ops_notes.trim(), rollback_notes: o.rollback_notes.trim() };
   });
 
   const total = reservedMemory(d);
-  if (total > MAX_TOTAL_MEMORY_MB) errors.memory_total = `The options reserve ${total} MB together. The limit is ${MAX_TOTAL_MEMORY_MB} MB, so lower the memory of one or more options.`;
+  if (total > MAX_TOTAL_MEMORY_MB) errors.memory_total = t('The options reserve {total} MB together. The limit is {limit} MB, so lower the memory of one or more options.', {
+      total,
+      limit: MAX_TOTAL_MEMORY_MB,
+    });
 
   if (Object.keys(errors).length) return { errors, body: null };
   return {
@@ -466,20 +476,20 @@ export class ParallelError extends Error {
 }
 
 const sentence = (s: string) => {
-  const t = s.trim();
-  if (!t) return t;
-  const c = t[0].toUpperCase() + t.slice(1);
+  const x = s.trim();
+  if (!x) return x;
+  const c = x[0].toUpperCase() + x.slice(1);
   return /[.!?]$/.test(c) ? c : `${c}.`;
 };
 
 /** Turns a response the server refused into a `ParallelError`. */
 export function errorFrom(status: number, answer: unknown): ParallelError {
   const a = answer && typeof answer === 'object' ? (answer as Record<string, unknown>) : {};
-  if (status === 409 && a.code === 'busy') return new ParallelError('Another run is going. It can start once that one finishes.', 409, true);
+  if (status === 409 && a.code === 'busy') return new ParallelError(t('Another run is going. It can start once that one finishes.'), 409, true);
   const err = typeof a.error === 'string' && a.error.trim() ? sentence(a.error) : null;
-  if (status === 403) return new ParallelError('Only you can see and run Parallel Universe.', 403);
-  if (status === 404 && !err) return new ParallelError('This server doesn’t have Parallel Universe yet. Update the app and try again.', 404);
-  return new ParallelError(err ?? `Something went wrong (HTTP ${status}).`, status);
+  if (status === 403) return new ParallelError(t('Only you can see and run Parallel Universe.'), 403);
+  if (status === 404 && !err) return new ParallelError(t('This server doesn’t have Parallel Universe yet. Update the app and try again.'), 404);
+  return new ParallelError(err ?? t('Something went wrong (HTTP {status}).', { status }), status);
 }
 
 async function call<T>(url: string, method = 'GET', body?: unknown): Promise<T> {
@@ -493,7 +503,7 @@ async function call<T>(url: string, method = 'GET', body?: unknown): Promise<T> 
     });
   } catch (e) {
     if (e instanceof PersonCancelledError) throw new ParallelError(e.message, 401);
-    throw new ParallelError('Couldn’t reach the server. Check your connection and try again.', 0);
+    throw new ParallelError(t('Couldn’t reach the server. Check your connection and try again.'), 0);
   }
   const answer = await res.json().catch(() => null);
   if (res.ok) return answer as T;

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { AlertTriangle, Bell, Camera, Check, CheckCircle2, ChevronLeft, Copy, ExternalLink, FileText, Loader2, Pencil, Plus, Quote, RotateCcw, Trash2, Upload, X } from 'lucide-react';
 import { playSfx } from '../audio/chiptune';
+import { t } from '../i18n';
 import { fileKind, formatBytes, isInlineImage, uploadAttachment } from '../attachments';
 import { LooseCase, LooseEndsError, draftCopyText, draftOpen, looseApi, shortDate } from '../looseEnds';
 import {
@@ -133,7 +134,7 @@ export const AddLetterForm: React.FC<{ onCreated: (caseId: string) => void; onCa
       }
     } catch (err) {
       setPhase('idle');
-      return setError({ text: `Couldn’t upload a page: ${err instanceof Error ? err.message : 'something went wrong.'}`, calm: false });
+      return setError({ text: t('Couldn’t upload a page: {error}', { error: err instanceof Error ? err.message : t('something went wrong.') }), calm: false });
     }
     setPhase('starting');
     try {
@@ -141,10 +142,10 @@ export const AddLetterForm: React.FC<{ onCreated: (caseId: string) => void; onCa
       playSfx('coin');
       onCreated(r.case_id);
     } catch (err) {
-      const t = letterErrorText(err);
+      const why = letterErrorText(err);
       // A page used by another letter must be uploaded again; a busy server can take the same ones.
       if (err instanceof LooseEndsError && err.status === 409 && err.code !== 'busy') setPages((cur) => cur.map((x) => ({ ...x, attachmentId: undefined, progress: 0 })));
-      setError(t);
+      setError(why);
       setPhase('idle');
     }
   };
@@ -153,14 +154,14 @@ export const AddLetterForm: React.FC<{ onCreated: (caseId: string) => void; onCa
     <form onSubmit={submit} className="rounded-xl border border-sky-500/30 bg-zinc-900/60 p-3 sm:p-4 space-y-3" aria-labelledby={`${id}-h`} data-add-letter>
       <div className="flex items-center justify-between gap-2">
         <h3 id={`${id}-h`} className="text-sm font-semibold text-zinc-100">
-          Add a letter
+          {t('Add a letter')}
         </h3>
-        <button type="button" onClick={onCancel} aria-label="Close" className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800">
+        <button type="button" onClick={onCancel} aria-label={t('Close')} className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800">
           <X size={14} />
         </button>
       </div>
       <p className="text-xs text-zinc-400">
-        Photograph each page, or pick up to {MAX_LETTER_PAGES} photos or PDFs of one letter (PNG, JPEG, WebP or PDF). It’s read into a case with the deadline and a reply draft. Nothing is sent to anyone.
+        {t('Photograph each page, or pick up to {n} photos or PDFs of one letter (PNG, JPEG, WebP or PDF). It’s read into a case with the deadline and a reply draft. Nothing is sent to anyone.', { n: MAX_LETTER_PAGES })}
       </p>
 
       <div className="flex flex-wrap gap-2">
@@ -168,22 +169,22 @@ export const AddLetterForm: React.FC<{ onCreated: (caseId: string) => void; onCa
           <>
             <input ref={cameraRef} id={`${id}-cam`} type="file" accept="image/*" capture="environment" className="sr-only" tabIndex={-1} onChange={(e) => (add(e.target.files), (e.target.value = ''))} />
             <button type="button" disabled={working || pages.length >= MAX_LETTER_PAGES} onClick={() => cameraRef.current?.click()} className={primaryBtn}>
-              <Camera size={14} aria-hidden="true" /> {pages.length ? 'Photograph another page' : 'Take a photo'}
+              <Camera size={14} aria-hidden="true" /> {pages.length ? t('Photograph another page') : t('Take a photo')}
             </button>
           </>
         )}
         <input ref={pickRef} id={`${id}-pick`} type="file" multiple accept={LETTER_ACCEPT} className="sr-only" tabIndex={-1} onChange={(e) => (add(e.target.files), (e.target.value = ''))} data-letter-files />
         <button type="button" disabled={working || pages.length >= MAX_LETTER_PAGES} onClick={() => pickRef.current?.click()} className={camera ? quietBtn : primaryBtn}>
-          <Upload size={14} aria-hidden="true" /> {camera ? 'Choose files' : pages.length ? 'Add more pages' : 'Choose photos or PDFs'}
+          <Upload size={14} aria-hidden="true" /> {camera ? t('Choose files') : pages.length ? t('Add more pages') : t('Choose photos or PDFs')}
         </button>
       </div>
 
       {pages.length > 0 && (
-        <ol className="grid grid-cols-2 sm:grid-cols-3 gap-2" aria-label="Pages to read">
+        <ol className="grid grid-cols-2 sm:grid-cols-3 gap-2" aria-label={t('Pages to read')}>
           {pages.map((p, i) => (
             <li key={p.key} className="relative min-w-0 rounded-lg border border-zinc-800 bg-zinc-950/60 p-2 space-y-1">
               {p.preview ? (
-                <img src={p.preview} alt={`Page ${i + 1}`} className="w-full h-24 object-cover object-top rounded" />
+                <img src={p.preview} alt={t('Page {n}', { n: i + 1 })} className="w-full h-24 object-cover object-top rounded" />
               ) : (
                 <div className="h-24 flex items-center justify-center rounded bg-zinc-900 text-zinc-500">
                   <FileText size={28} aria-hidden="true" />
@@ -194,13 +195,13 @@ export const AddLetterForm: React.FC<{ onCreated: (caseId: string) => void; onCa
               </p>
               <p className="text-[11px] text-zinc-500">
                 {fileKind(p.file.type, p.file.name)} · {formatBytes(p.file.size)}
-                {p.attachmentId ? ' · uploaded' : phase === 'uploading' && p.progress > 0 ? ` · ${Math.round(p.progress * 100)}%` : ''}
+                {p.attachmentId ? ` · ${t('uploaded')}` : phase === 'uploading' && p.progress > 0 ? ` · ${Math.round(p.progress * 100)}%` : ''}
               </p>
               <button
                 type="button"
                 disabled={working}
                 onClick={() => remove(p.key)}
-                aria-label={`Remove page ${i + 1}, ${p.file.name}`}
+                aria-label={t('Remove page {n}, {name}', { n: i + 1, name: p.file.name })}
                 className="absolute top-1 right-1 p-1.5 rounded-md bg-zinc-900/90 text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800"
               >
                 <X size={12} />
@@ -224,11 +225,19 @@ export const AddLetterForm: React.FC<{ onCreated: (caseId: string) => void; onCa
 
       <div className="flex flex-wrap justify-end gap-2">
         <button type="button" onClick={onCancel} disabled={working} className={quietBtn}>
-          Cancel
+          {t('Cancel')}
         </button>
         <button type="submit" disabled={working || pages.length === 0 || !!problem} className={primaryBtn}>
           {working ? <Loader2 size={13} className={spin} aria-hidden="true" /> : <FileText size={13} aria-hidden="true" />}
-          {phase === 'uploading' ? 'Uploading…' : phase === 'starting' ? 'Starting…' : error?.calm ? 'Try again' : `Read ${pages.length > 1 ? `${pages.length} pages` : 'the letter'}`}
+          {phase === 'uploading'
+            ? t('Uploading…')
+            : phase === 'starting'
+              ? t('Starting…')
+              : error?.calm
+                ? t('Try again')
+                : pages.length > 1
+                  ? t('Read {n} pages', { n: pages.length })
+                  : t('Read the letter')}
         </button>
       </div>
     </form>
@@ -246,14 +255,14 @@ export const StateBadge: React.FC<{ field: LetterField | null | undefined }> = (
       className={`inline-flex items-center gap-1 px-1.5 py-px rounded-full border text-[11px] ${STATE_TONE[s]}`}
       data-state={s}
       data-auto={auto || undefined}
-      title={auto ? 'This was clear in the letter, so it was confirmed for you. Edit or clear it if it’s wrong.' : undefined}
+      title={auto ? t('This was clear in the letter, so it was confirmed for you. Edit or clear it if it’s wrong.') : undefined}
     >
       {s === 'uncertain' && <AlertTriangle size={11} aria-hidden="true" />}
       {s === 'confirmed' && <Check size={11} aria-hidden="true" />}
       {FIELD_STATE_LABEL[s]}
       {auto && (
         <span className="ml-0.5 px-1 rounded bg-emerald-500/15 text-[10px] font-medium uppercase tracking-wide text-emerald-300/90">
-          auto<span className="sr-only">: confirmed automatically, not by you</span>
+          {t('auto')}<span className="sr-only">{t(': confirmed automatically, not by you')}</span>
         </span>
       )}
     </span>
@@ -265,12 +274,12 @@ const FieldQuote: React.FC<{ field: LetterField }> = ({ field }) =>
     <blockquote className="flex gap-1.5 text-[11px] text-zinc-400 whitespace-pre-wrap break-words">
       <Quote size={11} className="mt-0.5 shrink-0 text-zinc-600" aria-hidden="true" />
       <span>
-        <span className="sr-only">From the letter: </span>
+        <span className="sr-only">{t('From the letter: ')}</span>
         {field.quote}
       </span>
     </blockquote>
   ) : (
-    <p className="text-[11px] text-zinc-500">No matching words were found in the letter. Check the page.</p>
+    <p className="text-[11px] text-zinc-500">{t('No matching words were found in the letter. Check the page.')}</p>
   );
 
 /** One field: its value, the quote it came from, whether it's uncertain or confirmed, and Confirm / Edit / Clear. */
@@ -282,7 +291,7 @@ export const FieldRow: React.FC<{ fkey: SingleKey; label: string; hint: string; 
   disabled,
   onSave,
   initialEditing = false,
-  missing = 'Not found in the letter.',
+  missing = t('Not found in the letter.'),
 }) => {
   const id = useId();
   const [editing, setEditing] = useState(initialEditing);
@@ -292,7 +301,7 @@ export const FieldRow: React.FC<{ fkey: SingleKey; label: string; hint: string; 
   const state = fieldState(field);
   const isDate = fkey === 'deadline';
   // Confirming "as it is" still has to parse: a deadline must be a real YYYY-MM-DD date.
-  const confirmBlocked = isDate && field?.value && !isIsoDate(field.value) ? 'This isn’t a YYYY-MM-DD date yet: edit it before confirming.' : null;
+  const confirmBlocked = isDate && field?.value && !isIsoDate(field.value) ? t('This isn’t a YYYY-MM-DD date yet: edit it before confirming.') : null;
 
   const save = async (body: Record<string, unknown>) => {
     setSaving(true);
@@ -339,20 +348,20 @@ export const FieldRow: React.FC<{ fkey: SingleKey; label: string; hint: string; 
           <div className="flex flex-wrap gap-2 pt-0.5">
             {field?.value && state !== 'confirmed' && (
               <button type="button" disabled={busy || !!confirmBlocked} onClick={() => save(confirmBody(fkey))} className={`${actionBtn} bg-emerald-600/90 hover:bg-emerald-500 text-white`}>
-                <Check size={13} aria-hidden="true" /> Confirm
+                <Check size={13} aria-hidden="true" /> {t('Confirm')}
               </button>
             )}
             <button type="button" disabled={busy} onClick={() => (setValue(field?.value ?? ''), setError(null), setEditing(true))} className={quietBtn}>
               {field?.value ? <Pencil size={13} aria-hidden="true" /> : <Plus size={13} aria-hidden="true" />}
-              {field?.value ? 'Edit' : 'Add'}
+              {field?.value ? t('Edit') : t('Add')}
               <span className="sr-only"> {label}</span>
             </button>
             {field?.value && (
               <button type="button" disabled={busy} onClick={() => save(clearBody(fkey))} className={`${actionBtn} text-zinc-300 hover:bg-zinc-800`}>
-                <X size={13} aria-hidden="true" /> Clear<span className="sr-only"> {label}</span>
+                <X size={13} aria-hidden="true" /> {t('Clear')}<span className="sr-only"> {label}</span>
               </button>
             )}
-            {saving && <Loader2 size={13} className={`${spin} self-center text-zinc-400`} aria-label="Saving" />}
+            {saving && <Loader2 size={13} className={`${spin} self-center text-zinc-400`} aria-label={t('Saving')} />}
           </div>
         </>
       )}
@@ -386,7 +395,7 @@ export const FieldRow: React.FC<{ fkey: SingleKey; label: string; hint: string; 
           )}
           {isDate && (
             <p id={`${id}-fmt`} className="text-[11px] text-zinc-500">
-              Year-month-day, for example 2026-11-14. Saving confirms it.
+              {t('Year-month-day, for example 2026-11-14. Saving confirms it.')}
             </p>
           )}
           {error && (
@@ -396,10 +405,10 @@ export const FieldRow: React.FC<{ fkey: SingleKey; label: string; hint: string; 
           )}
           <div className="flex flex-wrap gap-2">
             <button type="submit" disabled={busy} className={primaryBtn}>
-              {saving ? <Loader2 size={13} className={spin} aria-hidden="true" /> : <Check size={13} aria-hidden="true" />} Save
+              {saving ? <Loader2 size={13} className={spin} aria-hidden="true" /> : <Check size={13} aria-hidden="true" />} {t('Save')}
             </button>
             <button type="button" disabled={saving} onClick={() => (setEditing(false), setError(null))} className={quietBtn}>
-              Cancel
+              {t('Cancel')}
             </button>
           </div>
         </form>
@@ -447,9 +456,9 @@ export const ListField: React.FC<{ fkey: ListKey; label: string; hint: string; e
     const kept = rows.filter((r) => r.value.trim());
     for (const r of kept) {
       const why = fieldValueError(fkey, r.value);
-      if (why) return setError(`“${r.value.trim().slice(0, 40)}”: ${why}`);
+      if (why) return setError(t('“{value}”: {error}', { value: r.value.trim().slice(0, 40), error: why }));
     }
-    if (kept.length > 20) return setError('At most 20 entries.');
+    if (kept.length > 20) return setError(t('At most 20 entries.'));
     save(kept, true);
   };
 
@@ -461,7 +470,7 @@ export const ListField: React.FC<{ fkey: ListKey; label: string; hint: string; e
         <span id={`${id}-l`} className="text-[11px] font-semibold text-zinc-400">
           {label}
         </span>
-        {items.length > 0 && !editing && <span className="text-[11px] text-zinc-500">{unchecked ? 'Not all checked' : 'All confirmed'}</span>}
+        {items.length > 0 && !editing && <span className="text-[11px] text-zinc-500">{unchecked ? t('Not all checked') : t('All confirmed')}</span>}
       </div>
 
       {!editing && (
@@ -494,7 +503,7 @@ export const ListField: React.FC<{ fkey: ListKey; label: string; hint: string; e
           <div className="flex flex-wrap gap-2">
             {items.length > 0 && unchecked && (
               <button type="button" disabled={busy} onClick={() => save(items.map((x) => ({ value: x.value, done: x.done })), true)} className={`${actionBtn} bg-emerald-600/90 hover:bg-emerald-500 text-white`}>
-                <Check size={13} aria-hidden="true" /> Confirm all<span className="sr-only"> {label}</span>
+                <Check size={13} aria-hidden="true" /> {t('Confirm all')}<span className="sr-only"> {label}</span>
               </button>
             )}
             <button
@@ -504,10 +513,10 @@ export const ListField: React.FC<{ fkey: ListKey; label: string; hint: string; e
               className={quietBtn}
             >
               {items.length ? <Pencil size={13} aria-hidden="true" /> : <Plus size={13} aria-hidden="true" />}
-              {items.length ? 'Edit' : 'Add'}
+              {items.length ? t('Edit') : t('Add')}
               <span className="sr-only"> {label}</span>
             </button>
-            {saving && <Loader2 size={13} className={`${spin} self-center text-zinc-400`} aria-label="Saving" />}
+            {saving && <Loader2 size={13} className={`${spin} self-center text-zinc-400`} aria-label={t('Saving')} />}
           </div>
         </>
       )}
@@ -525,18 +534,18 @@ export const ListField: React.FC<{ fkey: ListKey; label: string; hint: string; e
                 autoComplete="off"
                 onChange={(e) => setRows((cur) => cur.map((x, j) => (j === i ? { ...x, value: e.target.value } : x)))}
               />
-              <button type="button" onClick={() => setRows((cur) => cur.filter((_, j) => j !== i))} aria-label={`Remove ${label.toLowerCase()} ${i + 1}`} className="shrink-0 p-2 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800">
+              <button type="button" onClick={() => setRows((cur) => cur.filter((_, j) => j !== i))} aria-label={t('Remove {item} {n}', { item: label.toLowerCase(), n: i + 1 })} className="shrink-0 p-2 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800">
                 <X size={14} />
               </button>
             </div>
           ))}
           {rows.length < 20 && (
             <button type="button" onClick={() => setRows((cur) => [...cur, { value: '' }])} className={quietBtn}>
-              <Plus size={13} aria-hidden="true" /> Add one
+              <Plus size={13} aria-hidden="true" /> {t('Add one')}
             </button>
           )}
-          {fkey === 'amounts' && <p className="text-[11px] text-zinc-500">Include the currency, like GBP 142.60 or £142.60.</p>}
-          <p className="text-[11px] text-zinc-500">Saving confirms every entry in this list.</p>
+          {fkey === 'amounts' && <p className="text-[11px] text-zinc-500">{t('Include the currency, like GBP 142.60 or £142.60.')}</p>}
+          <p className="text-[11px] text-zinc-500">{t('Saving confirms every entry in this list.')}</p>
           {error && (
             <p role="alert" className="text-[11px] text-rose-300 break-words">
               {error}
@@ -544,10 +553,10 @@ export const ListField: React.FC<{ fkey: ListKey; label: string; hint: string; e
           )}
           <div className="flex flex-wrap gap-2">
             <button type="submit" disabled={busy} className={primaryBtn}>
-              {saving ? <Loader2 size={13} className={spin} aria-hidden="true" /> : <Check size={13} aria-hidden="true" />} Save
+              {saving ? <Loader2 size={13} className={spin} aria-hidden="true" /> : <Check size={13} aria-hidden="true" />} {t('Save')}
             </button>
             <button type="button" disabled={saving} onClick={() => (setEditing(false), setError(null))} className={quietBtn}>
-              Cancel
+              {t('Cancel')}
             </button>
           </div>
         </form>
@@ -567,34 +576,35 @@ export const LetterPages: React.FC<{ extraction: Extraction | null }> = ({ extra
   return (
     <section aria-labelledby="letter-pages" className="space-y-2 min-w-0">
       <h3 id="letter-pages" className={sectionTitle}>
-        The letter{pages.length > 1 ? ` · ${pages.length} pages` : ''}
+        {t('The letter')}
+        {pages.length > 1 ? ` · ${t('{n} pages', { n: pages.length })}` : ''}
       </h3>
-      {pages.length === 0 && <p className="text-xs text-zinc-500">No pages are stored for this letter.</p>}
+      {pages.length === 0 && <p className="text-xs text-zinc-500">{t('No pages are stored for this letter.')}</p>}
       <ol className="space-y-3">
         {pages.map((p, i) => (
           <li key={p.id} className="rounded-lg border border-zinc-800 bg-zinc-900/40 overflow-hidden">
             {isInlineImage(p.mime) ? (
-              <a href={p.url} target="_blank" rel="noopener noreferrer" title="Open full size">
-                <img src={p.url} alt={`Page ${i + 1} of the letter`} loading="lazy" className="block w-full max-h-[75vh] object-contain bg-zinc-950" />
+              <a href={p.url} target="_blank" rel="noopener noreferrer" title={t('Open full size')}>
+                <img src={p.url} alt={t('Page {n} of the letter', { n: i + 1 })} loading="lazy" className="block w-full max-h-[75vh] object-contain bg-zinc-950" />
               </a>
             ) : (
               <a href={p.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-3 text-xs text-sky-300 hover:text-sky-200 hover:bg-zinc-800/60">
                 <FileText size={18} className="shrink-0" aria-hidden="true" />
                 <span className="min-w-0 break-all">{p.name}</span>
                 <span className="ml-auto shrink-0 inline-flex items-center gap-1 text-[11px]">
-                  Open {fileKind(p.mime, p.name)} <ExternalLink size={11} aria-hidden="true" />
+                  {t('Open {kind}', { kind: fileKind(p.mime, p.name) })} <ExternalLink size={11} aria-hidden="true" />
                 </span>
               </a>
             )}
             <p className="px-3 py-1 text-[11px] text-zinc-500 border-t border-zinc-800 truncate">
-              Page {i + 1} · {p.name}
+              {t('Page {n}', { n: i + 1 })} · {p.name}
             </p>
           </li>
         ))}
       </ol>
       {extraction && extraction.text.trim() && (
         <details className="rounded-lg border border-zinc-800 bg-zinc-900/40">
-          <summary className="cursor-pointer px-3 py-2 text-xs text-zinc-300 min-h-[36px] flex items-center">What was read from it</summary>
+          <summary className="cursor-pointer px-3 py-2 text-xs text-zinc-300 min-h-[36px] flex items-center">{t('What was read from it')}</summary>
           <pre className="max-h-80 overflow-y-auto whitespace-pre-wrap break-words font-sans text-[11px] text-zinc-300 px-3 pb-3">{extraction.text}</pre>
         </details>
       )}
@@ -608,14 +618,14 @@ export const LetterReminders: React.FC<{ deadline: LetterField | null | undefine
   return (
     <section aria-labelledby="letter-reminders" className="space-y-2" data-reminders={gate.on && !closed ? 'on' : 'off'}>
       <h3 id="letter-reminders" className={`${sectionTitle} flex items-center gap-1.5`}>
-        <Bell size={12} aria-hidden="true" /> Reminders
+        <Bell size={12} aria-hidden="true" /> {t('Reminders')}
       </h3>
       {closed ? (
-        <p className="text-xs text-zinc-400">This letter is closed, so its reminders are off. Reopen it to bring back the ones still ahead.</p>
+        <p className="text-xs text-zinc-400">{t('This letter is closed, so its reminders are off. Reopen it to bring back the ones still ahead.')}</p>
       ) : (
         <p className={`text-xs ${gate.on ? 'text-zinc-300' : 'px-3 py-2 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-100'}`}>{gate.text}</p>
       )}
-      {!closed && gate.on && reminders.length === 0 && <p className="text-xs text-zinc-500">No reminders are left: the deadline has passed or is today.</p>}
+      {!closed && gate.on && reminders.length === 0 && <p className="text-xs text-zinc-500">{t('No reminders are left: the deadline has passed or is today.')}</p>}
       {reminders.length > 0 && (
         <ul className="divide-y divide-zinc-800 rounded-lg border border-zinc-800">
           {[...reminders]
@@ -627,13 +637,13 @@ export const LetterReminders: React.FC<{ deadline: LetterField | null | undefine
                   {reminderWhen(r.due_at)}
                 </time>
                 <span className={`ml-auto px-1.5 py-px rounded-full border text-[11px] ${r.fired_at ? STATE_TONE.confirmed : STATE_TONE.unconfirmed}`}>
-                  {r.fired_at ? `Sent ${reminderWhen(r.fired_at)}` : 'Due'}
+                  {r.fired_at ? t('Sent {when}', { when: reminderWhen(r.fired_at) }) : t('Due')}
                 </span>
               </li>
             ))}
         </ul>
       )}
-      <p className="text-[11px] text-zinc-500">A reminder is a notification with counts only, never the sender, amounts or words of the letter.</p>
+      <p className="text-[11px] text-zinc-500">{t('A reminder is a notification with counts only, never the sender, amounts or words of the letter.')}</p>
     </section>
   );
 };
@@ -656,19 +666,20 @@ export const LetterDraft: React.FC<{ c: LooseCase }> = ({ c }) => {
   return (
     <section aria-labelledby="letter-draft" className="rounded-lg border border-sky-500/20 bg-sky-500/5 p-3 space-y-2" data-draft-channel={d.channel}>
       <h3 id="letter-draft" className="text-[11px] font-semibold text-sky-200 break-words">
-        {d.channel === 'letter' ? 'Reply by post' : 'Reply by email'}
-        {d.to ? ` to ${d.to}` : ''}
-        {d.generated_by === 'model' && <span className="ml-1 font-normal text-zinc-500">(written by a model)</span>}
+        {d.to
+          ? t(d.channel === 'letter' ? 'Reply by post to {to}' : 'Reply by email to {to}', { to: d.to })
+          : t(d.channel === 'letter' ? 'Reply by post' : 'Reply by email')}
+        {d.generated_by === 'model' && <span className="ml-1 font-normal text-zinc-500">{t('(written by a model)')}</span>}
       </h3>
       <p className="text-[11px] text-amber-200" data-nothing-sent>
         {draftChannelText(d.channel)}
       </p>
-      {d.subject && <p className="text-xs text-zinc-300 break-words">Subject: {d.subject}</p>}
+      {d.subject && <p className="text-xs text-zinc-300 break-words">{t('Subject: {subject}', { subject: d.subject })}</p>}
       <pre className="max-h-64 overflow-y-auto whitespace-pre-wrap break-words font-sans text-xs text-zinc-100 bg-zinc-950/60 border border-zinc-800 rounded-lg p-2.5 select-text">{d.body}</pre>
       <div className="flex flex-wrap items-center gap-2">
         <button type="button" onClick={copy} className={quietBtn}>
           {copied === 'ok' ? <Check size={13} aria-hidden="true" /> : <Copy size={13} aria-hidden="true" />}
-          {copied === 'ok' ? 'Copied' : 'Copy reply'}
+          {copied === 'ok' ? t('Copied') : t('Copy reply')}
         </button>
         {open && (
           <a href={open.href} rel="noopener noreferrer" className={quietBtn}>
@@ -676,7 +687,7 @@ export const LetterDraft: React.FC<{ c: LooseCase }> = ({ c }) => {
           </a>
         )}
         <span role="status" className="text-[11px] text-zinc-400">
-          {copied === 'failed' ? 'Couldn’t copy here: select the text above and copy it.' : ''}
+          {copied === 'failed' ? t('Couldn’t copy here: select the text above and copy it.') : ''}
         </span>
       </div>
     </section>
@@ -718,31 +729,31 @@ export const LetterDetail: React.FC<LetterDetailProps> = ({ view, loading, error
         <button
           type="button"
           onClick={onBack}
-          aria-label="Back to Loose ends"
+          aria-label={t('Back to Loose ends')}
           className="shrink-0 p-2 rounded-lg text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500"
         >
           <ChevronLeft size={18} />
         </button>
         <div className="min-w-0 flex-1">
-          <h2 className="text-sm font-semibold text-zinc-100 truncate">{c?.title ?? 'Letter'}</h2>
-          <p className="text-[11px] text-zinc-400 truncate mt-0.5">Loose ends · letter</p>
+          <h2 className="text-sm font-semibold text-zinc-100 truncate">{c?.title ?? t('Letter')}</h2>
+          <p className="text-[11px] text-zinc-400 truncate mt-0.5">{t('Loose ends · letter')}</p>
         </div>
-        {c && closed && <span className="shrink-0 px-1.5 py-px rounded-full border text-[11px] border-emerald-500/30 bg-emerald-500/10 text-emerald-200">{c.status === 'closed' ? 'Done' : 'Dismissed'}</span>}
+        {c && closed && <span className="shrink-0 px-1.5 py-px rounded-full border text-[11px] border-emerald-500/30 bg-emerald-500/10 text-emerald-200">{c.status === 'closed' ? t('Done') : t('Dismissed')}</span>}
       </div>
 
       <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6" aria-busy={loading || reading}>
         <div className="max-w-6xl mx-auto space-y-4">
           {error && (
             <div role="alert" className="px-3 py-2 rounded-lg border border-rose-500/20 bg-rose-500/5 flex flex-wrap items-center gap-2 text-xs text-rose-300">
-              <span className="break-words">Couldn’t load the letter: {error}</span>
+              <span className="break-words">{t('Couldn’t load the letter: {error}', { error })}</span>
               <button type="button" onClick={onRetry} className="ml-auto px-2 py-0.5 rounded border border-rose-500/30 hover:bg-rose-500/10">
-                Retry
+                {t('Retry')}
               </button>
             </div>
           )}
           {!view && loading && (
             <p className="flex items-center gap-2 text-xs text-zinc-400">
-              <Loader2 size={14} className={spin} aria-hidden="true" /> Loading…
+              <Loader2 size={14} className={spin} aria-hidden="true" /> {t('Loading…')}
             </p>
           )}
 
@@ -755,7 +766,7 @@ export const LetterDetail: React.FC<LetterDetailProps> = ({ view, loading, error
                 </p>
                 <p className="break-words opacity-90">{status.body}</p>
                 {reading && (
-                  <div className="h-1 rounded-full bg-sky-950 overflow-hidden" role="progressbar" aria-label="Reading the letter" aria-valuetext="Reading">
+                  <div className="h-1 rounded-full bg-sky-950 overflow-hidden" role="progressbar" aria-label={t('Reading the letter')} aria-valuetext={t('Reading')}>
                     <div className="h-full w-1/3 rounded-full bg-sky-400 animate-pulse motion-reduce:animate-none" />
                   </div>
                 )}
@@ -775,20 +786,22 @@ export const LetterDetail: React.FC<LetterDetailProps> = ({ view, loading, error
                 <div className="space-y-5 min-w-0">
                   <section aria-labelledby="letter-fields" className="space-y-2">
                     <h3 id="letter-fields" className={sectionTitle}>
-                      What it says
+                      {t('What it says')}
                     </h3>
                     {reading ? (
-                      <p className="text-xs text-zinc-500">The fields appear here once the letter has been read.</p>
+                      <p className="text-xs text-zinc-500">{t('The fields appear here once the letter has been read.')}</p>
                     ) : (
                       <>
                         <p className="text-[11px] text-zinc-500">
                           {needsLook(fields) > 0
-                            ? `${needsLook(fields) === 1 ? '1 field needs' : `${needsLook(fields)} fields need`} a look: check ${needsLook(fields) === 1 ? 'it' : 'each'} against the page and confirm. `
-                            : 'Nothing needs a look. '}
-                          Fields marked auto were clear in the letter and are confirmed already; edit or clear any that are wrong.
+                            ? t(needsLook(fields) === 1 ? '{n} field needs a look: check it against the page and confirm.' : '{n} fields need a look: check each against the page and confirm.', {
+                                n: needsLook(fields),
+                              })
+                            : t('Nothing needs a look.')}{' '}
+                          {t('Fields marked auto were clear in the letter and are confirmed already; edit or clear any that are wrong.')}
                         </p>
                         {SINGLE_FIELDS.map((f) => (
-                          <FieldRow key={`${f.key}-${fields[f.key]?.value ?? ''}-${fields[f.key]?.confirmed}-${fields[f.key]?.auto}`} fkey={f.key} label={f.label} hint={f.hint} field={fields[f.key]} disabled={!canEdit || acting} onSave={onSave} missing={wasRead ? undefined : 'Not filled in yet.'} />
+                          <FieldRow key={`${f.key}-${fields[f.key]?.value ?? ''}-${fields[f.key]?.confirmed}-${fields[f.key]?.auto}`} fkey={f.key} label={f.label} hint={f.hint} field={fields[f.key]} disabled={!canEdit || acting} onSave={onSave} missing={wasRead ? undefined : t('Not filled in yet.')} />
                         ))}
                         {LIST_FIELDS.map((f) => (
                           <ListField
@@ -796,7 +809,7 @@ export const LetterDetail: React.FC<LetterDetailProps> = ({ view, loading, error
                             fkey={f.key}
                             label={f.label}
                             hint={f.hint}
-                            empty={wasRead ? f.empty : 'None added yet.'}
+                            empty={wasRead ? f.empty : t('None added yet.')}
                             items={fields[f.key] ?? []}
                             disabled={!canEdit || acting}
                             onSave={onSave}
@@ -811,33 +824,33 @@ export const LetterDetail: React.FC<LetterDetailProps> = ({ view, loading, error
                   {!reading && c && !closed && <LetterDraft c={c} />}
 
                   {c && (
-                    <section aria-label="What to do with this letter" className="space-y-2 border-t border-zinc-800 pt-4">
+                    <section aria-label={t('What to do with this letter')} className="space-y-2 border-t border-zinc-800 pt-4">
                       <div className="flex flex-wrap gap-2">
                         {closed ? (
                           <button type="button" disabled={acting} onClick={onReopen} className={quietBtn}>
-                            <RotateCcw size={13} aria-hidden="true" /> Reopen
+                            <RotateCcw size={13} aria-hidden="true" /> {t('Reopen')}
                           </button>
                         ) : (
                           <button type="button" disabled={acting || reading} onClick={onDone} className={`${actionBtn} bg-emerald-600/90 hover:bg-emerald-500 text-white`}>
-                            <CheckCircle2 size={13} aria-hidden="true" /> Mark done
+                            <CheckCircle2 size={13} aria-hidden="true" /> {t('Mark done')}
                           </button>
                         )}
                         {!confirmDelete && (
                           <button type="button" disabled={acting} onClick={() => setConfirmDelete(true)} className={`${actionBtn} text-rose-300 hover:bg-rose-500/10`}>
-                            <Trash2 size={13} aria-hidden="true" /> Delete letter
+                            <Trash2 size={13} aria-hidden="true" /> {t('Delete letter')}
                           </button>
                         )}
-                        {acting && <Loader2 size={13} className={`${spin} self-center text-zinc-400`} aria-label="Saving" />}
+                        {acting && <Loader2 size={13} className={`${spin} self-center text-zinc-400`} aria-label={t('Saving')} />}
                       </div>
                       {confirmDelete && (
-                        <div role="group" aria-label="Delete this letter" className="rounded-lg border border-rose-500/30 bg-rose-500/5 p-3 space-y-2" data-confirm-delete>
-                          <p className="text-xs text-rose-100">Delete this letter, its pages, everything read from it and its reminders? This can’t be undone.</p>
+                        <div role="group" aria-label={t('Delete this letter')} className="rounded-lg border border-rose-500/30 bg-rose-500/5 p-3 space-y-2" data-confirm-delete>
+                          <p className="text-xs text-rose-100">{t('Delete this letter, its pages, everything read from it and its reminders? This can’t be undone.')}</p>
                           <div className="flex flex-wrap gap-2">
                             <button type="button" disabled={acting} onClick={() => (setConfirmDelete(false), onDelete())} className={`${actionBtn} bg-rose-600 hover:bg-rose-500 text-white`}>
-                              <Trash2 size={13} aria-hidden="true" /> Delete it
+                              <Trash2 size={13} aria-hidden="true" /> {t('Delete it')}
                             </button>
                             <button type="button" onClick={() => setConfirmDelete(false)} className={quietBtn}>
-                              Keep it
+                              {t('Keep it')}
                             </button>
                           </div>
                         </div>
@@ -870,7 +883,7 @@ export const LetterPage: React.FC<{ caseId: string; onBack: () => void; onDelete
       if (alive.current) (setView(v), setError(null));
       return v;
     } catch (e) {
-      if (alive.current) setError(e instanceof Error ? e.message : 'Something went wrong.');
+      if (alive.current) setError(e instanceof Error ? e.message : t('Something went wrong.'));
       return null;
     } finally {
       if (alive.current) setLoading(false);
@@ -893,12 +906,12 @@ export const LetterPage: React.FC<{ caseId: string; onBack: () => void; onDelete
       // one more load once reading ends picks those up.
       if (!wasReading.current) return;
       wasReading.current = false;
-      const t = window.setTimeout(() => load(), 1000);
-      return () => window.clearTimeout(t);
+      const timer = window.setTimeout(() => load(), 1000);
+      return () => window.clearTimeout(timer);
     }
     wasReading.current = true;
-    const t = window.setInterval(() => load(), 2000);
-    return () => window.clearInterval(t);
+    const timer = window.setInterval(() => load(), 2000);
+    return () => window.clearInterval(timer);
   }, [reading, load]);
 
   const save: Save = async (body) => {
@@ -909,9 +922,9 @@ export const LetterPage: React.FC<{ caseId: string; onBack: () => void; onDelete
     } catch (e) {
       if (e instanceof LooseEndsError && e.status === 409) {
         load();
-        return 'This letter is still being read. Try again once it has finished.';
+        return t('This letter is still being read. Try again once it has finished.');
       }
-      return `${e instanceof Error ? e.message : 'Something went wrong.'} Nothing was changed.`;
+      return `${e instanceof Error ? e.message : t('Something went wrong.')} ${t('Nothing was changed.')}`;
     }
   };
 
@@ -922,7 +935,7 @@ export const LetterPage: React.FC<{ caseId: string; onBack: () => void; onDelete
       await looseApi.act(caseId, a);
       await load();
     } catch (e) {
-      setNotice({ text: `${e instanceof Error ? e.message : 'Something went wrong.'} The letter is unchanged.`, calm: false });
+      setNotice({ text: `${e instanceof Error ? e.message : t('Something went wrong.')} ${t('The letter is unchanged.')}`, calm: false });
     } finally {
       setActing(false);
     }
@@ -933,7 +946,7 @@ export const LetterPage: React.FC<{ caseId: string; onBack: () => void; onDelete
     setNotice(null);
     try {
       await letterApi.remove(caseId);
-      onDeleted(view?.case.title ?? 'Letter');
+      onDeleted(view?.case.title ?? t('Letter'));
     } catch (e) {
       if (alive.current) setNotice(deleteErrorText(e));
     } finally {

@@ -1,6 +1,7 @@
 import React from 'react';
 import { KeyRound } from 'lucide-react';
 import { ModernAvatar } from './ModernAvatar';
+import { t } from '../i18n';
 
 export interface WelcomeBot {
   id: string;
@@ -27,10 +28,10 @@ export const FirstRunWelcome: React.FC<Props> = ({ bots, actionLabel, onAction }
       ))}
     </div>
     <h2 id="kw-welcome-title" className="text-lg font-semibold text-zinc-100">
-      Welcome to kwant bots
+      {t('Welcome to kwant bots')}
     </h2>
     <p className="mt-1.5 text-sm text-zinc-400">
-      These are your bots. Ask anything here and Laya picks who answers.
+      {t('These are your bots. Ask anything here and Laya picks who answers.')}
     </p>
     {bots.length > 0 && (
       <ul className="mt-4 flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-zinc-400">
@@ -50,6 +51,6 @@ export const FirstRunWelcome: React.FC<Props> = ({ bots, actionLabel, onAction }
       <KeyRound size={15} aria-hidden="true" />
       {actionLabel}
     </button>
-    <p className="mt-2 text-[11px] text-zinc-500">Sign in with Claude or ChatGPT, or paste an API key. Your bots can answer once one works.</p>
+    <p className="mt-2 text-[11px] text-zinc-500">{t('Sign in with Claude or ChatGPT, or paste an API key. Your bots can answer once one works.')}</p>
   </section>
 );

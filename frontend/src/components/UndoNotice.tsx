@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Undo2 } from 'lucide-react';
+import { t } from '../i18n';
 
 /** Takes the place of something just deleted while Undo is still possible. Focus moves to Undo,
  *  since the Delete button that had it is gone. */
@@ -18,7 +19,7 @@ export const UndoNotice: React.FC<{ text: string; onUndo: () => void; className?
         onClick={onUndo}
         className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium border border-sky-500/40 bg-sky-500/10 text-sky-200 hover:bg-sky-500/20 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500"
       >
-        <Undo2 size={11} aria-hidden="true" /> Undo
+        <Undo2 size={11} aria-hidden="true" /> {t('Undo')}
       </button>
     </Tag>
   );

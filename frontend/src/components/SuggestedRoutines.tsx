@@ -26,6 +26,7 @@ import { RoutineForm } from './RoutinesPanel';
 import { ModernAvatar } from './ModernAvatar';
 import type { Channel, Kwant } from './Sidebar';
 import { playSfx } from '../audio/chiptune';
+import { t } from '../i18n';
 
 const smallBtn =
   'inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium border transition-colors disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500';
@@ -39,11 +40,11 @@ const errText = (e: unknown, fallback: string) => (e instanceof Error && e.messa
 
 /** Where an offer would post, in words. */
 function placeText(s: Suggestion, channels: Channel[]): string {
-  if (s.delivery?.thread_id) return 'the thread it came from';
+  if (s.delivery?.thread_id) return t('the thread it came from');
   const id = s.delivery?.channel_id;
-  if (!id) return 'direct chat';
+  if (!id) return t('direct chat');
   const c = channels.find((ch) => ch.id === id);
-  return c ? channelLabel(c.name) : 'a deleted channel';
+  return c ? channelLabel(c.name) : t('a deleted channel');
 }
 
 const Disclosure: React.FC<{ label: string; children: React.ReactNode; defaultOpen?: boolean }> = ({ label, children, defaultOpen = false }) => {
@@ -75,7 +76,7 @@ const KeepChecks: React.FC<{ suggestion: Suggestion; keep: boolean[]; onChange: 
   if (suggestion.checks.length === 0) return null;
   return (
     <fieldset className="space-y-1">
-      <legend className="block text-xs font-medium text-zinc-400 mb-1">Checks after each run</legend>
+      <legend className="block text-xs font-medium text-zinc-400 mb-1">{t('Checks after each run')}</legend>
       {suggestion.checks.map((c, i) => (
         <label key={i} className="flex items-start gap-2 min-h-[28px] text-[11px] text-zinc-300 cursor-pointer">
           <input
@@ -86,11 +87,11 @@ const KeepChecks: React.FC<{ suggestion: Suggestion; keep: boolean[]; onChange: 
           />
           <span className="min-w-0 [overflow-wrap:anywhere]">
             {checkLine(c)}
-            {!c.required && <span className="text-zinc-500"> (optional)</span>}
+            {!c.required && <span className="text-zinc-500">{t(' (optional)')}</span>}
           </span>
         </label>
       ))}
-      <p className="text-[11px] text-zinc-500">Untick a check to leave it out. Checks can’t be changed here; edit the routine later for that.</p>
+      <p className="text-[11px] text-zinc-500">{t('Untick a check to leave it out. Checks can’t be changed here; edit the routine later for that.')}</p>
     </fieldset>
   );
 };
@@ -113,7 +114,7 @@ export const SuggestionCard: React.FC<{
   const intent = useRef(new AcceptIntent(makeKey)).current;
   const titleId = useId();
   const kwant = kwants.find((k) => k.id === s.kwant_id);
-  const botName = kwant?.name ?? 'a deleted bot';
+  const botName = kwant?.name ?? t('a deleted bot');
   const p = s.permissions;
   const e = s.evidence;
 
@@ -128,7 +129,8 @@ export const SuggestionCard: React.FC<{
     try {
       const res = await discoveryApi.accept(s.id, intent.current(), edits);
       const when = res.first_run_text ?? s.first_run_text;
-      onDone({ id: s.id, text: `Added “${res.routine?.name ?? body.name}” for ${botName}.${when ? ` First run: ${when}.` : ''}` }, true);
+      const name = res.routine?.name ?? body.name;
+      onDone({ id: s.id, text: when ? t('Added “{name}” for {bot}. First run: {when}.', { name, bot: botName, when }) : t('Added “{name}” for {bot}.', { name, bot: botName }) }, true);
     } catch (err) {
       intent.settle(err);
       if (stale(err)) return;
@@ -146,12 +148,17 @@ export const SuggestionCard: React.FC<{
       onDone(
         {
           id: s.id,
-          text: `Dismissed “${s.name}”. It won’t be suggested again for 30 days${until ? ` (until ${new Date(until).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })})` : ''}.`,
+          text: until
+            ? t('Dismissed “{name}”. It won’t be suggested again for 30 days (until {date}).', {
+                name: s.name,
+                date: new Date(until).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }),
+              })
+            : t('Dismissed “{name}”. It won’t be suggested again for 30 days.', { name: s.name }),
         },
         false,
       );
     } catch (err) {
-      if (!stale(err)) setError(errText(err, 'Dismissing failed.'));
+      if (!stale(err)) setError(errText(err, t('Dismissing failed.')));
       setBusy(false);
     }
   };
@@ -170,8 +177,8 @@ export const SuggestionCard: React.FC<{
           }}
           kwants={kwants}
           channels={channels}
-          label={`Accept ${s.name}`}
-          submitLabel="Add routine"
+          label={t('Accept {name}', { name: s.name })}
+          submitLabel={t('Add routine')}
           hideEnabled
           onSubmit={accept}
           onCancel={() => setEditing(false)}
@@ -199,7 +206,7 @@ export const SuggestionCard: React.FC<{
           </p>
           {s.first_run_text && (
             <p className="text-[11px] text-zinc-400">
-              First run: <span className="text-zinc-200">{s.first_run_text}</span>
+              {t('First run:')} <span className="text-zinc-200">{s.first_run_text}</span>
             </p>
           )}
         </div>
@@ -210,14 +217,21 @@ export const SuggestionCard: React.FC<{
           <p className="text-zinc-300">{habitLine(e)}</p>
           {e && e.settled > 0 && (
             <p>
-              {e.verified} of {e.settled} finished {e.settled === 1 ? 'task' : 'tasks'} passed {e.verified === 1 && e.settled === 1 ? 'its' : 'their'} checks.
+              {t(
+                e.settled !== 1
+                  ? '{verified} of {settled} finished tasks passed their checks.'
+                  : e.verified === 1
+                    ? '{verified} of {settled} finished task passed its checks.'
+                    : '{verified} of {settled} finished task passed their checks.',
+                { verified: e.verified, settled: e.settled },
+              )}
             </p>
           )}
         </div>
 
         {s.sources.length > 0 && (
-          <Disclosure label={`Why: the ${s.sources.length === 1 ? 'task' : `${s.sources.length} tasks`} it learned from`}>
-            <ul className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-0.5" aria-label="Tasks it learned from">
+          <Disclosure label={t(s.sources.length === 1 ? 'Why: the task it learned from' : 'Why: the {n} tasks it learned from', { n: s.sources.length })}>
+            <ul className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-0.5" aria-label={t('Tasks it learned from')}>
               {s.sources.map((src) => (
                 <li key={src.task_id} className="col-span-2 grid grid-cols-subgrid [overflow-wrap:anywhere]">
                   <span className="text-zinc-500 tabular-nums whitespace-nowrap">
@@ -230,12 +244,21 @@ export const SuggestionCard: React.FC<{
           </Disclosure>
         )}
 
-        <Disclosure label="What it would do">
+        <Disclosure label={t('What it would do')}>
           <p className="whitespace-pre-wrap text-zinc-300 [overflow-wrap:anywhere]">{s.instructions}</p>
-          {s.acceptance && <p className="mt-1">Done when: <span className="text-zinc-300">{s.acceptance}</span></p>}
+          {s.acceptance && (
+            <p className="mt-1">
+              {t('Done when:')} <span className="text-zinc-300">{s.acceptance}</span>
+            </p>
+          )}
           {s.chain.filter((c) => !c.in_instructions).length > 0 && (
             <p className="mt-1">
-              Mentions, but leaves to other bots: {s.chain.filter((c) => !c.in_instructions).map((c) => `“${c.title}”`).join(', ')}.
+              {t('Mentions, but leaves to other bots: {steps}.', {
+                steps: s.chain
+                  .filter((c) => !c.in_instructions)
+                  .map((c) => `“${c.title}”`)
+                  .join(', '),
+              })}
             </p>
           )}
         </Disclosure>
@@ -244,7 +267,8 @@ export const SuggestionCard: React.FC<{
           <div className="flex items-start gap-1.5" data-testid="permissions-preview">
             <ShieldCheck size={12} className="mt-0.5 shrink-0 text-emerald-300/80" aria-hidden="true" />
             <p>
-              <span className="text-zinc-300">{p.flight_school ? p.tier_label : 'Works as this bot does today'}.</span> {approvalText(p.approval_mode)}. Payments always ask you.{' '}
+              <span className="text-zinc-300">{t('{what}.', { what: p.flight_school ? p.tier_label : t('Works as this bot does today') })}</span>{' '}
+              {t('{what}.', { what: approvalText(p.approval_mode) })} {t('Payments always ask you.')}{' '}
               {pastText(p.past)}
             </p>
           </div>
@@ -254,23 +278,23 @@ export const SuggestionCard: React.FC<{
           <div>
             {s.checks.length > 0 ? (
               <>
-                <p className="text-zinc-300">Checks it keeps after each run:</p>
-                <ul className="list-disc pl-4 space-y-0.5" aria-label="Checks it keeps">
+                <p className="text-zinc-300">{t('Checks it keeps after each run:')}</p>
+                <ul className="list-disc pl-4 space-y-0.5" aria-label={t('Checks it keeps')}>
                   {s.checks.map((c, i) => (
                     <li key={i} className="[overflow-wrap:anywhere]">
                       {checkLine(c)}
-                      {!c.required && <span className="text-zinc-500"> (optional)</span>}
+                      {!c.required && <span className="text-zinc-500">{t(' (optional)')}</span>}
                     </li>
                   ))}
                 </ul>
               </>
             ) : (
-              <p>No checks would run after each run.</p>
+              <p>{t('No checks would run after each run.')}</p>
             )}
             {s.left_out_checks.length > 0 && (
               <>
-                <p className="mt-1 text-zinc-300">Left out:</p>
-                <ul className="list-disc pl-4 space-y-0.5" aria-label="Checks left out">
+                <p className="mt-1 text-zinc-300">{t('Left out:')}</p>
+                <ul className="list-disc pl-4 space-y-0.5" aria-label={t('Checks left out')}>
                   {s.left_out_checks.map((c, i) => (
                     <li key={i} className="[overflow-wrap:anywhere]">
                       {checkLine(c)} <span className="text-zinc-500">— {leftOutText(c.reason)}</span>
@@ -292,15 +316,15 @@ export const SuggestionCard: React.FC<{
             setError(null);
             setEditing(true);
           }}
-          aria-label={`Accept ${s.name}: review and add it`}
+          aria-label={t('Accept {name}: review and add it', { name: s.name })}
           className={primaryBtn}
         >
-          <Check size={11} aria-hidden="true" /> Accept…
+          <Check size={11} aria-hidden="true" /> {t('Accept…')}
         </button>
-        <button type="button" disabled={busy} onClick={dismiss} aria-label={`Dismiss ${s.name}`} className={quietBtn}>
-          {busy ? <Loader2 size={11} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <X size={11} aria-hidden="true" />} Dismiss
+        <button type="button" disabled={busy} onClick={dismiss} aria-label={t('Dismiss {name}', { name: s.name })} className={quietBtn}>
+          {busy ? <Loader2 size={11} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <X size={11} aria-hidden="true" />} {t('Dismiss')}
         </button>
-        {!kwant && <span className="text-[11px] text-amber-200">Its bot is gone, so it can only be dismissed.</span>}
+        {!kwant && <span className="text-[11px] text-amber-200">{t('Its bot is gone, so it can only be dismissed.')}</span>}
       </div>
       {error && (
         <p className="pl-[38px] text-[11px] text-rose-400 flex items-center gap-1.5" role="alert">
@@ -316,41 +340,41 @@ const ScanReport: React.FC<{ result: ScanResult; onClose: () => void }> = ({ res
   const n = result.offered.length;
   const head = result.preview
     ? n === 0
-      ? 'Preview: nothing would be suggested now.'
-      : `Preview: ${n === 1 ? '1 routine would' : `${n} routines would`} be suggested. Nothing was saved.`
+      ? t('Preview: nothing would be suggested now.')
+      : t(n === 1 ? 'Preview: {n} routine would be suggested. Nothing was saved.' : 'Preview: {n} routines would be suggested. Nothing was saved.', { n })
     : n === 0
-      ? 'Looked just now: nothing new to suggest.'
-      : `Looked just now: ${n === 1 ? '1 new suggestion' : `${n} new suggestions`}.`;
+      ? t('Looked just now: nothing new to suggest.')
+      : t(n === 1 ? 'Looked just now: {n} new suggestion.' : 'Looked just now: {n} new suggestions.', { n });
   return (
     <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-3 space-y-2 text-[11px] text-zinc-400" data-testid="scan-report">
       <div className="flex items-start justify-between gap-2">
         <p className="text-zinc-200" role="status">
           {head}
         </p>
-        <button type="button" onClick={onClose} aria-label="Close the scan results" className="p-0.5 rounded text-zinc-500 hover:text-zinc-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500">
+        <button type="button" onClick={onClose} aria-label={t('Close the scan results')} className="p-0.5 rounded text-zinc-500 hover:text-zinc-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500">
           <X size={12} />
         </button>
       </div>
       {result.preview && n > 0 && (
-        <ul className="space-y-1" aria-label="Would be suggested">
+        <ul className="space-y-1" aria-label={t('Would be suggested')}>
           {result.offered.map((o) => (
             <li key={o.cluster_key}>
               <span className="text-zinc-200">{o.name}</span> · {scheduleWords(o.schedule)}
-              {o.first_run_text ? ` · first run ${o.first_run_text}` : ''}
+              {o.first_run_text ? t(' · first run {when}', { when: o.first_run_text }) : ''}
               <span className="block text-zinc-500">{habitLine(o.evidence)}</span>
             </li>
           ))}
         </ul>
       )}
       {result.skipped.length > 0 && (
-        <Disclosure label={`Not suggested (${result.skipped.length})`}>
-          <ul className="space-y-0.5" aria-label="Not suggested">
+        <Disclosure label={t('Not suggested ({n})', { n: result.skipped.length })}>
+          <ul className="space-y-0.5" aria-label={t('Not suggested')}>
             {result.skipped.map((k) => (
               <li key={k.cluster_key} className="[overflow-wrap:anywhere]">
                 <span className="text-zinc-300">{k.title}</span>
                 <span className="text-zinc-500">
                   {' '}
-                  ({k.asks === 1 ? 'asked once' : `asked ${k.asks} times`}): {skipText(k.reason)}.
+                  {t('({asked}): {why}.', { asked: k.asks === 1 ? t('asked once') : t('asked {n} times', { n: k.asks }), why: skipText(k.reason) })}
                 </span>
               </li>
             ))}
@@ -390,7 +414,7 @@ export const SuggestedRoutines: React.FC<{
     } catch (e) {
       // A server without Automation Discovery: show nothing, as before
       if (e instanceof DiscoveryError && (e.status === 404 || e.status === 405)) setUnsupported(true);
-      else setLoadError(errText(e, 'Couldn’t load suggestions.'));
+      else setLoadError(errText(e, t('Couldn’t load suggestions.')));
     }
   }, []);
 
@@ -435,7 +459,7 @@ export const SuggestedRoutines: React.FC<{
       else setReport(r);
       if (!preview) reload();
     } catch (e) {
-      setScanError(errText(e, 'Looking failed.'));
+      setScanError(errText(e, t('Looking failed.')));
     } finally {
       setScanning(null);
     }
@@ -448,7 +472,7 @@ export const SuggestedRoutines: React.FC<{
   const onlyOff = blocked.length === 1 && blocked[0] === 'off';
   const settingsBtn = onOpenSettings && (
     <button type="button" onClick={onOpenSettings} className={quietBtn}>
-      Open Settings
+      {t('Open Settings')}
     </button>
   );
 
@@ -457,16 +481,16 @@ export const SuggestedRoutines: React.FC<{
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 id={headingId} className="flex items-center gap-1.5 text-xs font-semibold text-zinc-200">
           <Sparkles size={13} className="text-violet-300" aria-hidden="true" />
-          Suggested routines
+          {t('Suggested routines')}
           {offers.length > 0 && <span className="px-1.5 rounded-full bg-violet-500/15 text-violet-200 text-[10px] font-medium">{offers.length}</span>}
         </h3>
         {list && blocked.length === 0 && (
           <div className="flex items-center gap-1.5">
-            <button type="button" onClick={() => scan(true)} disabled={!!scanning} className={quietBtn} title="See what would be suggested now, without saving anything">
-              {scanning === 'preview' ? <Loader2 size={11} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Eye size={11} aria-hidden="true" />} Preview
+            <button type="button" onClick={() => scan(true)} disabled={!!scanning} className={quietBtn} title={t('See what would be suggested now, without saving anything')}>
+              {scanning === 'preview' ? <Loader2 size={11} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Eye size={11} aria-hidden="true" />} {t('Preview')}
             </button>
             <button type="button" onClick={() => scan(false)} disabled={!!scanning} className={quietBtn}>
-              {scanning === 'scan' ? <Loader2 size={11} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Search size={11} aria-hidden="true" />} Scan now
+              {scanning === 'scan' ? <Loader2 size={11} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Search size={11} aria-hidden="true" />} {t('Scan now')}
             </button>
           </div>
         )}
@@ -474,7 +498,7 @@ export const SuggestedRoutines: React.FC<{
 
       {!list && !loadError && (
         <p className="flex items-center gap-2 text-[11px] text-zinc-400" role="status">
-          <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> Checking for suggestions…
+          <Loader2 size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> {t('Checking for suggestions…')}
         </p>
       )}
 
@@ -482,7 +506,7 @@ export const SuggestedRoutines: React.FC<{
         <div className="flex items-center justify-between gap-2 bg-rose-500/10 border border-rose-500/20 text-rose-300 px-3 py-2 rounded-lg text-[11px]" role="alert">
           <span>{loadError}</span>
           <button type="button" onClick={reload} className={quietBtn}>
-            <RefreshCw size={11} aria-hidden="true" /> Retry
+            <RefreshCw size={11} aria-hidden="true" /> {t('Retry')}
           </button>
         </div>
       )}
@@ -490,7 +514,7 @@ export const SuggestedRoutines: React.FC<{
       {list && onlyOff && (
         <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-zinc-400 border border-dashed border-zinc-800 rounded-lg px-3 py-2" data-testid="discovery-blocked">
           <p>
-            You can get a suggested routine when you ask for the same board task on a regular rhythm. {blockText('off').title} {blockText('off').fix}
+            {t('You can get a suggested routine when you ask for the same board task on a regular rhythm.')} {blockText('off').title} {blockText('off').fix}
           </p>
           {settingsBtn}
         </div>
@@ -498,7 +522,7 @@ export const SuggestedRoutines: React.FC<{
 
       {list && blocked.length > 0 && !onlyOff && (
         <div className="text-[11px] text-amber-100 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2 space-y-1.5" role="status" data-testid="discovery-blocked">
-          <p className="font-medium">Suggestions are paused:</p>
+          <p className="font-medium">{t('Suggestions are paused:')}</p>
           <ul className="space-y-1">
             {blocked.map((b) => (
               <li key={b}>
@@ -509,7 +533,7 @@ export const SuggestedRoutines: React.FC<{
           <div className="flex gap-1.5">
             {settingsBtn}
             <button type="button" onClick={reload} className={quietBtn}>
-              <RefreshCw size={11} aria-hidden="true" /> Check again
+              <RefreshCw size={11} aria-hidden="true" /> {t('Check again')}
             </button>
           </div>
         </div>
@@ -547,14 +571,19 @@ export const SuggestedRoutines: React.FC<{
           <CalendarClock size={14} className="mt-0.5 shrink-0 text-zinc-600" aria-hidden="true" />
           <p>
             {list.daily_cap === 0
-              ? 'No suggestions. The daily limit in Settings is 0, so nothing new is suggested; Preview shows what it would suggest.'
-              : `No suggestions right now. The board is checked every hour for tasks you ask for on a regular rhythm, with at most ${list.daily_cap} new ${list.daily_cap === 1 ? 'suggestion' : 'suggestions'} a day.`}
+              ? t('No suggestions. The daily limit in Settings is 0, so nothing new is suggested; Preview shows what it would suggest.')
+              : t(
+                  list.daily_cap === 1
+                    ? 'No suggestions right now. The board is checked every hour for tasks you ask for on a regular rhythm, with at most {n} new suggestion a day.'
+                    : 'No suggestions right now. The board is checked every hour for tasks you ask for on a regular rhythm, with at most {n} new suggestions a day.',
+                  { n: list.daily_cap },
+                )}
           </p>
         </div>
       )}
 
       {offers.length > 0 && (
-        <ul className="space-y-2" aria-label="Suggested routines">
+        <ul className="space-y-2" aria-label={t('Suggested routines')}>
           {offers.map((s) => (
             <SuggestionCard key={s.id} suggestion={s} kwants={kwants} channels={channels} onDone={decided} onStale={stale} />
           ))}
@@ -563,7 +592,8 @@ export const SuggestedRoutines: React.FC<{
 
       {list && (list.setting === 'on' || list.stats.offered_30d > 0) && (
         <p className="text-[11px] text-zinc-500" data-testid="discovery-stats">
-          {statsLine(list.stats)} {list.last_scan_at ? `Last looked ${formatWhen(list.last_scan_at)}.` : list.setting === 'on' ? 'Hasn’t looked yet.' : ''}
+          {statsLine(list.stats)}{' '}
+          {list.last_scan_at ? t('Last looked {when}.', { when: formatWhen(list.last_scan_at) }) : list.setting === 'on' ? t('Hasn’t looked yet.') : ''}
         </p>
       )}
     </section>

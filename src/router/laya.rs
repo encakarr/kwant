@@ -25,6 +25,8 @@ pub struct LayaRouter {
     pub base_url: String,
     pub(crate) client: Client,
     status: Arc<RwLock<LayaStatus>>,
+    /// Jev, a hosted decision model: when the person sets it up, it picks who answers in a channel.
+    pub jev: super::jev::Jev,
 }
 
 impl LayaRouter {
@@ -36,7 +38,7 @@ impl LayaRouter {
 
         let base_url = normalize_base_url(&base_url);
         let status = Arc::new(RwLock::new(LayaStatus::new(&base_url)));
-        Self { base_url, client, status }
+        Self { base_url, client, status, jev: super::jev::Jev::default() }
     }
 
     pub fn status(&self) -> LayaStatus {

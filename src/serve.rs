@@ -47,6 +47,8 @@ pub async fn run(config: Config, shutdown: impl Future<Output = ()>) -> Result<(
     }
 
     let state = AppState::new(config.clone(), db, tools, broker, router);
+    // Jev picks who answers in channels once the person saved a key in App settings
+    crate::server::jev_routes::load(&state).await;
     // Saved passwords left in a bot's folder by older versions move into the vault
     crate::server::passwords::migrate_all(&state).await;
     crate::server::passwords::warn_if_exposed(&state).await;

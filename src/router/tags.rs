@@ -1,3 +1,4 @@
+use crate::router::team::is_cjk;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -49,7 +50,9 @@ pub fn parse_mentions_with_lookup(
             if is_boundary && !in_link(&chars, i) {
                 i += 1;
                 let start = i;
-                while i < len && (chars[i].is_ascii_alphanumeric() || chars[i] == '_' || chars[i] == '-') {
+                // Chinese, Japanese and Korean names count too; those scripts run on without a space
+                // ("@小装帮我看看"), so such a tag is cut to the longest name the lookup knows, below
+                while i < len && (chars[i].is_ascii_alphanumeric() || chars[i] == '_' || chars[i] == '-' || is_cjk(chars[i])) {
                     i += 1;
                 }
                 // A handle or domain ("@mr.absurdia", "@acme.io") is one token, not "@mr" plus text,
@@ -64,7 +67,13 @@ pub fn parse_mentions_with_lookup(
                     continue;
                 }
                 if i > start {
-                    let token: String = chars[start..i].iter().collect();
+                    let mut token: String = chars[start..i].iter().collect();
+                    if lookup(&token).is_none() && chars[start..i].iter().any(|c| is_cjk(*c)) {
+                        if let Some(end) = (start + 1..i).rev().find(|&end| lookup(&chars[start..end].iter().collect::<String>()).is_some()) {
+                            token = chars[start..end].iter().collect();
+                            i = end;
+                        }
+                    }
                     if let Some(is_team) = lookup(&token) {
                         if is_team {
                             mentions.push(TagMention::Team(token));
@@ -215,7 +224,7 @@ pub fn handoff_mentions(text: &str, names: &[&str]) -> HandoffMentions {
                     out.targets.push(i);
                 }
             }
-        } else if let Some(i) = is_name(tag) {
+        } else if let Some(i) = is_name(tag).or_else(|| cjk_name_prefix(tag, names)) {
             if !out.targets.contains(&i) {
                 out.targets.push(i);
             }
@@ -226,13 +235,31 @@ pub fn handoff_mentions(text: &str, names: &[&str]) -> HandoffMentions {
         }
     }
     for mention in parse_mentions_with_lookup(&fenced, |_| Some(false)) {
-        if let Some(i) = is_name(mention.name()) {
+        if let Some(i) = is_name(mention.name()).or_else(|| cjk_name_prefix(mention.name(), names)) {
             if !out.targets.contains(&i) && !out.in_code_block.contains(&i) {
                 out.in_code_block.push(i);
             }
         }
     }
     out
+}
+
+/// `@装修顾问帮我看看`: the tag is a name and the words after it, written without a space. The longest
+/// teammate name the tag starts with, when the name ends in a CJK character or the tag goes on
+/// with one (`@Bea帮我`).
+fn cjk_name_prefix(tag: &str, names: &[&str]) -> Option<usize> {
+    let tag = tag.to_lowercase();
+    names
+        .iter()
+        .enumerate()
+        .filter_map(|(i, n)| {
+            let n = n.trim().to_lowercase();
+            let rest = tag.strip_prefix(n.as_str())?;
+            let joins = n.chars().last().is_some_and(is_cjk) || rest.chars().next().is_some_and(is_cjk);
+            (!n.is_empty() && !rest.is_empty() && joins).then_some((i, n.len()))
+        })
+        .max_by_key(|&(_, len)| len)
+        .map(|(i, _)| i)
 }
 
 /// Words right before an @mention that make it a credit ("as @Writer found", "thanks to @SEO").

@@ -153,6 +153,10 @@ impl LayaRouter {
         last_speaker: Option<&str>,
         hints: &Hints,
     ) -> ChannelRoute {
+        // Jev, when the person set it up, picks first; without it, or when it fails, as before
+        if let Some(route) = self.jev_route(prompt, channel_name, lead_kwant_id, members, last_speaker, hints).await {
+            return route;
+        }
         let started = std::time::Instant::now();
         let mut why_not_laya = None;
         let laya = match self.query_laya_for_kwant(prompt, channel_name, members).await {
@@ -273,7 +277,7 @@ pub fn fallback_reason(laya: Option<LayaGuess<'_>>, route: &ChannelRoute) -> Opt
 /// Laya scores each option by how well its key and description match the prompt. Opaque IDs and
 /// long persona prompts drown that signal (it picked the first agent for almost everything), so
 /// options are keyed by agent name and described by title alone, which measured far more accurate.
-fn choice_keys(members: &[Kwant]) -> Vec<String> {
+pub(crate) fn choice_keys(members: &[Kwant]) -> Vec<String> {
     let mut keys: Vec<String> = Vec::with_capacity(members.len());
     for m in members {
         let name = m.name.trim();
@@ -560,7 +564,7 @@ fn in_own_title(kwant: &Kwant, w: &str) -> bool {
     tokens(&format!("{} {}", kwant.name, kwant.title)).iter().any(|t| t == w)
 }
 
-fn lead_of<'a>(lead_kwant_id: &str, members: &'a [Kwant]) -> &'a Kwant {
+pub(crate) fn lead_of<'a>(lead_kwant_id: &str, members: &'a [Kwant]) -> &'a Kwant {
     members.iter().find(|m| m.id == lead_kwant_id).unwrap_or(&members[0])
 }
 
@@ -661,7 +665,8 @@ pub fn content_words(text: &str) -> Vec<String> {
         .collect();
     let mut w: Vec<String> = scope_words(text)
         .into_iter()
-        .filter(|w| (w.chars().count() >= 3 || acronyms.contains(w)) && !NOT_CONTENT.contains(&w.as_str()))
+        .filter(|w| (w.chars().count() >= 3 || acronyms.contains(w) || (has_cjk(w) && w.chars().count() == 2)) && !NOT_CONTENT.contains(&w.as_str()))
+        .flat_map(cjk_pairs)
         .collect();
     w.sort();
     w.dedup();
@@ -701,13 +706,13 @@ impl Hints {
     }
 
     /// The message has every word of an entry in `kwant`'s avoids list.
-    fn avoids(&self, kwant: &Kwant, words: &[String]) -> bool {
+    pub(crate) fn avoids(&self, kwant: &Kwant, words: &[String]) -> bool {
         self.scopes.get(&kwant.id).is_some_and(|s| s.avoids.iter().any(|e| entry_in(e, words)))
     }
 }
 
 /// Words compared for covers/avoids: lowercased, a plural's "s" dropped ("restaurants" ~ "restaurant").
-fn scope_words(text: &str) -> Vec<String> {
+pub(crate) fn scope_words(text: &str) -> Vec<String> {
     tokens(text)
         .into_iter()
         .filter(|w| !STOP_WORDS.contains(&w.as_str()))
@@ -715,10 +720,32 @@ fn scope_words(text: &str) -> Vec<String> {
         .collect()
 }
 
-/// Every word of a covers/avoids entry ("street food") is in the message.
+/// Every word of a covers/avoids entry ("street food") is in the message. Chinese, Japanese and
+/// Korean are written without spaces, so a whole sentence is one word: a CJK word of the entry
+/// ("瓷砖") counts when it is anywhere inside one of the message's words.
 fn entry_in(entry: &str, words: &[String]) -> bool {
     let need = scope_words(entry);
-    !need.is_empty() && need.iter().all(|n| words.contains(n))
+    !need.is_empty()
+        && need.iter().all(|n| if has_cjk(n) { words.iter().any(|w| w.contains(n.as_str())) } else { words.contains(n) })
+}
+
+/// A Chinese character, Japanese kana or a Korean syllable: scripts written without spaces.
+pub(crate) fn is_cjk(c: char) -> bool {
+    matches!(c as u32, 0x3040..=0x30FF | 0x3400..=0x4DBF | 0x4E00..=0x9FFF | 0xAC00..=0xD7AF | 0xF900..=0xFAFF)
+}
+
+pub(crate) fn has_cjk(text: &str) -> bool {
+    text.chars().any(is_cjk)
+}
+
+/// A CJK word split into overlapping pairs ("地面瓷砖" → 地面, 面瓷, 瓷砖), so two sentences can share
+/// words; other words stay whole.
+fn cjk_pairs(word: String) -> Vec<String> {
+    let chars: Vec<char> = word.chars().collect();
+    if chars.len() < 3 || !chars.iter().all(|c| is_cjk(*c)) {
+        return vec![word];
+    }
+    chars.windows(2).map(|w| w.iter().collect()).collect()
 }
 
 /// [`pick_member_after`] with [`Hints`]: an entry of a bot's covers list in the message counts
@@ -798,8 +825,14 @@ pub fn pick_by_words<'a>(
             return Some(Pick { kwant: lead, basis: "several", reason, terms, fit: 1.0, choices: vec![] });
         }
     }
-    //    Named without @ ("Bea, can you…")
-    let named: Vec<&Kwant> = members.iter().filter(|m| words.iter().any(|w| *w == m.name.trim().to_lowercase())).collect();
+    //    Named without @ ("Bea, can you…"); a CJK name of two or more characters inside the sentence ("小装帮我看看")
+    let named: Vec<&Kwant> = members
+        .iter()
+        .filter(|m| {
+            let name = m.name.trim().to_lowercase();
+            words.iter().any(|w| *w == name || (has_cjk(&name) && name.chars().count() >= 2 && w.contains(name.as_str())))
+        })
+        .collect();
     if let [k] = named.as_slice() {
         return Some(chosen(k, vec![k.name.trim().to_lowercase()], NAMED, 1.0));
     }

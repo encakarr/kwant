@@ -28,6 +28,7 @@ import { SignedInDevices } from './DeviceSignIn';
 import { signedInDevicesVisible } from '../deviceSignIn';
 import { ComputerModeControl, useComputerMode } from './ComputerModeSwitch';
 import { LayaStatusRow } from './LayaStatus';
+import { JevRoutingRow } from './JevRouting';
 import { AppUpdateAbout, useAppUpdate } from './AppUpdateBanner';
 import { StarAskSettingsLink } from './StarAsk';
 import { ProactiveSettings, WORK_AHEAD_CAP_MAX, WORK_AHEAD_CAP_MIN, parseProactiveSettings } from '../decideFirst';
@@ -534,6 +535,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
         )}
 
         <LayaStatusRow />
+
+        <JevRoutingRow />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="flex items-center gap-3 bg-zinc-950/60 p-3 rounded-xl border border-zinc-800">

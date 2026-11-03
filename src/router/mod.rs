@@ -1,5 +1,6 @@
 pub mod depends;
 pub mod fallback;
+pub mod jev;
 pub mod laya;
 pub mod sidecar;
 pub mod sticky;

@@ -76,7 +76,7 @@ pub fn awaiting_answer<'a>(recent: &[Message], open: &[Question], members: &'a [
 pub fn yields_to_route(awaiting: &Awaiting<'_>, route: &crate::router::team::ChannelRoute) -> bool {
     !awaiting.card
         && route.kwant_id != awaiting.kwant.id
-        && matches!(route.basis.as_str(), "skills" | "keywords")
+        && matches!(route.basis.as_str(), "skills" | "keywords" | "jev")
         && route.fit >= crate::router::team::ROUTE_AT
 }
 

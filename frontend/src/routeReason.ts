@@ -14,7 +14,8 @@ export type RouteBasis =
   | 'concierge'
   | 'ask'
   | 'handback'
-  | 'learned';
+  | 'learned'
+  | 'jev';
 
 export interface RouteReasonInput {
   kwantName?: string;

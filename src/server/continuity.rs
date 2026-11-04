@@ -72,6 +72,19 @@ pub async fn prompt_block(
     channel_id: Option<&str>,
     with_tools: bool,
 ) -> String {
+    prompt_block_with(state, kwant, team_id, channel_id, with_tools, "").await
+}
+
+/// [`prompt_block`] with the bot's lessons block (`missions::lessons::for_turn`, empty for none)
+/// after its memories and before the tools section, so a turn that drops the tools keeps it.
+pub async fn prompt_block_with(
+    state: &AppState,
+    kwant: &Kwant,
+    team_id: Option<&str>,
+    channel_id: Option<&str>,
+    with_tools: bool,
+    lessons: &str,
+) -> String {
     let db = &state.db;
     let mut out = String::new();
     if let Some(text) = match team_id {
@@ -97,6 +110,7 @@ pub async fn prompt_block(
         Some(block) => out.push_str(&block),
         None => out.push_str(&memory_block(&memories, with_tools)),
     }
+    out.push_str(lessons);
     if with_tools {
         out.push_str(crate::drivers::APP_TOOLS_MARKER);
         out.push_str(&format!(
@@ -141,8 +155,9 @@ pub async fn prompt_block(
             [How to work]\n\
             - Never tell the person to do what your tools can do; do it now. Hand over only the rest.\n\
             - Check with the list or search tools before stating what exists or was done. Never claim an action you didn't take.\n\
-            - When the person reveals a lasting preference or fact (diet, goals, schedule), save it with `memory_add` without \
-            asking, and apply your notes unasked later.\n\
+            - When the person reveals a lasting preference or fact (diet, goals, schedule), or corrects how you did something in \
+            a way that would apply again (\"use a table\", \"always cc Sam\"), save it with `memory_add` without asking, and apply \
+            your notes unasked later.\n\
             - Be proactive: after the asked work, do the obvious next step. Add one concrete extra the person would \
             clearly want: a shopping list with a meal plan; with a new routine, a sample of what it will send (a \
             motivation, the reminder's checklist); a monthly routine that sends a report you wrote. When a plan has \

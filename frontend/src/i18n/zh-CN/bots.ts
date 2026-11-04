@@ -485,5 +485,11 @@ const zh: Record<string, string> = {
   'a zip': 'zip 压缩包',
   'pasted text': '粘贴的文本',
   'The export didn’t work. Try again in a moment.': '导出失败，请稍后重试。',
+  // Lessons (kwant 0.6.8)
+  'Lessons from earlier work': '以往的经验',
+  '{name} sees these before similar work. They come from the last 30 days and update on their own.': '{name} 在做类似工作前会先看到这些。内容来自最近 30 天，会自动更新。',
+  'Happened {n} times': '发生过 {n} 次',
+  'View task for this lesson: {lesson}': '查看这条经验对应的子任务：{lesson}',
+  'View task': '查看子任务',
 };
 export default zh;

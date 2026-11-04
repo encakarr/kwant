@@ -641,5 +641,8 @@ const zh: Record<string, string> = {
   'Open as window': '以窗口打开',
   'Sign in or finish what you need there. Closing the window, or the button below, brings it back here.': '在那里登录或完成需要的操作。关闭窗口或点下面的按钮，它就会回到这里。',
   'Show it here instead': '改为在这里显示',
+  // Lessons (kwant 0.6.8)
+  'Learn from earlier work': '从以往工作中学习',
+  'Before similar work, each bot sees what went wrong in its last 30 days: failed checks, stalled turns, your send-backs and goals that stopped holding.': '每个机器人在做类似工作前，会先看到自己最近 30 天里出过的问题：没通过的检查、卡住的轮次、你退回的工作，以及不再成立的目标。',
 };
 export default zh;

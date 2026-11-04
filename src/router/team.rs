@@ -1015,20 +1015,29 @@ pub fn pick_by_words<'a>(
         return Some(p);
     }
     let tied: Vec<&'a Kwant> = best.iter().map(|&i| scored[i].0).take(2).collect();
+    // The words the tied bots matched: what makes the tie a close call worth asking about
+    let mut tied_terms: Vec<String> = Vec::new();
+    for &i in best.iter().take(2) {
+        for t in &scored[i].2 {
+            if !tied_terms.contains(t) {
+                tied_terms.push(t.clone());
+            }
+        }
+    }
 
     // 5. Nothing in the message matched (or two bots tied on words): the bot that spoke last, else
     //    the lead, with no fit. Laya alone never picks: it sees only titles, and its confident guess
     //    sent "Best place to eat corn dogs in Munich tomorrow?" to a TikTok scriptwriter. A tie is a
     //    close call between the tied bots.
-    let (fit, choices) = if tied.len() > 1 { (0.45, tied) } else { (0.0, vec![]) };
+    let (fit, choices, terms) = if tied.len() > 1 { (0.45, tied, tied_terms) } else { (0.0, vec![], vec![]) };
     if let Some(k) = last_speaker.and_then(|id| members.iter().find(|m| m.id == id)).filter(|k| !avoided(k)) {
         // "thanks", "make it shorter", "and for Berlin?" carry on with whoever is talking
         let fit = if choices.is_empty() && (is_small_talk(prompt) || reads_as_follow_up(prompt)) { ROUTE_AT } else { fit };
         let reason = format!("Nothing in your message named a role, so {} ({}), who spoke last here, carries on", k.name, k.title);
-        return Some(Pick { kwant: k, basis: "last", reason, terms: vec![], fit, choices });
+        return Some(Pick { kwant: k, basis: "last", reason, terms, fit, choices });
     }
     let reason = format!("No one's role matched this, so it went to the {lead_word}, {} ({})", lead.name, lead.title);
-    Some(Pick { kwant: lead, basis: "lead", reason, terms: vec![], fit, choices })
+    Some(Pick { kwant: lead, basis: "lead", reason, terms, fit, choices })
 }
 
 /// Everyday words that say nothing about whose work a request is. They never count as shared
@@ -1091,14 +1100,20 @@ pub enum Settle {
 /// candidates) asks the person. Below that, #general (every bot in the space) leans to the
 /// Concierge rather than to whichever specialist happened to lead or speak last; any other channel
 /// leans to its own members, so a low score stays with the last speaker or lead as before.
+///
+/// In #general a close call asks only with words of the message behind it. Laya's titles-only
+/// guess against a weak hint for another bot ("Compare lidl and edeka": Laya said Community,
+/// "compare" leans to the Analyst) names no one's work, so the Concierge answers rather than
+/// asking the person to pick between two bots the message isn't for.
 pub fn settle(route: &ChannelRoute, general: bool, has_concierge: bool) -> Settle {
     if route.fit >= ROUTE_AT {
         return Settle::Route;
     }
-    if route.fit >= ASK_FROM && route.choices.len() >= 2 {
+    let concierge = general && has_concierge;
+    if route.fit >= ASK_FROM && route.choices.len() >= 2 && !(concierge && route.matched_terms.is_empty()) {
         return Settle::Ask(route.choices.iter().take(2).cloned().collect());
     }
-    if general && has_concierge {
+    if concierge {
         return Settle::Concierge;
     }
     Settle::Route
@@ -1174,10 +1189,17 @@ fn is_code_request(prompt: &str) -> bool {
     words.iter().take(3).any(|w| VERBS.contains(&w.as_str()))
 }
 
+/// The words a route shows as "matched". A route no one's words won (`lead`, `last`) or the
+/// Concierge took shows none: a step-5 tie keeps its words only so [`settle`] asks, and
+/// "No one's role matched this · matched 'macro', 'bread'" read wrong.
+pub fn shown_terms(basis: &str, terms: Vec<String>) -> Vec<String> {
+    if matches!(basis, "lead" | "last" | "concierge") { Vec::new() } else { terms }
+}
+
 /// A Direct decision from a pick. A message nobody can take goes to the lead.
 fn direct(pick: Option<Pick<'_>>, team: &Team) -> TeamDecision {
     match pick {
-        Some(p) => TeamDecision::Direct { kwant_id: p.kwant.id.clone(), reason: p.reason, basis: p.basis.into(), matched_terms: p.terms },
+        Some(p) => TeamDecision::Direct { kwant_id: p.kwant.id.clone(), reason: p.reason, basis: p.basis.into(), matched_terms: shown_terms(p.basis, p.terms) },
         None => TeamDecision::Direct {
             kwant_id: team.lead_kwant_id.clone(),
             reason: "No team members available; routed to team lead".into(),
@@ -1458,7 +1480,7 @@ fn generate_discussion_plan(speakers: &[String], members: &[Kwant]) -> Vec<Strin
 mod tests {
     use super::*;
 
-    fn make_test_fixture() -> (Team, Vec<Kwant>) {
+    pub(super) fn make_test_fixture() -> (Team, Vec<Kwant>) {
         let team = Team {
             space_id: crate::db::spaces::DEFAULT_SPACE_ID.into(),
             id: "team-1".into(),
@@ -1797,6 +1819,21 @@ mod fit_tests {
         ]
     }
 
+    /// A step-5 word tie asks in #general, but routed on to the lead it shows no matched words.
+    #[test]
+    fn a_route_no_words_won_shows_no_matched_words() {
+        let members = kitchen();
+        let p = pick_member_after("bread macros", "k-tl", &members, None, "channel lead", None).unwrap();
+        assert!(matches!(p.basis, "lead" | "last"), "{p:?}");
+        assert!(!p.terms.is_empty(), "{p:?}");
+        assert!(matches!(settle(&route_of(&p), true, true), Settle::Ask(_)), "{p:?}");
+        let team = Team { lead_kwant_id: "k-tl".into(), ..super::tests::make_test_fixture().0 };
+        let TeamDecision::Direct { matched_terms, basis, .. } = direct(Some(p), &team) else { panic!("not direct") };
+        assert!(matched_terms.is_empty(), "{basis}: {matched_terms:?}");
+        assert_eq!(shown_terms("skills", vec!["dough".into()]), vec!["dough".to_string()]);
+        assert!(shown_terms("concierge", vec!["dough".into()]).is_empty());
+    }
+
     /// The first fit score sent a specialist question with one word only its bot has, and no
     /// runner-up, to the Concierge (0.5, nobody to ask about). Corn dogs still have no fit.
     #[test]
@@ -1880,6 +1917,33 @@ mod fit_tests {
         assert_eq!(settle(&route_of(&p), false, false), ask);
         let p = pick_member_after("@Bea the button CSS is off", "k-seo", &members, None, "channel lead", None).unwrap();
         assert_eq!((p.kwant.id.as_str(), settle(&route_of(&p), true, true)), ("k-fe", Settle::Route));
+    }
+
+    /// Oleks 2026-11-03: in #general "Compare lidl and edeka" showed "Who should answer this?"
+    /// with Community and Analyst. Laya guessed Community from titles alone and "compare" only
+    /// leans to the Analyst: no word of the message is either bot's work, so the Concierge answers.
+    /// Outside #general (or with the Concierge removed) the close call still asks.
+    #[test]
+    fn a_titles_only_guess_against_a_weak_hint_goes_to_the_concierge_in_general() {
+        let members = kitchen();
+        let laya = Some(LayaGuess { kwant: &members[6], confident: true });
+        for prompt in ["Compare lidl and edeka", "Compare Aldi with lidl"] {
+            let p = pick_member_after(prompt, "k-tl", &members, laya, "channel lead", None).unwrap();
+            assert!((ASK_FROM..ROUTE_AT).contains(&p.fit), "{prompt}: {p:?}");
+            assert!(p.terms.is_empty(), "{prompt}: {p:?}");
+            let ids: Vec<&str> = p.choices.iter().map(|k| k.id.as_str()).collect();
+            assert_eq!(ids, ["k-comm", "k-data"], "{prompt}");
+            assert_eq!(settle(&route_of(&p), true, true), Settle::Concierge, "{prompt}");
+            let ask = Settle::Ask(vec!["k-comm".into(), "k-data".into()]);
+            assert_eq!(settle(&route_of(&p), true, false), ask, "{prompt}");
+            assert_eq!(settle(&route_of(&p), false, true), ask, "{prompt}");
+            // Without Laya's guess there is no one to ask about either
+            let p = pick_member_after(prompt, "k-tl", &members, None, "channel lead", None).unwrap();
+            assert_eq!(settle(&route_of(&p), true, true), Settle::Concierge, "{prompt}: {p:?}");
+        }
+        // A real close call in #general still asks
+        let p = pick_member_after("Ideas for our TikTok this week?", "k-tl", &members, laya, "channel lead", None).unwrap();
+        assert!(matches!(settle(&route_of(&p), true, true), Settle::Ask(_)), "{p:?}");
     }
 
     /// An entry of a bot's covers list counts like a word of its title; empty lists change nothing.

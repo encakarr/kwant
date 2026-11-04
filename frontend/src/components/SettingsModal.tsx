@@ -45,6 +45,7 @@ import {
   formatTokens,
   limitError as tokenLimitError,
   parseAutofixSettings,
+  parseLessonsSetting,
   parseDefaultLimits,
   parseLimit,
   parseMissionBoardSetting,
@@ -314,6 +315,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
   // null: this server has no Mission board, so the switch stays hidden.
   const [missionBoard, setMissionBoard] = useState<boolean | null>(null);
   const [autofix, setAutofix] = useState<AutofixSettings | null>(null);
+  // Bots see what went wrong in their last 30 days before similar work. Null on a server without it.
+  const [lessons, setLessons] = useState<'on' | 'off' | null>(null);
   // null on a server without the Swarm Auditor: the switch stays hidden and out of the save
   const [auditor, setAuditor] = useState<AuditorSettings | null>(null);
   // null on a server without Flight School: the switch stays hidden and out of the save
@@ -386,6 +389,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
           setProactive(parseProactiveSettings(data));
           setMissionBoard(parseMissionBoardSetting(data));
           setAutofix(parseAutofixSettings(data));
+          setLessons(parseLessonsSetting(data));
           setAuditor(parseAuditorSettings(data));
           setFlightSchool(parseFlightSchoolSettings(data));
           setDiscovery(parseDiscoverySettings(data));
@@ -467,6 +471,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
           ...(proactive ?? {}),
           ...(missionBoard !== null ? { mission_board: missionBoard } : {}),
           ...(autofix !== null ? { autofix: autofix.autofix, recovery_budget_pct: autofix.recovery_budget_pct } : {}),
+          ...(lessons !== null ? { lessons } : {}),
           ...(flightSchool ?? {}),
           ...(auditor ?? {}),
           ...(discovery ?? {}),
@@ -912,6 +917,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
                     </div>
                   )}
                 </SwitchRow>
+              )}
+              {lessons !== null && (
+                <SwitchRow
+                  id="lessons"
+                  label={t('Learn from earlier work')}
+                  hint={t('Before similar work, each bot sees what went wrong in its last 30 days: failed checks, stalled turns, your send-backs and goals that stopped holding.')}
+                  checked={lessons === 'on'}
+                  onToggle={() => setLessons((v) => (v === 'on' ? 'off' : 'on'))}
+                />
               )}
               {flightSchool !== null && <FlightSchoolSetting value={flightSchool} onChange={setFlightSchool} />}
               {auditor !== null && (

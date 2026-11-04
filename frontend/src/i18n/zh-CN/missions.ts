@@ -844,5 +844,10 @@ const zh: Record<string, string> = {
   '{failed} of {n} didn’t go through: {error}': '{n} 个中有 {failed} 个未成功：{error}',
   'Task': '子任务',
   'Couldn’t load this task.': '无法加载此子任务。',
+  // Lessons (kwant 0.6.8)
+  'It ran its checks before hand-in': '它在提交前先运行了检查',
+  'It started with {n} lesson from earlier work': '它带着 {n} 条以往的经验开始',
+  'It started with {n} lessons from earlier work': '它带着 {n} 条以往的经验开始',
+  'It started with lessons from earlier work': '它带着以往的经验开始',
 };
 export default zh;

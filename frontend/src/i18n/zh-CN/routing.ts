@@ -29,5 +29,16 @@ const zh: Record<string, string> = {
   'Jev picks the model': '由 Jev 选择模型',
   'Jev picks the engine for each message. Tools work with Claude Code, Ollama and API keys, but not through the Codex or Grok CLIs.':
     'Jev 会为每条消息挑选引擎。Claude Code、Ollama 和 API 密钥都能使用工具，但 Codex 和 Grok CLI 不行。',
+  // "Jev picks" where Laya's sentence says "Laya picks" (Jev on)
+  '{n} bot in {space}. Jev only picks from these.': '{space} 中有 {n} 个机器人。Jev 只会从中挑选。',
+  '{n} bots in {space}. Jev only picks from these.': '{space} 中有 {n} 个机器人。Jev 只会从中挑选。',
+  'Jev picked {name} {pool}{matched}': 'Jev {pool}选中了 {name}{matched}',
+  'Jev picks which of these bots answers each message.': 'Jev 会为每条消息从这些机器人中挑选一个来回答。',
+  'Jev picks who answers, from the {n} bot in {space}': '由 Jev 从 {space} 的 {n} 个机器人中选择回答者',
+  'Jev picks who answers, from the {n} bots in {space}': '由 Jev 从 {space} 的 {n} 个机器人中选择回答者',
+  "Jev picks who answers, only from {space}'s bots.": '由 Jev 选择回答者，只从 {space} 的机器人中挑选。',
+  'Jev picks who answers here': '由 Jev 决定这里谁来回答',
+  'These are your bots. Ask anything here and Jev picks who answers.': '这些是你的机器人。在这里随便提问，Jev 会挑选合适的机器人来回答。',
+  'With one bot, it answers every message. Add another and Jev picks who answers.': '只有一个机器人时，由它回答每条消息。再添加一个，Jev 就会挑选由谁回答。',
 };
 export default zh;

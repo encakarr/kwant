@@ -2,6 +2,7 @@
 // who answers.
 
 import { t } from './i18n';
+import { jevActive } from './jevStatus';
 
 const unique = (ids: string[]) => ids.filter((id, i) => ids.indexOf(id) === i);
 
@@ -73,6 +74,9 @@ export function layaRoutes(c: ChannelLike, botsInSpace: number): boolean {
 /** The line under the bot picker, for `picked` bots. */
 export function routingHint(picked: number): string {
   if (picked === 0) return t('Pick at least one bot.');
-  if (picked === 1) return t('With one bot, it answers every message. Add another and Laya picks who answers.');
-  return t('Laya picks which of these bots answers each message.');
+  if (picked === 1)
+    return jevActive()
+      ? t('With one bot, it answers every message. Add another and Jev picks who answers.')
+      : t('With one bot, it answers every message. Add another and Laya picks who answers.');
+  return jevActive() ? t('Jev picks which of these bots answers each message.') : t('Laya picks which of these bots answers each message.');
 }

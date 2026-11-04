@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Check, CheckCircle2, Loader2, MessagesSquare, Sparkles } from 'lucide-react';
 import { ResolvePick, ResolveResult, RouteChoiceMeta, generalHint, routeChoiceOutcome, routeChoiceView } from '../routeChoice';
 import { t } from '../i18n';
+import { useJevActive } from '../jevStatus';
 
 export interface RouteChoiceCardProps {
   meta: RouteChoiceMeta;
@@ -22,6 +23,7 @@ type Busy = string | 'general' | null;
  * second tap (409) just shows it's already answered.
  */
 export const RouteChoiceCard: React.FC<RouteChoiceCardProps> = ({ meta, messageId, live, question, onResolve, flash }) => {
+  const jevOn = useJevActive();
   const view = routeChoiceView(meta, live);
   const [busy, setBusy] = useState<Busy>(null);
   const [error, setError] = useState<string | null>(null);
@@ -95,7 +97,7 @@ export const RouteChoiceCard: React.FC<RouteChoiceCardProps> = ({ meta, messageI
         <div className="px-4 pt-3 pb-2 space-y-1">
           <span className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-400">
             <MessagesSquare size={12} className="text-violet-300" aria-hidden="true" />
-            <span className="text-zinc-200">Laya</span> · {t('router')}
+            <span className="text-zinc-200">{jevOn ? 'Jev' : 'Laya'}</span> · {t('router')}
           </span>
           <h3 id={headingId} className="text-sm font-semibold text-zinc-100 leading-snug">
             {t('Who should answer this?')}

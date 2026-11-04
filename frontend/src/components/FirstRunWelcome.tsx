@@ -2,6 +2,7 @@ import React from 'react';
 import { KeyRound } from 'lucide-react';
 import { ModernAvatar } from './ModernAvatar';
 import { t } from '../i18n';
+import { jevActive } from '../jevStatus';
 
 export interface WelcomeBot {
   id: string;
@@ -31,7 +32,7 @@ export const FirstRunWelcome: React.FC<Props> = ({ bots, actionLabel, onAction }
       {t('Welcome to kwant bots')}
     </h2>
     <p className="mt-1.5 text-sm text-zinc-400">
-      {t('These are your bots. Ask anything here and Laya picks who answers.')}
+      {jevActive() ? t('These are your bots. Ask anything here and Jev picks who answers.') : t('These are your bots. Ask anything here and Laya picks who answers.')}
     </p>
     {bots.length > 0 && (
       <ul className="mt-4 flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-zinc-400">

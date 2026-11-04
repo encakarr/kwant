@@ -65,3 +65,32 @@ test('with Jev on, screens say Jev picks the model instead of Laya', async () =>
     globalThis.fetch = saved;
   }
 });
+
+test('the routing card and the hints name Jev when Jev picks, Laya otherwise', async () => {
+  const s = await loadBundled(`
+    export { loadJevActive } from './src/jevStatus';
+    export { LayaRoutingCard } from './src/components/ChatView';
+    export { routingHint } from './src/channels';
+    export { renderToStaticMarkup } from 'react-dom/server.browser';
+    export { createElement } from 'react';
+  `);
+  const card = (routing) => s.renderToStaticMarkup(s.createElement(s.LayaRoutingCard, { routing }));
+  const decided = (over) => ({ phase: 'decided', candidates: [], kwantName: 'Ada', kwantTitle: 'Lead', ...over });
+  const header = (html) => html.match(/text-zinc-200">(Jev|Laya)</)?.[1];
+  const saved = globalThis.fetch;
+  try {
+    globalThis.fetch = async () => ({ ok: true, json: async () => ({ active: false }) });
+    await s.loadJevActive();
+    assert.equal(header(card(decided({ basis: 'keywords', reason: 'Ada (Lead) does this kind of work' }))), 'Laya');
+    assert.equal(header(card(decided({ basis: 'jev', reason: 'Jev matched this to Ada (Lead), 96% sure' }))), 'Jev', 'Jev decided this one');
+    assert.match(s.routingHint(2), /^Laya picks/);
+
+    globalThis.fetch = async () => ({ ok: true, json: async () => ({ active: true }) });
+    await s.loadJevActive();
+    assert.equal(header(card(decided({ basis: 'keywords', reason: 'Ada (Lead) was named in your message' }))), 'Jev', 'with Jev on, the router is Jev');
+    assert.equal(header(card({ phase: 'deciding', candidates: [] })), 'Jev');
+    assert.match(s.routingHint(2), /^Jev picks/);
+  } finally {
+    globalThis.fetch = saved;
+  }
+});

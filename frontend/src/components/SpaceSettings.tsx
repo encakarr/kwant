@@ -41,6 +41,7 @@ import type { SettingsScope, SpaceSettingsTab } from '../nav';
 import { InstallAppButton } from './InstallAppButton';
 import { editorProps, useEscapeLayer } from '../escape';
 import { t } from '../i18n';
+import { jevActive } from '../jevStatus';
 
 export type { SettingsScope, SpaceSettingsTab };
 
@@ -564,7 +565,7 @@ const BotsTab: React.FC<TabProps> = ({ space, kwants, onNewBot, onEditBot, onOpe
   <div className="space-y-3">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <p className="text-xs text-zinc-400">
-        {t(kwants.length === 1 ? '{n} bot in {space}. Laya only picks from these.' : '{n} bots in {space}. Laya only picks from these.', {
+        {t(jevActive() ? (kwants.length === 1 ? '{n} bot in {space}. Jev only picks from these.' : '{n} bots in {space}. Jev only picks from these.') : kwants.length === 1 ? '{n} bot in {space}. Laya only picks from these.' : '{n} bots in {space}. Laya only picks from these.', {
           n: kwants.length,
           space: space.name,
         })}

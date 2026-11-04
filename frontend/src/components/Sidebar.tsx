@@ -17,6 +17,7 @@ import { layaRoutes } from '../channels';
 import { InstallAppButton } from './InstallAppButton';
 import { trapFocusTarget } from '../imports';
 import { t } from '../i18n';
+import { jevActive } from '../jevStatus';
 
 export interface Kwant {
   id: string;
@@ -747,7 +748,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   key={c.id}
                   onClick={() => onSelectChannel(c)}
                   // The channel's header says it too; no pill on every row
-                  title={layaRoutes(c, kwants.length) ? t('Laya picks who answers here') : undefined}
+                  title={layaRoutes(c, kwants.length) ? (jevActive() ? t('Jev picks who answers here') : t('Laya picks who answers here')) : undefined}
                   className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all text-left ${
                     active
                       ? 'bg-zinc-800 text-zinc-100 shadow-sm border border-zinc-700/50'

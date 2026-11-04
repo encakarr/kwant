@@ -4,6 +4,7 @@
 import { parseView, viewSegment, type SpaceView } from './nav';
 import { pickedLine, serverReason } from './routeReason';
 import { t } from './i18n';
+import { jevActive } from './jevStatus';
 
 export interface SpaceCounts {
   bots: number;
@@ -321,7 +322,7 @@ export function routingLine(r: RoutingMeta, spaceName: string, nameOf?: (kwantId
   if (r.fallback) return t('Picked by keywords (Laya is offline) · {name} {pool}{matched}', { name, pool, matched });
   if (r.basis === 'lead') return t('No one’s role matched, so the team lead {name} took it {pool}', { name, pool });
   if (r.basis === 'only') return t('{name} is the only bot that can answer {pool}', { name, pool });
-  return t('Laya picked {name} {pool}{matched}', { name, pool, matched });
+  return r.basis === 'jev' || jevActive() ? t('Jev picked {name} {pool}{matched}', { name, pool, matched }) : t('Laya picked {name} {pool}{matched}', { name, pool, matched });
 }
 
 /** "ran on Work account" from a reply's `ran_on`, or null. */

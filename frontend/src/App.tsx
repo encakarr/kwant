@@ -116,6 +116,7 @@ import { PromptContext, suggestedPrompts } from './suggestedPrompts';
 import { isNotificationOpen, showDeviceNotification } from './push';
 import { inDesktopApp, leaveForSignIn, mcpSignIn, pollUntil, signInChanged } from './externalLinks';
 import { t } from './i18n';
+import { autoPicker, useJevActive } from './jevStatus';
 import { saveBotEffort } from './botEffort';
 
 // Kwant and Tools editors are their own chunks. They stay mounted (rendering nothing while closed),
@@ -1058,7 +1059,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
               contextId: ctx || targetId || undefined,
               candidates: event.data?.candidates || [],
             });
-            markLive(ctx || targetId, 'Laya');
+            markLive(ctx || targetId, autoPicker());
             break;
           }
           case 'routing_decided':
@@ -2411,11 +2412,14 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
     ? `@${currentChannel.name.replace(/^team-/, '')}`
     : `#${currentChannel?.name || 'general'}`;
 
+  const jevOn = useJevActive();
   const isGeneral = isChannel && !currentTeam && currentChannel?.name === 'general';
   const chatSubtitle = !isChannel
     ? currentKwant?.title || t('Kwant bot')
     : isGeneral
-      ? t(kwants.length === 1 ? 'Laya picks who answers, from the {n} bot in {space}' : 'Laya picks who answers, from the {n} bots in {space}', { n: kwants.length, space: space.name })
+      ? jevOn
+        ? t(kwants.length === 1 ? 'Jev picks who answers, from the {n} bot in {space}' : 'Jev picks who answers, from the {n} bots in {space}', { n: kwants.length, space: space.name })
+        : t(kwants.length === 1 ? 'Laya picks who answers, from the {n} bot in {space}' : 'Laya picks who answers, from the {n} bots in {space}', { n: kwants.length, space: space.name })
       : currentTeam?.description || currentChannel?.description || t('A team in {space}', { space: space.name });
 
   // "Suggested:" prompts from who is in this chat, so a kitchen team isn't offered developer prompts
@@ -2823,7 +2827,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
                 },
               },
             },
-            { done: false, title: t('Message #general'), detail: t("Laya picks who answers, only from {space}'s bots.", { space: space.name }) },
+            { done: false, title: t('Message #general'), detail: jevOn ? t("Jev picks who answers, only from {space}'s bots.", { space: space.name }) : t("Laya picks who answers, only from {space}'s bots.", { space: space.name }) },
           ].map((step: { done: boolean; keepAction?: boolean; title: string; detail: string; action?: { label: string; icon: React.ReactNode; onClick: () => void } }, i) => (
             <li key={step.title} className="flex items-start gap-3 rounded-xl border border-zinc-800 bg-zinc-950/50 p-3">
               <span

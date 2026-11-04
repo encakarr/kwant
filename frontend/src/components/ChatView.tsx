@@ -52,6 +52,7 @@ import { SmartActionsSlot } from './results/SmartActions';
 import { COMPOSE_PREFILL_EVENT, withPrefill } from './results/SmartResult';
 import { FilesPreviewOnly } from './results/Files';
 import { t, tj } from '../i18n';
+import { useJevActive } from '../jevStatus';
 
 /** A swipeable chip row whose right fade edge (phones only, see .kw-scroll-row) goes away once
  *  it is scrolled to the end, or when everything already fits. */
@@ -386,11 +387,13 @@ const RoutingLine: React.FC<{ text: string; fallback: boolean; reroute?: Reroute
   );
 };
 
-const LayaRoutingCard: React.FC<{ routing: RoutingState; spaceName?: string }> = ({ routing, spaceName }) => {
+export const LayaRoutingCard: React.FC<{ routing: RoutingState; spaceName?: string }> = ({ routing, spaceName }) => {
   const deciding = routing.phase === 'deciding';
   const isDiscuss = routing.mode === 'discuss';
   const why = routeReasonText(routing);
   const pool = routing.candidateCount ?? (routing.candidates.length || null);
+  const jevOn = useJevActive();
+  const router = routing.basis === 'jev' || /^Jev\b/.test(routing.reason ?? '') || jevOn ? 'Jev' : 'Laya';
 
   return (
     <div className="flex items-start gap-3.5 w-full max-w-5xl" aria-live="polite">
@@ -399,7 +402,7 @@ const LayaRoutingCard: React.FC<{ routing: RoutingState; spaceName?: string }> =
       </div>
       <div className="flex flex-col items-start min-w-0 flex-1 max-w-4xl">
         <div className="flex items-center gap-2 mb-1.5 text-[11px] text-zinc-400 font-medium">
-          <span className="text-zinc-200">Laya</span>
+          <span className="text-zinc-200">{router}</span>
           <span className="text-zinc-500">· {t('router')}</span>
         </div>
         <div className="px-4 py-3 rounded-2xl rounded-tl-sm bg-violet-950/20 border border-violet-500/20 text-sm text-zinc-200 shadow-sm w-full">

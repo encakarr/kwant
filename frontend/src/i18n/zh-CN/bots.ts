@@ -500,7 +500,7 @@ const zh: Record<string, string> = {
   'Extra high (xhigh)': '超高（xhigh）',
   'Max': '最高（max）',
   'Each message gets low, medium or high, from what it asks.': '根据每条消息的内容，自动选择低、中或高。',
-  'Slower and uses much more of your limits. Claude Code runs it as is; Codex and Grok run xhigh; model APIs run their deepest model.': '更慢，也更耗额度。Claude Code 按此档位运行；Codex 和 Grok 按 xhigh 运行；模型 API 使用最深的模型。',
+  'Slower and uses much more of your limits. Claude Code and Codex run it as is (Codex steps down when the model tops out lower); Grok runs xhigh at most; model APIs run their deepest model.': '更慢，也更耗额度。Claude Code 和 Codex 按此档位运行（模型不支持时，Codex 会降到它支持的最高档）；Grok 最高按 xhigh 运行；模型 API 使用最深的模型。',
   'Every message runs at this effort. Unless a model is pinned, it also picks the model tier.': '每条消息都按这个强度运行。没有固定具体模型时，也会按它选择模型档位。',
   'Couldn’t save the thinking effort (HTTP {status}).': '思考强度保存失败（HTTP {status}）。',
   'Couldn’t save the thinking effort.': '思考强度保存失败。',

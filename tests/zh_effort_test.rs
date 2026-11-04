@@ -141,3 +141,49 @@ async fn a_bots_effort_is_saved_read_back_and_checked() {
     use axum::http::Method;
     assert!(kwnt::server::auth::person_only(&Method::POST, &uri), "only the person sets it");
 }
+
+#[test]
+fn codex_gets_each_level_up_to_max_and_steps_down_to_what_its_model_lists() {
+    use kwnt::drivers::codex_effort::{clamp, parse_levels, wanted};
+    for e in ["low", "medium", "high", "xhigh", "max"] {
+        assert_eq!(wanted(e), e);
+    }
+    assert_eq!(wanted("auto"), "medium");
+    assert_eq!(wanted("ultra"), "medium", "kwant never asks for ultra");
+    let to_max: Vec<String> = ["low", "medium", "high", "xhigh", "max", "ultra"].map(String::from).to_vec();
+    let to_xhigh: Vec<String> = ["low", "medium", "high", "xhigh"].map(String::from).to_vec();
+    assert_eq!(clamp("max", &to_max), "max");
+    assert_eq!(clamp("max", &to_xhigh), "xhigh", "gpt-5.5 tops out at xhigh");
+    assert_eq!(clamp("high", &to_xhigh), "high");
+    assert_eq!(clamp("max", &[]), "max", "an unknown model gets the level as is");
+
+    // The shape of `codex debug models`
+    let levels = parse_levels(
+        r#"{"models":[
+            {"slug":"gpt-6.1-sol","supported_reasoning_levels":[{"effort":"low"},{"effort":"medium"},{"effort":"high"},{"effort":"xhigh"},{"effort":"max"},{"effort":"ultra"}]},
+            {"slug":"gpt-5.5","supported_reasoning_levels":[{"effort":"low"},{"effort":"medium"},{"effort":"high"},{"effort":"xhigh"}]}
+        ]}"#,
+    );
+    assert_eq!(clamp("max", &levels["gpt-6.1-sol"]), "max");
+    assert_eq!(clamp("max", &levels["gpt-5.5"]), "xhigh");
+}
+
+#[tokio::test]
+async fn a_codex_turn_reads_the_models_list_from_codex_itself() {
+    use kwnt::drivers::codex_effort::for_turn;
+    let dir = tempdir().unwrap();
+    let bin = dir.path().join("codex");
+    std::fs::write(
+        &bin,
+        "#!/bin/sh\necho '{\"models\":[{\"slug\":\"gpt-5.5\",\"supported_reasoning_levels\":[{\"effort\":\"low\"},{\"effort\":\"high\"},{\"effort\":\"xhigh\"}]},{\"slug\":\"gpt-6-astra\",\"supported_reasoning_levels\":[{\"effort\":\"low\"},{\"effort\":\"max\"}]}]}'\n",
+    )
+    .unwrap();
+    use std::os::unix::fs::PermissionsExt;
+    std::fs::set_permissions(&bin, std::fs::Permissions::from_mode(0o755)).unwrap();
+    let bin = bin.to_str().unwrap();
+    assert_eq!(for_turn(bin, Some("gpt-5.5"), "max").await, "xhigh");
+    assert_eq!(for_turn(bin, Some("gpt-6-astra"), "max").await, "max");
+    assert_eq!(for_turn(bin, Some("gpt-6-astra"), "high").await, "low", "the highest it lists at or below high");
+    assert_eq!(for_turn(bin, Some("not-listed"), "xhigh").await, "xhigh");
+    assert_eq!(for_turn(bin, None, "max").await, "max", "codex's own default model: as is");
+}

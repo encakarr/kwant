@@ -1,4 +1,5 @@
-//! A bot's fixed thinking effort, set in its settings: `auto` (the default: the router picks low,
+//! A bot's fixed thinking effort (Claude Code takes every level; Codex up to what its model lists;
+//! Grok up to xhigh; model APIs only use the tier), set in its settings: `auto` (the default: the router picks low,
 //! medium or high for each message) or one of `low`, `medium`, `high`, `xhigh`, `max` for every
 //! message. The effort also picks the model tier unless the bot pins a model: low is the fast tier,
 //! medium balanced, high and above deep. Kept in the settings table, so the bots table stays as it is.

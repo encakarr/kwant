@@ -67,7 +67,7 @@ test('the Edit form shows the saved effort, offers all six and sends a change wi
   assert.ok(select, 'the effort picker is in the form');
   assert.deepEqual([...select.options].map((o) => o.value), ['auto', 'low', 'medium', 'high', 'xhigh', 'max']);
   assert.equal(select.value, 'xhigh', 'the saved effort shows');
-  assert.match(host.querySelector('#agent-effort-hint').textContent, /Codex and Grok run xhigh/);
+  assert.match(host.querySelector('#agent-effort-hint').textContent, /Grok runs xhigh at most/);
 
   const setter = Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype, 'value').set;
   setter.call(select, 'max');

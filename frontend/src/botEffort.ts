@@ -1,7 +1,7 @@
 // A bot's thinking effort (its settings, under the engine and model): auto lets the router pick low,
 // medium or high for each message; the others fix it for every message. xhigh and max are only
-// ever chosen here: Claude Code runs them as is, Codex and Grok top out at xhigh, model APIs use
-// the deep tier. See src/server/bot_effort.rs.
+// ever chosen here: Claude Code and Codex run them as is (Codex steps down to what the model lists),
+// Grok tops out at xhigh, model APIs use the deep tier. See src/server/bot_effort.rs.
 import { t } from './i18n';
 
 export type EffortChoice = 'auto' | 'low' | 'medium' | 'high' | 'xhigh' | 'max';
@@ -24,7 +24,7 @@ export function effortHint(effort: EffortChoice): string {
       return t('Each message gets low, medium or high, from what it asks.');
     case 'xhigh':
     case 'max':
-      return t('Slower and uses much more of your limits. Claude Code runs it as is; Codex and Grok run xhigh; model APIs run their deepest model.');
+      return t('Slower and uses much more of your limits. Claude Code and Codex run it as is (Codex steps down when the model tops out lower); Grok runs xhigh at most; model APIs run their deepest model.');
     default:
       return t('Every message runs at this effort. Unless a model is pinned, it also picks the model tier.');
   }

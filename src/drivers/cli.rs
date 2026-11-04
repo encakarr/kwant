@@ -1084,13 +1084,8 @@ impl Driver for CliDriver {
         match self.tool_kind.as_str() {
             "codex" => {
                 let out_file = format!("/tmp/kwnt_codex_{}.txt", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos());
-                // codex's top level is xhigh
-                let codex_effort = match effort {
-                    "xhigh" | "max" => "xhigh",
-                    "high" => "high",
-                    "low" => "low",
-                    _ => "medium",
-                };
+                // Up to max; a level the model doesn't list steps down to its highest (see codex_effort)
+                let codex_effort = super::codex_effort::for_turn(&bin_path, input.model.as_deref(), effort).await;
                 let full_prompt = format!("[System Context: {}]\n\n{}", system_prompt, effective_prompt);
                 // Fail closed: without the names, the user's own servers would run with no
                 // approval card (and despite a per-kwant opt-out). Same for a user server named
@@ -1165,6 +1160,7 @@ impl Driver for CliDriver {
                 codex_out_file = Some(out_file);
             }
             "grok" => {
+                // grok's levels end at xhigh (grok-4.6 and later; grok-4.5 treats xhigh as high)
                 let grok_effort = match effort {
                     "xhigh" | "max" => "xhigh",
                     "high" => "high",

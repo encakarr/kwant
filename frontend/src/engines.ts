@@ -1,6 +1,7 @@
 // Engines: whether each way of running a model (a CLI, an API key, Ollama) can run right now, from
 // GET /api/engines, and the shared Engine → Model choice stored in a kwant's preferred_model.
 import { t } from './i18n';
+import { jevActive } from './jevStatus';
 
 export type EngineId = 'claude' | 'codex' | 'grok' | 'anthropic_api' | 'openai_api' | 'xai_api' | 'ollama' | 'custom_api';
 export type EngineKind = 'cli' | 'api' | 'local';
@@ -277,7 +278,7 @@ export function pickLabel(value: string, engines: EngineInfo[] | null = null): s
 
 /** A bot's engine in words, for its tooltip in the bot list: "Laya picks the model", "Runs on Claude · Sonnet". */
 export function engineTip(value: string, engines: EngineInfo[] | null = null): string {
-  return parsePick(value).family === 'auto' ? t('Laya picks the model') : t('Runs on {pick}', { pick: pickLabel(value, engines) });
+  return parsePick(value).family === 'auto' ? (jevActive() ? t('Jev picks the model') : t('Laya picks the model')) : t('Runs on {pick}', { pick: pickLabel(value, engines) });
 }
 
 /** "Claude Haiku (latest)" → "Haiku" when shown after the family name. */

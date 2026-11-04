@@ -121,6 +121,10 @@ impl LayaRouter {
         }
 
         let payload = model_payload(prompt, context, criteria);
+        // Jev, when the person set it up, picks first; without it, or when it fails, Laya as before
+        if let Some(decision) = self.jev_route_prompt(prompt, &payload).await {
+            return Ok(decision);
+        }
         let endpoint = format!("{}/v1/systemone", self.base_url.trim_end_matches('/'));
 
         let started = std::time::Instant::now();

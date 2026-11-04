@@ -2223,6 +2223,7 @@ async fn run_kwant_turn_inner(
             },
         };
         let mut route = route;
+        let picked_by_jev = route.reasoning.starts_with(crate::router::jev::JEV_PICK);
         if opts.routed.is_none() {
             if let Some(capped) = crate::router::fallback::cap_effort_for_attachment(&prompt, &route.effort_level) {
                 route.reasoning = format!("{} · effort capped at {capped}: a short message with an attachment", route.reasoning);
@@ -2248,7 +2249,8 @@ async fn run_kwant_turn_inner(
         let pinned_family = crate::router::parse_pin(&target_kwant.preferred_model).family.is_some();
 
         event_broadcast.send(RuntimeEvent::ThinkingDelta(format!(
-            "🔮 Laya Router: model='{}', effort='{}' ({:.0}% conf) — {}",
+            "🔮 {} Router: model='{}', effort='{}' ({:.0}% conf) — {}",
+            if picked_by_jev { "Jev" } else { "Laya" },
             target_model,
             effort_level,
             route.confidence * 100.0,
@@ -2965,6 +2967,7 @@ async fn run_kwant_turn_inner(
                 let pick = match (pinned_model.is_some(), pinned_family) {
                     (true, _) => "pinned_model",
                     (false, true) => "pinned_engine",
+                    (false, false) if picked_by_jev => "jev",
                     (false, false) => "laya",
                 };
                 let mut meta = ran_on

@@ -3,6 +3,7 @@
 import React from 'react';
 import { Sparkles } from 'lucide-react';
 import { t } from '../i18n';
+import { loadJevActive } from '../jevStatus';
 
 export interface JevView {
   enabled: boolean;
@@ -22,7 +23,7 @@ export const JEV_PRESETS = [
 /** The status line under the title. */
 export function jevStatus(view: JevView | null): string {
   if (!view) return t('Loading…');
-  if (view.active) return t('On · {model} picks who answers in channels', { model: view.model });
+  if (view.active) return t('On · {model} picks the model for each message and who answers in channels', { model: view.model });
   if (!view.api_key) return t('Off · add an API key to turn it on');
   return t('Off · channels pick by keywords and Laya');
 }
@@ -68,6 +69,7 @@ export const JevRoutingRow: React.FC = () => {
       const { ok, data } = await send('/api/settings/jev', { ...fields(), ...(enabled === undefined ? {} : { enabled }) });
       if (ok) {
         show(data as JevView);
+        loadJevActive();
         setNote({ ok: true, text: t('Saved.') });
       } else setNote({ ok: false, text: data.error || t('Couldn’t save.') });
     } catch {
@@ -101,7 +103,7 @@ export const JevRoutingRow: React.FC = () => {
       <div className="flex-1 min-w-0 space-y-2">
         <div className="flex items-center gap-3">
           <div className="flex-1 min-w-0">
-            <p id="jev-label" className="text-xs font-medium text-zinc-200">{t('Jev, smarter channel routing')}</p>
+            <p id="jev-label" className="text-xs font-medium text-zinc-200">{t('Jev, smarter routing')}</p>
             <p className="mt-0.5 text-[11px] text-zinc-400" role="status">{jevStatus(view)}</p>
           </div>
           <button
@@ -118,7 +120,7 @@ export const JevRoutingRow: React.FC = () => {
         </div>
         <p className="text-[11px] text-zinc-500 leading-snug">
           {t(
-            'Reads the meaning of a message, so it also routes Chinese and other languages written without spaces. Each channel message, the channel name and your bots’ names, titles and Good for / Not for lists are sent to the URL below.',
+            'Picks each message’s engine and model, and who answers in a channel, in Laya’s place. It reads the meaning of a message, so Chinese and other languages written without spaces route well too. Messages, the channel name and your bots’ names, titles and Good for / Not for lists are sent to the URL below.',
           )}
         </p>
         <div className="flex flex-wrap gap-1.5">

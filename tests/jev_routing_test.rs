@@ -336,3 +336,42 @@ async fn channel_messages_go_to_jev_and_fall_back_when_it_fails() {
     assert_eq!(r.kwant_id, "reno");
     assert_ne!(r.basis, "jev");
 }
+
+#[tokio::test]
+async fn jev_picks_the_engine_and_effort_and_laya_takes_over_when_it_cannot() {
+    let (url, fake) = fake_jev().await;
+    let router = LayaRouter::new("http://127.0.0.1:9".into());
+    router.jev.set_settings(JevSettings { enabled: true, url, api_key: KEY.into(), model: "jev-1.13-free".into() });
+
+    // Jev answers Laya's two questions: which engine, how much effort
+    *fake.reply.lock().unwrap() = Some(json!({"answers": {
+        "model_selection": {"choice": "claude", "confidence": 0.93},
+        "effort_level": {"choice": "high", "confidence": 0.8}
+    }}));
+    let d = router.route_prompt_with_models("帮我重构这个模块的数据库访问层", "chat", &[]).await.expect("a decision");
+    assert_eq!(d.selected_model, "claude");
+    assert!(!d.is_fallback);
+    assert!(d.reasoning.starts_with(kwnt::router::jev::JEV_PICK), "{}", d.reasoning);
+    let (auth, body) = fake.seen.lock().unwrap().last().cloned().unwrap();
+    assert_eq!(auth, format!("Bearer {KEY}"));
+    assert_eq!(body["model"], "jev-1.13-free");
+    assert_eq!(body["state"]["prompt"], "帮我重构这个模块的数据库访问层");
+    assert!(body["questions"]["model_selection"]["criteria"]["claude"].is_string());
+    assert_eq!(body["questions"]["effort_level"]["type"], "choice");
+
+    // An engine that wasn't offered is no pick: routed as before (Laya is down here, so the rules)
+    *fake.reply.lock().unwrap() = Some(json!({"answers": {"model_selection": {"choice": "gpt-9"}, "effort_level": {"choice": "low"}}}));
+    let d = router.route_prompt_with_models("hi", "chat", &[]).await.expect("a decision");
+    assert!(!d.reasoning.starts_with(kwnt::router::jev::JEV_PICK), "{}", d.reasoning);
+
+    // Jev failing: routed as before
+    *fake.reply.lock().unwrap() = None;
+    let d = router.route_prompt_with_models("hi", "chat", &[]).await.expect("a decision");
+    assert!(d.is_fallback || !d.reasoning.starts_with(kwnt::router::jev::JEV_PICK), "{}", d.reasoning);
+
+    // Off: Jev isn't asked at all
+    let asked = fake.seen.lock().unwrap().len();
+    router.jev.set_settings(JevSettings::default());
+    router.route_prompt_with_models("hi", "chat", &[]).await.expect("a decision");
+    assert_eq!(fake.seen.lock().unwrap().len(), asked);
+}

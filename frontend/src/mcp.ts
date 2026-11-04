@@ -1,6 +1,7 @@
 // MCP server helpers shared by the servers screen, the per-kwant picker and chat.
 // Contract: docs/mcp-api.md
 import { t, tc } from './i18n';
+import { jevActive } from './jevStatus';
 
 export type McpTransport = 'stdio' | 'http';
 
@@ -704,7 +705,9 @@ export const mcpSupportFor = (preferredModel: string, keys: EngineKeys): { suppo
   }
   return {
     supported: true,
-    note: t('Laya picks the engine for each message. Tools work with Claude Code, Ollama and API keys, but not through the Codex or Grok CLIs.'),
+    note: jevActive()
+      ? t('Jev picks the engine for each message. Tools work with Claude Code, Ollama and API keys, but not through the Codex or Grok CLIs.')
+      : t('Laya picks the engine for each message. Tools work with Claude Code, Ollama and API keys, but not through the Codex or Grok CLIs.'),
   };
 };
 

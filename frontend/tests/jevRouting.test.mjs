@@ -41,3 +41,27 @@ test('a Jev pick shows the server’s sentence', () => {
   const text = m.routeReasonText({ kwantName: '小装', basis: 'jev', reason: 'Jev matched this to 小装 (装修顾问), 96% sure' });
   assert.equal(text, 'Jev matched this to 小装 (装修顾问), 96% sure.');
 });
+
+test('with Jev on, screens say Jev picks the model instead of Laya', async () => {
+  const s = await loadBundled(`
+    export { loadJevActive, jevActive, autoPicker } from './src/jevStatus';
+    export { engineTip } from './src/engines';
+  `);
+  const answer = (active) => async () => ({ ok: true, json: async () => ({ active }) });
+  const saved = globalThis.fetch;
+  try {
+    globalThis.fetch = answer(false);
+    assert.equal(await s.loadJevActive(), false);
+    assert.equal(s.autoPicker(), 'Laya');
+    assert.equal(s.engineTip('auto'), 'Laya picks the model');
+    globalThis.fetch = answer(true);
+    assert.equal(await s.loadJevActive(), true);
+    assert.equal(s.jevActive(), true);
+    assert.equal(s.autoPicker(), 'Jev');
+    assert.equal(s.engineTip('auto'), 'Jev picks the model');
+    globalThis.fetch = async () => { throw new Error('offline'); };
+    assert.equal(await s.loadJevActive(), false, 'a server it can’t reach means Laya');
+  } finally {
+    globalThis.fetch = saved;
+  }
+});

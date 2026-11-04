@@ -51,7 +51,7 @@ test('screens render in Chinese', () => {
   assert.doesNotMatch(approval, />Allow Once</);
 
   const jev = html(m.JevRoutingRow);
-  assert.match(jev, /Jev 智能频道分配/);
+  assert.match(jev, /Jev 智能分配/);
   assert.match(jev, /OpenCode Zen（免费）/);
 
   assert.match(html(m.LanguageRow), /跟随浏览器/);

@@ -17,6 +17,7 @@ import {
   pickHealth,
 } from '../engines';
 import { t } from '../i18n';
+import { useJevActive } from '../jevStatus';
 
 interface ModelPickerProps {
   /** A kwant's preferred_model: "auto", "claude", "claude/sonnet"… */
@@ -50,6 +51,7 @@ const SELECT =
 
 /** One Engine → Model choice used wherever a kwant's model is set. Only engines that can run are offered. */
 export const ModelPicker: React.FC<ModelPickerProps> = ({ value, onChange, engines, onOpenSettings, onSignInClaude, profiles, profileId, onPickAccount }) => {
+  const jev = useJevActive();
   const id = useId();
   const pick = parsePick(value);
   const customAccounts = readyCustomAccounts(profiles);
@@ -101,7 +103,7 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({ value, onChange, engin
             aria-invalid={health.kind === 'engine_unavailable' || undefined}
             className={`${SELECT} ${health.kind === 'engine_unavailable' ? 'border-amber-500/60' : ''}`}
           >
-            <option value="auto">{t('Auto (Laya picks)')}</option>
+            <option value="auto">{jev ? t('Auto (Jev picks)') : t('Auto (Laya picks)')}</option>
             {options.map((o) => (
               <option key={o.id} value={o.id}>
                 {o.via.length ? `${o.label} · ${o.via.join(', ')}` : o.label}
@@ -145,7 +147,7 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({ value, onChange, engin
             aria-describedby={describedBy}
             className={`${SELECT} ${health.kind === 'model_missing' ? 'border-amber-500/60' : ''}`}
           >
-            <option value="">{family === 'auto' ? t('Laya picks per task') : t('Auto (Laya picks)')}</option>
+            <option value="">{family === 'auto' ? (jev ? t('Jev picks per task') : t('Laya picks per task')) : jev ? t('Auto (Jev picks)') : t('Auto (Laya picks)')}</option>
             {groupByTier(models).map((g) => (
               <optgroup key={g.label} label={g.label}>
                 {g.models.map((m) => (

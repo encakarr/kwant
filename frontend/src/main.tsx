@@ -7,8 +7,10 @@ import { captureInstallPrompt, registerServiceWorker, trackAppHeight } from './p
 import './styles/fonts.css';
 import './styles/modern.css';
 import { locale } from './i18n';
+import { loadJevActive } from './jevStatus';
 
 document.documentElement.lang = locale;
+loadJevActive();
 registerServiceWorker();
 captureInstallPrompt();
 trackAppHeight();

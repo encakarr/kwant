@@ -29,6 +29,8 @@ pub const TIMEOUT_MS: u64 = 4000;
 /// How sure Jev must be that a message only follows on from the last reply ("谢谢", "再短一点")
 /// for it to stay with the bot that spoke last.
 pub const FOLLOW_UP_AT: f64 = 0.7;
+/// How the reasoning of an engine and effort Jev picked begins (see `LayaRouter::jev_route_prompt`).
+pub const JEV_PICK: &str = "Jev decision router selected";
 /// Longest persona line sent as part of a member's description.
 const PERSONA_CHARS: usize = 160;
 
@@ -311,6 +313,32 @@ pub fn says_who(p: &Pick<'_>, prompt: &str) -> bool {
 }
 
 impl LayaRouter {
+    /// The engine and effort for one message with Jev (the same questions Laya answers, see
+    /// [`super::laya::model_payload`]), or `None` when Jev is off, fails or names no offered engine.
+    pub(crate) async fn jev_route_prompt(&self, prompt: &str, payload: &Value) -> Option<super::RouteDecision> {
+        let settings = self.jev.active()?;
+        let mut payload = payload.clone();
+        payload["model"] = json!(settings.model.trim());
+        let started = std::time::Instant::now();
+        let data = match self.jev.ask(&settings, &payload).await {
+            Ok(data) => data,
+            Err(e) => {
+                tracing::warn!(error = %e, elapsed_ms = started.elapsed().as_millis() as u64, "Jev didn't pick the model for this message; asking Laya");
+                return None;
+            }
+        };
+        let mut decision = super::parse_laya_response(&data)?;
+        let offered = payload["questions"]["model_selection"]["criteria"].as_object().is_some_and(|c| c.contains_key(&decision.selected_model));
+        if !offered {
+            tracing::warn!(choice = %decision.selected_model, "Jev named an engine that wasn't offered; asking Laya");
+            return None;
+        }
+        decision.effort_level = super::fallback::blend_effort(prompt, &decision.effort_level);
+        decision.reasoning = format!("{JEV_PICK} {} with {} effort", decision.selected_model, decision.effort_level);
+        tracing::info!(model = %decision.selected_model, effort = %decision.effort_level, elapsed_ms = started.elapsed().as_millis() as u64, "Jev picked the model for this message");
+        Some(decision)
+    }
+
     /// The channel pick with Jev, or `None` when Jev is off or didn't answer (the caller then routes
     /// as before).
     pub(crate) async fn jev_route(

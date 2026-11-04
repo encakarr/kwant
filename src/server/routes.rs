@@ -2230,6 +2230,11 @@ async fn run_kwant_turn_inner(
                 route.effort_level = capped.into();
             }
         }
+        if opts.routed.is_none() && opts.tier.is_none() {
+            if let Some(level) = super::bot_effort::fixed(state, &target_kwant.id).await {
+                route = super::bot_effort::apply(route, level);
+            }
+        }
         let route = crate::router::apply_preferred_model(route, &target_kwant.preferred_model);
         let route = match opts.tier {
             Some(t) => crate::router::with_tier(route, t),

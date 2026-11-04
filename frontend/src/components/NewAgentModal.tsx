@@ -19,6 +19,7 @@ import { FlightSchoolPanel } from './FlightSchoolPanel';
 import { useEscapeLayer } from '../escape';
 import { BrowserSites, FieldErrorKey, SITE_LIMITS, changedSites, fieldError, sitesOf, sitesSummary } from '../browserSites';
 import { t, tj } from '../i18n';
+import { EFFORT_CHOICES, EffortChoice, effortHint, isEffortChoice, loadBotEffort } from '../botEffort';
 
 export type EditTab = 'profile' | 'memory' | 'skills' | 'routines' | 'usage';
 const EDIT_TABS: Array<{ id: EditTab; label: string; Icon: typeof Brain }> = [
@@ -48,6 +49,8 @@ export interface AgentFormData {
   browser_allowed_sites?: string[];
   browser_blocked_sites?: string[];
   browser_block_private_network?: boolean;
+  /** Thinking effort (kept apart from the bot itself, see src/botEffort.ts); absent until loaded. */
+  effort?: EffortChoice;
 }
 
 interface NewAgentModalProps {
@@ -92,7 +95,7 @@ interface NewAgentModalProps {
   onOpenTask?: (taskId: string) => void;
 }
 
-type ProfileFields = { name: string; title: string; roleStyle: string; model: string; prompt: string; soul: string; profileId: string | null; failover: boolean; covers: string; avoids: string; sites: string };
+type ProfileFields = { name: string; title: string; roleStyle: string; model: string; prompt: string; soul: string; profileId: string | null; failover: boolean; covers: string; avoids: string; sites: string; effort: string };
 
 export const NewAgentModal: React.FC<NewAgentModalProps> = ({
   isOpen,
@@ -122,6 +125,7 @@ export const NewAgentModal: React.FC<NewAgentModalProps> = ({
   const [title, setTitle] = useState('');
   const [roleStyle, setRoleStyle] = useState('architect');
   const [model, setModel] = useState('auto');
+  const [effort, setEffort] = useState<EffortChoice>('auto');
   const [prompt, setPrompt] = useState('');
   const [soul, setSoul] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -153,7 +157,7 @@ export const NewAgentModal: React.FC<NewAgentModalProps> = ({
 
   // The profile as it opened (or as a preset filled it in): Escape keeps the editor open while it differs.
   const [base, setBase] = useState<ProfileFields | null>(null);
-  const current: ProfileFields = { name, title, roleStyle, model, prompt, soul, profileId, failover, covers: covers.join('\n'), avoids: avoids.join('\n'), sites: JSON.stringify(sites) };
+  const current: ProfileFields = { name, title, roleStyle, model, prompt, soul, profileId, failover, covers: covers.join('\n'), avoids: avoids.join('\n'), sites: JSON.stringify(sites), effort };
   const unsaved = !!base && (Object.keys(base) as (keyof ProfileFields)[]).some((k) => base[k] !== current[k]);
   const rootRef = useRef<HTMLDivElement>(null);
   useEscapeLayer(rootRef, isOpen, onClose, {
@@ -180,7 +184,16 @@ export const NewAgentModal: React.FC<NewAgentModalProps> = ({
       covers: (initial?.covers ?? []).join('\n'),
       avoids: (initial?.avoids ?? []).join('\n'),
       sites: JSON.stringify(sitesOf(initial)),
+      effort: 'auto',
     });
+    setEffort('auto');
+    // Saved apart from the bot: read it, then count it as the base so opening isn't a change
+    if (kwantId) {
+      loadBotEffort(kwantId).then((e) => {
+        setEffort(e);
+        setBase((b) => (b ? { ...b, effort: e } : b));
+      });
+    }
     setName(initial?.name ?? '');
     setTitle(initial?.title ?? '');
     setRoleStyle(initial?.avatar_sprite || 'architect');
@@ -282,6 +295,7 @@ export const NewAgentModal: React.FC<NewAgentModalProps> = ({
       // Editing: only once loaded, since older servers leave them out. Creating: always.
       ...(!isEdit || initial?.covers ? { covers, avoids } : {}),
       ...(isEdit && sitesBase && sites ? changedSites(sitesBase, sites) : {}),
+      effort,
     });
 
     setSubmitting(false);
@@ -502,6 +516,28 @@ export const NewAgentModal: React.FC<NewAgentModalProps> = ({
             profileId={profileId}
             onPickAccount={setProfileId}
           />
+
+          <div>
+            <label htmlFor="agent-effort" className="block text-xs font-medium text-zinc-400 mb-1">
+              {t('Thinking effort')}
+            </label>
+            <select
+              id="agent-effort"
+              value={effort}
+              onChange={(e) => isEffortChoice(e.target.value) && setEffort(e.target.value)}
+              aria-describedby="agent-effort-hint"
+              className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-100 focus:border-sky-500 focus:outline-none transition-colors"
+            >
+              {EFFORT_CHOICES.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+            <p id="agent-effort-hint" className="mt-1 text-[11px] text-zinc-500 leading-snug">
+              {effortHint(effort)}
+            </p>
+          </div>
 
           {engine && (
             <div>

@@ -491,5 +491,18 @@ const zh: Record<string, string> = {
   'Happened {n} times': '发生过 {n} 次',
   'View task for this lesson: {lesson}': '查看这条经验对应的子任务：{lesson}',
   'View task': '查看子任务',
+  // Thinking effort
+  'Thinking effort': '思考强度',
+  'Auto (picked per message)': '自动（按每条消息判断）',
+  'Low · fast model': '低 · 快速模型',
+  'Medium · balanced model': '中 · 均衡模型',
+  'High · deep model': '高 · 深度模型',
+  'Extra high (xhigh)': '超高（xhigh）',
+  'Max': '最高（max）',
+  'Each message gets low, medium or high, from what it asks.': '根据每条消息的内容，自动选择低、中或高。',
+  'Slower and uses much more of your limits. Claude Code runs it as is; Codex and Grok run xhigh; model APIs run their deepest model.': '更慢，也更耗额度。Claude Code 按此档位运行；Codex 和 Grok 按 xhigh 运行；模型 API 使用最深的模型。',
+  'Every message runs at this effort. Unless a model is pinned, it also picks the model tier.': '每条消息都按这个强度运行。没有固定具体模型时，也会按它选择模型档位。',
+  'Couldn’t save the thinking effort (HTTP {status}).': '思考强度保存失败（HTTP {status}）。',
+  'Couldn’t save the thinking effort.': '思考强度保存失败。',
 };
 export default zh;

@@ -1084,7 +1084,9 @@ impl Driver for CliDriver {
         match self.tool_kind.as_str() {
             "codex" => {
                 let out_file = format!("/tmp/kwnt_codex_{}.txt", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos());
+                // codex's top level is xhigh
                 let codex_effort = match effort {
+                    "xhigh" | "max" => "xhigh",
                     "high" => "high",
                     "low" => "low",
                     _ => "medium",
@@ -1133,7 +1135,9 @@ impl Driver for CliDriver {
                     .arg("--color")
                     .arg("never")
                     .arg("-c")
-                    .arg(format!("reasoning_effort=\"{}\"", codex_effort))
+                    // codex's key is model_reasoning_effort; a bare reasoning_effort is ignored and
+                    // the user's own default (often xhigh) applies
+                    .arg(format!("model_reasoning_effort=\"{}\"", codex_effort))
                     // Never the user's own codex servers: codex exec has no hook for kwnt's
                     // approval cards. The kwant's servers come only through kwnt's gateway.
                     .arg("-c")
@@ -1162,6 +1166,7 @@ impl Driver for CliDriver {
             }
             "grok" => {
                 let grok_effort = match effort {
+                    "xhigh" | "max" => "xhigh",
                     "high" => "high",
                     "low" => "low",
                     _ => "medium",
@@ -1226,7 +1231,10 @@ impl Driver for CliDriver {
             }
             _ => {
                 // claude default
+                // Claude Code has every level: low, medium, high, xhigh, max
                 let claude_effort = match effort {
+                    "max" => "max",
+                    "xhigh" => "xhigh",
                     "high" => "high",
                     "low" => "low",
                     _ => "medium",

@@ -79,7 +79,7 @@ impl Tier {
     pub fn from_effort(effort: &str) -> Self {
         match effort {
             "low" => Tier::Fast,
-            "high" => Tier::Deep,
+            "high" | "xhigh" | "max" => Tier::Deep,
             _ => Tier::Balanced,
         }
     }

@@ -36,6 +36,7 @@ pub mod hires;
 pub mod concierge;
 pub mod rerouting;
 pub mod jev_routes;
+pub mod bot_effort;
 pub mod import_routes;
 pub mod approval_modes;
 pub mod passwords;
@@ -227,6 +228,7 @@ pub fn create_router(state: AppState) -> Router {
         .route("/api/laya/status", get(routes::laya_status))
         .route("/api/settings/jev", get(jev_routes::get).post(jev_routes::save))
         .route("/api/settings/jev/test", post(jev_routes::test))
+        .route("/api/settings/bot-effort/:id", get(bot_effort::get).post(bot_effort::save))
         .route("/api/kwants", get(routes::list_kwants).post(routes::create_kwant))
         .route("/api/kwants/:id", put(routes::put_kwant).delete(routes::delete_kwant))
         .route("/api/kwants/:id/usage", get(routes::kwant_usage))

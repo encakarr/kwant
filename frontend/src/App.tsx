@@ -116,6 +116,7 @@ import { PromptContext, suggestedPrompts } from './suggestedPrompts';
 import { isNotificationOpen, showDeviceNotification } from './push';
 import { inDesktopApp, leaveForSignIn, mcpSignIn, pollUntil, signInChanged } from './externalLinks';
 import { t } from './i18n';
+import { saveBotEffort } from './botEffort';
 
 // Kwant and Tools editors are their own chunks. They stay mounted (rendering nothing while closed),
 // so both load right after start-up and opening them never waits.
@@ -2079,7 +2080,7 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
 
   const handleUpdateAgent = async (kwant: Kwant, agentData: AgentFormData): Promise<string | void> => {
     try {
-      const { mcp_server_ids, ...kwantData } = agentData;
+      const { mcp_server_ids, effort, ...kwantData } = agentData;
       const res = await fetch(`/api/kwants/${kwant.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -2090,6 +2091,10 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
       if (!res.ok) return (await serverError(res)) ?? t("Couldn't save the bot (HTTP {status}).", { status: res.status });
 
       const updated: Kwant = await res.json();
+      if (effort !== undefined) {
+        const effortError = await saveBotEffort(kwant.id, effort);
+        if (effortError) return effortError;
+      }
       setKwants((prev) => prev.map((k) => (k.id === updated.id ? updated : k)));
       if (updated.name !== kwant.name) {
         const rename = (list: ChatMessage[]) =>
@@ -2133,6 +2138,10 @@ export const SpaceApp: React.FC<SpaceAppProps> = ({
       if (res.ok) {
         const created: Kwant = await res.json();
         setKwants((prev) => [...prev, created]);
+        if (agentData.effort && agentData.effort !== 'auto') {
+          const effortError = await saveBotEffort(created.id, agentData.effort);
+          if (effortError) console.error(effortError);
+        }
         // Saved even when empty: switching every server off means none.
         const mcpError = await saveKwantMcpServers(created.id, agentData.mcp_server_ids);
         if (mcpError) console.error(mcpError);
